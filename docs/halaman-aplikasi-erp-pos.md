@@ -6,7 +6,7 @@ _React + Next.js + JavaScript + Tailwind + MongoDB_
 
 ### 1. Auth (Semua Role)
 
-- `/login` – Halaman masuk pengguna (Clerk/NextAuth)
+- `/login` – Halaman masuk pengguna (Clerk)
 - `/register` – Pendaftaran pengguna baru (khusus Admin)
 - `/forgot-password` – Lupa password dan reset
 
