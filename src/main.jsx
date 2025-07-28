@@ -4,7 +4,12 @@ import { BrowserRouter, Routes, Route } from "react-router";
 import { ClerkProvider } from "@clerk/react-router";
 import "./index.css";
 import App from "./App.jsx";
-import Dashboard from "./pages/Dashboard.jsx";
+import Dashboard from "./pages/Dashboard/Dashboard";
+import ProductsList from "./pages/products/ProductsList";
+import CreateProduct from "./pages/products/CreateProduct";
+import EditProduct from "./pages/products/EditProduct";
+import ProductDetail from "./pages/products/ProductDetail";
+import Categories from "./pages/Categories/Categories";
 
 // Import your publishable key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -153,6 +158,11 @@ createRoot(document.getElementById("root")).render(
         <Routes>
           <Route path="/" element={<App />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/products" element={<ProductsList />} />
+          <Route path="/products/create" element={<CreateProduct />} />
+          <Route path="/products/:id" element={<ProductDetail />} />
+          <Route path="/products/:id/edit" element={<EditProduct />} />
+          <Route path="/categories" element={<Categories />} />
         </Routes>
       </ClerkProvider>
     </BrowserRouter>
