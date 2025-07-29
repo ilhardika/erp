@@ -10,6 +10,7 @@ import CreateProduct from "./pages/products/CreateProduct";
 import EditProduct from "./pages/products/EditProduct";
 import ProductDetail from "./pages/products/ProductDetail";
 import Categories from "./pages/Categories/Categories";
+import AuthRedirect from "./pages/AuthRedirect";
 
 // Import your publishable key
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
@@ -156,7 +157,8 @@ createRoot(document.getElementById("root")).render(
         fallbackRedirectUrl="/dashboard"
       >
         <Routes>
-          <Route path="/" element={<App />} />
+          <Route path="/" element={<AuthRedirect />} />
+          <Route path="/login" element={<AuthRedirect />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/products" element={<ProductsList />} />
           <Route path="/products/create" element={<CreateProduct />} />

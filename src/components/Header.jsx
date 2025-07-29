@@ -9,6 +9,7 @@ import { Link, useLocation } from "react-router";
 import { Button } from "./ui/button";
 import DropdownNavigation from "./ui/DropdownNavigation";
 import { useState } from "react";
+import { Package, Folder, BarChart3, Menu, X, ChevronDown } from "lucide-react";
 
 const MobileProductDropdown = ({ onLinkClick }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -52,24 +53,14 @@ const MobileProductDropdown = ({ onLinkClick }) => {
         }`}
       >
         <div className="flex items-center">
-          <span className="mr-3 text-gray-400">📦</span>
+          <Package className="mr-3 h-4 w-4 text-gray-400" />
           <span>Produk</span>
         </div>
-        <svg
+        <ChevronDown
           className={`w-4 h-4 transition-transform ${
             isOpen ? "rotate-180" : ""
           }`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        />
       </button>
 
       {isOpen && (
@@ -117,13 +108,13 @@ export function Header() {
       {
         name: "Produk",
         href: "/products",
-        icon: "📦",
+        icon: Package,
         description: "Kelola produk & inventori",
       },
       {
         name: "Kategori",
         href: "/categories",
-        icon: "📂",
+        icon: Folder,
         description: "Kelola kategori produk",
       },
     ],
@@ -149,28 +140,11 @@ export function Header() {
                 className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 aria-label="Toggle menu"
               >
-                <svg
-                  className="w-5 h-5 text-gray-600"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  {isMobileMenuOpen ? (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  ) : (
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 6h16M4 12h16M4 18h16"
-                    />
-                  )}
-                </svg>
+                {isMobileMenuOpen ? (
+                  <X className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <Menu className="w-5 h-5 text-gray-600" />
+                )}
               </button>
             )}
 
@@ -254,19 +228,7 @@ export function Header() {
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="p-2 rounded-lg hover:bg-gray-100"
                   >
-                    <svg
-                      className="w-5 h-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <X className="w-5 h-5" />
                   </button>
                 </div>
 
@@ -304,7 +266,7 @@ export function Header() {
                           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                       }`}
                     >
-                      <span className="mr-3 text-gray-400">📊</span>
+                      <BarChart3 className="mr-3 h-4 w-4 text-gray-400" />
                       {item.name}
                     </Link>
                   ))}

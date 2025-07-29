@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { Filter, X, Check } from "lucide-react";
 
 const MultiSelectFilter = ({
   options = [],
@@ -90,19 +91,7 @@ const MultiSelectFilter = ({
         className="p-1 text-gray-400 hover:text-gray-600 rounded hover:bg-gray-100 transition-colors relative"
         title={`Filter ${placeholder}`}
       >
-        <svg
-          className="h-4 w-4"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.707A1 1 0 013 7V4z"
-          />
-        </svg>
+        <Filter className="h-4 w-4" />
         {value.length > 0 && (
           <span className="absolute -top-1 -right-1 bg-blue-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
             {value.length}
@@ -158,19 +147,7 @@ const MultiSelectFilter = ({
                     className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
                     title="Clear search"
                   >
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M6 18L18 6M6 6l12 12"
-                      />
-                    </svg>
+                    <X className="h-4 w-4" />
                   </button>
                 )}
               </div>
@@ -196,17 +173,7 @@ const MultiSelectFilter = ({
                         }`}
                       >
                         {value.includes(option.value) && (
-                          <svg
-                            className="w-2.5 h-2.5 text-white"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
+                          <Check className="w-2.5 h-2.5 text-white" />
                         )}
                       </div>
                       {/* Option Text */}

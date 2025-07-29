@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Link, useLocation } from "react-router";
 import { cn } from "../../lib/utils";
+import { ChevronDown } from "lucide-react";
 
 const DropdownNavigation = ({
   title,
@@ -41,22 +42,12 @@ const DropdownNavigation = ({
         )}
       >
         <span>{title}</span>
-        <svg
+        <ChevronDown
           className={cn(
             "w-4 h-4 transition-transform",
             isOpen ? "rotate-180" : ""
           )}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
-        </svg>
+        />
       </button>
 
       {isOpen && (
@@ -79,6 +70,9 @@ const DropdownNavigation = ({
                       : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                   )}
                 >
+                  {item.icon && (
+                    <item.icon className="mr-3 h-4 w-4 text-gray-400" />
+                  )}
                   <div>
                     <div className="font-medium">{item.name}</div>
                     {item.description && (

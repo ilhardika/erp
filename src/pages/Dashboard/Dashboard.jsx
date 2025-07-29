@@ -1,10 +1,18 @@
 import React from "react";
 import { Header } from "../../components/Header";
+import {
+  DollarSign,
+  Package,
+  AlertTriangle,
+  Users,
+  TrendingUp,
+  BarChart3,
+} from "lucide-react";
 
-const Card = ({ title, value, description, icon }) => (
+const Card = ({ title, value, description, icon: Icon }) => (
   <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 hover:shadow-md transition-shadow">
     <div className="flex items-center justify-between mb-3 sm:mb-4">
-      <div className="text-2xl sm:text-3xl">{icon}</div>
+      <Icon className="h-8 w-8 text-gray-400" />
       <div className="text-right">
         <p className="text-xs sm:text-sm text-gray-500 mb-1">{title}</p>
         <p className="text-lg sm:text-2xl font-bold text-gray-900">{value}</p>
@@ -35,25 +43,25 @@ const Dashboard = () => {
             title="Total Penjualan Hari Ini"
             value="Rp 2.450.000"
             description="↗ 12% dari kemarin"
-            icon="💰"
+            icon={DollarSign}
           />
           <Card
             title="Pesanan Baru"
             value="24"
             description="↗ 8% dari kemarin"
-            icon="📦"
+            icon={Package}
           />
           <Card
             title="Stok Menipis"
             value="7"
             description="Perlu restock segera"
-            icon="⚠️"
+            icon={AlertTriangle}
           />
           <Card
             title="Pelanggan Aktif"
             value="156"
             description="↗ 5% dari minggu lalu"
-            icon="👥"
+            icon={Users}
           />
         </div>
 
@@ -74,7 +82,7 @@ const Dashboard = () => {
                 </p>
               </button>
               <button className="p-3 sm:p-4 hover:bg-gray-50 rounded-lg text-left transition-colors border border-gray-200">
-                <div className="text-2xl mb-2">📦</div>
+                <Package className="h-8 w-8 text-gray-400 mb-2" />
                 <h3 className="font-medium text-gray-900 text-sm sm:text-base">
                   Kelola Produk
                 </h3>
@@ -83,7 +91,7 @@ const Dashboard = () => {
                 </p>
               </button>
               <button className="p-3 sm:p-4 hover:bg-gray-50 rounded-lg text-left transition-colors border border-gray-200">
-                <div className="text-2xl mb-2">📊</div>
+                <BarChart3 className="h-8 w-8 text-gray-400 mb-2" />
                 <h3 className="font-medium text-gray-900 text-sm sm:text-base">
                   Laporan
                 </h3>
@@ -158,7 +166,7 @@ const Dashboard = () => {
           </h2>
           <div className="h-48 sm:h-64 bg-gray-50 rounded-lg flex items-center justify-center">
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl mb-2">📈</div>
+              <TrendingUp className="h-12 w-12 text-gray-400 mx-auto mb-2" />
               <p className="text-sm sm:text-base text-gray-600">
                 Grafik penjualan akan ditampilkan di sini
               </p>

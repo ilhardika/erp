@@ -3,6 +3,14 @@ import { Header } from "../../components/Header";
 import { useParams, Link } from "react-router";
 import { DataGrid, StatusBadge } from "../../components/ui/DataTable";
 import { createColumnHelper } from "@tanstack/react-table";
+import {
+  Package,
+  PackageMinus,
+  Settings,
+  BarChart3,
+  ArrowLeft,
+  Edit,
+} from "lucide-react";
 
 const ProductDetail = () => {
   const { id } = useParams();
@@ -105,13 +113,13 @@ const ProductDetail = () => {
   const getStockTypeIcon = (type) => {
     switch (type) {
       case "in":
-        return "📦";
+        return Package;
       case "out":
-        return "📤";
+        return PackageMinus;
       case "adjustment":
-        return "🔧";
+        return Settings;
       default:
-        return "📋";
+        return Package;
     }
   };
 
@@ -151,14 +159,17 @@ const ProductDetail = () => {
       }),
       columnHelper.accessor("type", {
         header: "Jenis",
-        cell: (info) => (
-          <div className="flex items-center space-x-2">
-            <span>{getStockTypeIcon(info.getValue())}</span>
-            <span className="text-gray-900">
-              {getStockTypeText(info.getValue())}
-            </span>
-          </div>
-        ),
+        cell: (info) => {
+          const IconComponent = getStockTypeIcon(info.getValue());
+          return (
+            <div className="flex items-center space-x-2">
+              <IconComponent className="h-4 w-4 text-gray-400" />
+              <span className="text-gray-900">
+                {getStockTypeText(info.getValue())}
+              </span>
+            </div>
+          );
+        },
         size: 120,
         enableSorting: true,
         enableColumnFilter: false,
@@ -229,19 +240,7 @@ const ProductDetail = () => {
               to="/products"
               className="inline-flex items-center text-gray-600 hover:text-gray-900"
             >
-              <svg
-                className="w-5 h-5 mr-1"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
+              <ArrowLeft className="w-5 h-5 mr-1" />
               Kembali
             </Link>
             <div>
@@ -258,19 +257,7 @@ const ProductDetail = () => {
               to={`/products/${product.id}/edit`}
               className="inline-flex items-center px-4 py-2 bg-gray-900 text-white font-medium rounded-lg hover:bg-gray-800 transition-colors"
             >
-              <svg
-                className="w-4 h-4 mr-2"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
+              <Edit className="w-4 h-4 mr-2" />
               Edit Produk
             </Link>
           </div>
@@ -425,7 +412,7 @@ const ProductDetail = () => {
               <div className="space-y-3">
                 <button className="w-full p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <span className="text-xl">📦</span>
+                    <Package className="h-5 w-5 text-gray-400" />
                     <div>
                       <div className="font-medium text-gray-900">
                         Tambah Stok
@@ -438,7 +425,7 @@ const ProductDetail = () => {
                 </button>
                 <button className="w-full p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <span className="text-xl">📤</span>
+                    <PackageMinus className="h-5 w-5 text-gray-400" />
                     <div>
                       <div className="font-medium text-gray-900">
                         Kurangi Stok
@@ -464,7 +451,7 @@ const ProductDetail = () => {
                 </button>
                 <button className="w-full p-3 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <span className="text-xl">📊</span>
+                    <BarChart3 className="h-5 w-5 text-gray-400" />
                     <div>
                       <div className="font-medium text-gray-900">
                         Laporan Detail
