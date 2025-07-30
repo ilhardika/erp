@@ -3,10 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { deleteCategory } from "@/lib/actions/categories";
 
+type CategoryRouteContext = { params: { id: string } };
+
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  context: CategoryRouteContext
+): Promise<ReturnType<typeof NextResponse.json>> {
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -16,7 +18,7 @@ export async function DELETE(
     if (!["admin", "gudang"].includes(session.user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
-    const id = params.id;
+    const id = context.params.id;
     if (!id) {
       return NextResponse.json({ error: "ID kategori wajib" }, { status: 400 });
     }

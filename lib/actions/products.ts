@@ -24,10 +24,10 @@ export async function createProduct(
     kode = `PRD${String(lastNumber + 1).padStart(6, "0")}`;
   }
 
-  // Cek apakah kode sudah ada
-  const existingProduct = await collection.findOne({ kode });
+  // Cek apakah kode sudah ada untuk user ini
+  const existingProduct = await collection.findOne({ kode, createdBy: userId });
   if (existingProduct) {
-    throw new Error("Kode produk sudah digunakan");
+    throw new Error("Kode produk sudah digunakan oleh Anda");
   }
 
   const product: Omit<Product, "_id"> = {
