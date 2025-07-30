@@ -268,7 +268,7 @@ export function ProductForm({
                   <FormItem>
                     <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="w-full">
                           <SelectValue placeholder="Pilih kategori" />
                         </SelectTrigger>
                       </FormControl>
@@ -457,31 +457,6 @@ export function ProductForm({
               </FormItem>
             )}
           />
-
-          {/* Berat */}
-          <FormField
-            control={form.control}
-            name="berat"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Berat ({weightUnit})</FormLabel>
-                <FormControl>
-                  <Input
-                    {...field}
-                    type="number"
-                    step="0.01"
-                    placeholder={`Berat dalam ${weightUnit}`}
-                    onChange={(e) =>
-                      field.onChange(
-                        e.target.value ? Number(e.target.value) : undefined
-                      )
-                    }
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
         </div>
 
         {/* Status */}
@@ -489,11 +464,11 @@ export function ProductForm({
           control={form.control}
           name="status"
           render={({ field }) => (
-            <FormItem className="col-span-1 sm:col-span-2">
+            <FormItem className="w-full">
               <FormLabel>Status</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
                 </FormControl>
