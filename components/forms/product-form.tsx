@@ -446,8 +446,9 @@ export function ProductForm({
                               if (response.ok) {
                                 const newCategory = await response.json();
                                 setCategories((prev) => [...prev, newCategory]);
-                                form.setValue("kategori", newCategory._id);
                                 setNewCategoryName("");
+                                await fetchCategories();
+                                form.setValue("kategori", newCategory._id);
                               }
                               setAddingCategory(false);
                             }}
