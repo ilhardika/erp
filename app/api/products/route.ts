@@ -64,10 +64,11 @@ export async function POST(request: NextRequest) {
     const product = await createProduct(body, session.user.id)
     
     return NextResponse.json(product, { status: 201 })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create product error:', error)
+    const message = error instanceof Error ? error.message : 'Gagal membuat produk'
     return NextResponse.json(
-      { error: error.message || 'Gagal membuat produk' },
+      { error: message },
       { status: 500 }
     )
   }

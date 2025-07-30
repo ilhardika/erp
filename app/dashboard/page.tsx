@@ -53,17 +53,17 @@ export default function DashboardPage() {
       </div>
 
       {/* Quick Stats */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {quickStats.map((stat) => (
           <Card key={stat.title}>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-xs sm:text-sm font-medium leading-tight">
                 {stat.title}
               </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
+              <stat.icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
+              <div className="text-lg sm:text-2xl font-bold">{stat.value}</div>
               <p className="text-xs text-muted-foreground">
                 {stat.description}
               </p>
@@ -77,11 +77,11 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+      <div className="grid gap-4 lg:grid-cols-7">
         {/* Chart Area */}
-        <Card className="col-span-4">
+        <Card className="lg:col-span-4">
           <CardHeader>
-            <CardTitle>Penjualan Mingguan</CardTitle>
+            <CardTitle className="text-lg">Penjualan Mingguan</CardTitle>
             <CardDescription>
               Grafik penjualan 7 hari terakhir
             </CardDescription>
@@ -94,9 +94,9 @@ export default function DashboardPage() {
         </Card>
 
         {/* Recent Activities */}
-        <Card className="col-span-3">
+        <Card className="lg:col-span-3">
           <CardHeader>
-            <CardTitle>Aktivitas Terbaru</CardTitle>
+            <CardTitle className="text-lg">Aktivitas Terbaru</CardTitle>
             <CardDescription>
               Log aktivitas sistem terbaru
             </CardDescription>
@@ -105,9 +105,9 @@ export default function DashboardPage() {
             <div className="space-y-4">
               {recentActivities.map((activity, index) => (
                 <div key={index} className="flex items-center space-x-4">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm font-medium leading-none">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
+                  <div className="flex-1 space-y-1 min-w-0">
+                    <p className="text-sm font-medium leading-none truncate">
                       {activity.action}
                     </p>
                     <p className="text-sm text-muted-foreground">
@@ -130,33 +130,33 @@ export default function DashboardPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="flex items-center space-x-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
-              <ShoppingCart className="h-8 w-8 text-blue-500" />
-              <div>
-                <p className="font-medium">Buka POS</p>
-                <p className="text-sm text-muted-foreground">Mulai transaksi penjualan</p>
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="flex items-center space-x-3 p-3 sm:p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+              <ShoppingCart className="h-6 w-6 sm:h-8 sm:w-8 text-blue-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="font-medium text-sm sm:text-base">Buka POS</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Mulai transaksi penjualan</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
-              <Package className="h-8 w-8 text-green-500" />
-              <div>
-                <p className="font-medium">Tambah Produk</p>
-                <p className="text-sm text-muted-foreground">Daftarkan produk baru</p>
+            <div className="flex items-center space-x-3 p-3 sm:p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+              <Package className="h-6 w-6 sm:h-8 sm:w-8 text-green-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="font-medium text-sm sm:text-base">Tambah Produk</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Daftarkan produk baru</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
-              <Users className="h-8 w-8 text-purple-500" />
-              <div>
-                <p className="font-medium">Tambah Pelanggan</p>
-                <p className="text-sm text-muted-foreground">Daftarkan pelanggan baru</p>
+            <div className="flex items-center space-x-3 p-3 sm:p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+              <Users className="h-6 w-6 sm:h-8 sm:w-8 text-purple-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="font-medium text-sm sm:text-base">Tambah Pelanggan</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Daftarkan pelanggan baru</p>
               </div>
             </div>
-            <div className="flex items-center space-x-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
-              <TrendingUp className="h-8 w-8 text-orange-500" />
-              <div>
-                <p className="font-medium">Lihat Laporan</p>
-                <p className="text-sm text-muted-foreground">Analisis performa bisnis</p>
+            <div className="flex items-center space-x-3 p-3 sm:p-4 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+              <TrendingUp className="h-6 w-6 sm:h-8 sm:w-8 text-orange-500 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="font-medium text-sm sm:text-base">Lihat Laporan</p>
+                <p className="text-xs sm:text-sm text-muted-foreground">Analisis performa bisnis</p>
               </div>
             </div>
           </div>

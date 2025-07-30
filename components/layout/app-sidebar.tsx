@@ -270,9 +270,9 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarContent>
-        <div className="px-4 py-2">
-          <h2 className="text-lg font-semibold">BizFlow</h2>
-          <p className="text-sm text-muted-foreground">
+        <div className="px-3 py-3 border-b">
+          <h2 className="text-base sm:text-lg font-semibold">BizFlow</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground truncate">
             {session?.user?.name} ({userRole})
           </p>
         </div>

@@ -50,7 +50,7 @@ export async function getProducts(
   const collection = db.collection<Product>('products')
 
   // Build filter
-  const filter: any = {}
+  const filter: Record<string, unknown> = {}
   
   if (search) {
     filter.$or = [
