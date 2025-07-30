@@ -99,6 +99,14 @@ export function ProductForm({
   onCancel,
   loading = false,
 }: ProductFormProps) {
+  const [satuans, setSatuans] = useState<{ _id: string; nama: string }[]>([]);
+  const [loadingSatuans, setLoadingSatuans] = useState(true);
+  const [newSatuanName, setNewSatuanName] = useState("");
+  const [addingSatuan, setAddingSatuan] = useState(false);
+  const [deleteSatuanId, setDeleteSatuanId] = useState<string | null>(null);
+
+  // Move fetchSatuans above useEffect and all usages
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
   // Kode produk selalu otomatis jika kosong
@@ -116,8 +124,24 @@ export function ProductForm({
     ? satuanToWeightUnit[selectedSatuan as keyof typeof satuanToWeightUnit]
     : "gram";
 
+  const fetchSatuans = async () => {
+    try {
+      setLoadingSatuans(true);
+      const response = await fetch("/api/satuans");
+      if (response.ok) {
+        const data = await response.json();
+        setSatuans(data);
+      }
+    } catch (error) {
+      console.error("Error fetching satuans:", error);
+    } finally {
+      setLoadingSatuans(false);
+    }
+  };
+
   useEffect(() => {
     fetchCategories();
+    fetchSatuans();
   }, []);
 
   const fetchCategories = async () => {
@@ -202,7 +226,7 @@ export function ProductForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {/* Kode Produk */}
           <div className="space-y-2">
             <Label>SKU/Kode Produk</Label>
@@ -266,7 +290,30 @@ export function ProductForm({
                 name="kategori"
                 render={({ field }) => (
                   <FormItem>
-                    <Select onValueChange={field.onChange} value={field.value}>
+                    <Select
+                      onValueChange={async (value) => {
+                        if (value === "__add_new__") {
+                          const newName = prompt("Nama kategori baru:");
+                          if (newName && newName.trim()) {
+                            const response = await fetch("/api/categories", {
+                              method: "POST",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ nama: newName.trim() }),
+                            });
+                            if (response.ok) {
+                              const newCategory = await response.json();
+                              setCategories((prev) => [...prev, newCategory]);
+                              field.onChange(newCategory._id);
+                            } else {
+                              alert("Gagal menambah kategori");
+                            }
+                          }
+                        } else {
+                          field.onChange(value);
+                        }
+                      }}
+                      value={field.value}
+                    >
                       <FormControl>
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Pilih kategori" />
@@ -277,85 +324,308 @@ export function ProductForm({
                           <SelectItem value="loading-placeholder" disabled>
                             Memuat...
                           </SelectItem>
-                        ) : categories.length === 0 ? (
+                        ) : null}
+                        {categories.length === 0 && !loadingCategories ? (
                           <SelectItem value="empty-placeholder" disabled>
                             Tidak ada kategori
                           </SelectItem>
-                        ) : (
-                          categories.map((category) => (
+                        ) : null}
+                        {categories.map((category) => (
+                          <div
+                            key={category._id?.toString() || category.nama}
+                            className="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded relative"
+                          >
                             <SelectItem
-                              key={category._id?.toString() || category.nama}
                               value={
                                 category._id?.toString() ||
                                 category.nama ||
                                 "unknown"
                               }
+                              className="flex-1"
                             >
                               {category.nama}
                             </SelectItem>
-                          ))
-                        )}
+                            {deleteConfirmId === String(category._id) ? (
+                              <div className="absolute right-0 top-0 bg-white border rounded shadow p-2 flex gap-2 z-10">
+                                <span className="text-xs">Hapus kategori?</span>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="px-2 h-6 text-xs bg-red-500 hover:bg-red-600 text-white"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    const response = await fetch(
+                                      `/api/categories/${category._id}`,
+                                      {
+                                        method: "DELETE",
+                                      }
+                                    );
+                                    if (response.ok) {
+                                      setCategories((prev) =>
+                                        prev.filter(
+                                          (c) => c._id !== category._id
+                                        )
+                                      );
+                                      if (
+                                        form.watch("kategori") ===
+                                        String(category._id)
+                                      ) {
+                                        form.setValue("kategori", "");
+                                      }
+                                    }
+                                    setDeleteConfirmId(null);
+                                  }}
+                                >
+                                  Ya
+                                </Button>
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  className="px-2 h-6 text-xs"
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteConfirmId(null);
+                                  }}
+                                >
+                                  Tidak
+                                </Button>
+                              </div>
+                            ) : (
+                              <button
+                                type="button"
+                                aria-label="Hapus kategori"
+                                className="ml-2 text-red-500 hover:text-red-700 px-2 py-0.5 rounded border border-transparent hover:border-red-300 flex items-center justify-center"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteConfirmId(String(category._id));
+                                }}
+                              >
+                                <span className="sr-only">Hapus</span>
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  className="h-4 w-4"
+                                  viewBox="0 0 20 20"
+                                  fill="currentColor"
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10l-4.95-4.95A1 1 0 115.05 3.636L10 8.586z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <div className="flex items-center gap-2 px-2 py-2 border-t mt-2">
+                          <Input
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            placeholder="Nama kategori baru"
+                            className="flex-1 h-6 text-xs px-2 py-1 w-full"
+                            disabled={addingCategory}
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            className="h-6 px-2 text-xs min-w-[56px]"
+                            disabled={addingCategory || !newCategoryName.trim()}
+                            onClick={async () => {
+                              if (!newCategoryName.trim()) return;
+                              setAddingCategory(true);
+                              const response = await fetch("/api/categories", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                },
+                                body: JSON.stringify({
+                                  nama: newCategoryName.trim(),
+                                }),
+                              });
+                              if (response.ok) {
+                                const newCategory = await response.json();
+                                setCategories((prev) => [...prev, newCategory]);
+                                form.setValue("kategori", newCategory._id);
+                                setNewCategoryName("");
+                              }
+                              setAddingCategory(false);
+                            }}
+                          >
+                            {addingCategory ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : (
+                              "Tambah"
+                            )}
+                          </Button>
+                        </div>
                       </SelectContent>
                     </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <div className="flex gap-2">
-                <Input
-                  placeholder="Kategori baru"
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  className="flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={addNewCategory}
-                  disabled={addingCategory || !newCategoryName.trim()}
-                >
-                  {addingCategory ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
+              {/* End flex container for category dropdown */}
             </div>
           </div>
 
           {/* Satuan */}
-          <FormField
-            control={form.control}
-            name="satuan"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Satuan *</FormLabel>
-                <Select
-                  onValueChange={(value) => {
-                    if (value === "") return; // Prevent selecting empty value
-                    field.onChange(value);
-                  }}
-                  value={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Pilih satuan" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {SATUAN_PRODUK.map((satuan) => (
-                      <SelectItem key={satuan} value={satuan}>
-                        {satuan}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <div className="space-y-2 col-span-1 sm:col-span-2">
+            <FormLabel>Satuan *</FormLabel>
+            <FormField
+              control={form.control}
+              name="satuan"
+              render={({ field }) => (
+                <FormItem className="w-full flex flex-col">
+                  <Select
+                    onValueChange={(value) => {
+                      if (value === "") return;
+                      field.onChange(value);
+                    }}
+                    value={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Pilih satuan" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent className="w-full">
+                      {loadingSatuans ? (
+                        <SelectItem value="loading-placeholder" disabled>
+                          Memuat...
+                        </SelectItem>
+                      ) : (
+                        <>
+                          {satuans.length === 0 && (
+                            <SelectItem value="empty-placeholder" disabled>
+                              Tidak ada satuan
+                            </SelectItem>
+                          )}
+                          {satuans.map((satuan) => (
+                            <div
+                              key={satuan._id}
+                              className="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded relative w-full"
+                            >
+                              <SelectItem
+                                value={satuan._id}
+                                className="flex-1 w-full"
+                              >
+                                {satuan.nama}
+                              </SelectItem>
+                              {deleteSatuanId === satuan._id ? (
+                                <div className="absolute right-0 top-0 bg-white border rounded shadow p-2 flex gap-2 z-10">
+                                  <span className="text-xs">Hapus satuan?</span>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    className="px-2 h-6 text-xs bg-red-500 hover:bg-red-600 text-white"
+                                    onClick={async (e) => {
+                                      e.stopPropagation();
+                                      await fetch(
+                                        `/api/satuans/${satuan._id}`,
+                                        {
+                                          method: "DELETE",
+                                        }
+                                      );
+                                      setDeleteSatuanId(null);
+                                      if (form.watch("satuan") === satuan._id) {
+                                        form.setValue("satuan", "");
+                                      }
+                                      fetchSatuans();
+                                    }}
+                                  >
+                                    Ya
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    className="px-2 h-6 text-xs"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDeleteSatuanId(null);
+                                    }}
+                                  >
+                                    Tidak
+                                  </Button>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  aria-label="Hapus satuan"
+                                  className="ml-2 text-red-500 hover:text-red-700 px-2 py-0.5 rounded border border-transparent hover:border-red-300 flex items-center justify-center"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteSatuanId(satuan._id);
+                                  }}
+                                >
+                                  <span className="sr-only">Hapus</span>
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    className="h-4 w-4"
+                                    viewBox="0 0 20 20"
+                                    fill="currentColor"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10l-4.95-4.95A1 1 0 115.05 3.636L10 8.586z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                </button>
+                              )}
+                            </div>
+                          ))}
+                          <div className="flex items-center gap-2 px-2 py-2 border-t mt-2 w-full">
+                            <Input
+                              value={newSatuanName}
+                              onChange={(e) => setNewSatuanName(e.target.value)}
+                              placeholder="Nama satuan baru"
+                              className="flex-1 h-6 text-xs px-2 py-1 w-full"
+                              disabled={addingSatuan}
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              className="h-6 px-2 text-xs min-w-[56px]"
+                              disabled={addingSatuan || !newSatuanName.trim()}
+                              onClick={async () => {
+                                if (!newSatuanName.trim()) return;
+                                setAddingSatuan(true);
+                                const response = await fetch("/api/satuans", {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    nama: newSatuanName.trim(),
+                                  }),
+                                });
+                                if (response.ok) {
+                                  const newSatuan = await response.json();
+                                  setNewSatuanName("");
+                                  form.setValue("satuan", newSatuan._id);
+                                  fetchSatuans();
+                                }
+                                setAddingSatuan(false);
+                              }}
+                            >
+                              {addingSatuan ? (
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                              ) : (
+                                "Tambah"
+                              )}
+                            </Button>
+                          </div>
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -442,16 +712,20 @@ export function ProductForm({
           />
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           {/* Barcode */}
           <FormField
             control={form.control}
             name="barcode"
             render={({ field }) => (
-              <FormItem>
+              <FormItem className="w-full">
                 <FormLabel>Barcode</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="Barcode produk (opsional)" />
+                  <Input
+                    {...field}
+                    placeholder="Barcode produk (opsional)"
+                    className="w-full"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
