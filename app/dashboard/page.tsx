@@ -1,102 +1,167 @@
-'use client'
+"use client"
 
 import { useSession } from 'next-auth/react'
-import Link from 'next/link'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { ShoppingCart, Package, Users, TrendingUp, AlertTriangle, CreditCard } from 'lucide-react'
 
 export default function DashboardPage() {
   const { data: session } = useSession()
 
-  const getRoleBasedMenus = (role: string) => {
-    const baseMenus = [
-      { name: 'Dashboard', href: '/dashboard', description: 'Halaman utama' }
-    ]
-
-    const roleMenus: Record<string, Array<{ name: string; href: string; description: string }>> = {
-      admin: [
-        { name: 'POS', href: '/dashboard/pos', description: 'Point of Sale' },
-        { name: 'Produk', href: '/dashboard/products', description: 'Kelola produk' },
-        { name: 'Pelanggan', href: '/dashboard/customers', description: 'Kelola pelanggan' },
-        { name: 'Karyawan', href: '/dashboard/employees', description: 'Kelola karyawan' },
-        { name: 'Laporan', href: '/dashboard/reports', description: 'Laporan bisnis' },
-        { name: 'Pengaturan', href: '/dashboard/settings', description: 'Pengaturan sistem' }
-      ],
-      kasir: [
-        { name: 'POS', href: '/dashboard/pos', description: 'Point of Sale' },
-        { name: 'Riwayat Transaksi', href: '/dashboard/pos/history', description: 'Histori transaksi' }
-      ],
-      gudang: [
-        { name: 'Produk', href: '/dashboard/products', description: 'Kelola produk' },
-        { name: 'Stok Opname', href: '/dashboard/inventory/stock-opname', description: 'Stok opname' },
-        { name: 'Mutasi Stok', href: '/dashboard/inventory/mutation', description: 'Mutasi stok' }
-      ],
-      sales: [
-        { name: 'Order Penjualan', href: '/dashboard/sales/orders', description: 'Kelola order' },
-        { name: 'Pelanggan', href: '/dashboard/customers', description: 'Kelola pelanggan' },
-        { name: 'Laporan Sales', href: '/dashboard/reports/salesman', description: 'Performa sales' }
-      ],
-      hrd: [
-        { name: 'Karyawan', href: '/dashboard/employees', description: 'Kelola karyawan' },
-        { name: 'Absensi', href: '/dashboard/attendance', description: 'Kelola absensi' },
-        { name: 'Payroll', href: '/dashboard/payroll', description: 'Slip gaji' }
-      ],
-      akuntan: [
-        { name: 'Transaksi Keuangan', href: '/dashboard/finance/transactions', description: 'Kas masuk/keluar' },
-        { name: 'Jurnal', href: '/dashboard/finance/journal', description: 'Jurnal umum' },
-        { name: 'Laporan Keuangan', href: '/dashboard/reports/finance', description: 'Laporan keuangan' }
-      ]
+  const quickStats = [
+    {
+      title: 'Total Penjualan Hari Ini',
+      value: 'Rp 0',
+      description: 'Penjualan 24 jam terakhir',
+      icon: TrendingUp,
+      trend: '+0%'
+    },
+    {
+      title: 'Transaksi Hari Ini',
+      value: '0',
+      description: 'Jumlah transaksi selesai',
+      icon: CreditCard,
+      trend: '+0%'
+    },
+    {
+      title: 'Produk Aktif',
+      value: '0',
+      description: 'Total produk tersedia',
+      icon: Package,
+      trend: '+0%'
+    },
+    {
+      title: 'Stok Menipis',
+      value: '0',
+      description: 'Produk perlu restok',
+      icon: AlertTriangle,
+      trend: 'Perhatian'
     }
+  ]
 
-    return [...baseMenus, ...(roleMenus[role] || [])]
-  }
-
-  const menus = session?.user?.role ? getRoleBasedMenus(session.user.role) : []
+  const recentActivities = [
+    { action: 'Sistem dimulai', time: 'Baru saja', type: 'info' },
+  ]
 
   return (
-    <div className="px-4 py-6 sm:px-0">
-      <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">
-            Selamat Datang di BizFlow
-          </h1>
-          <p className="text-lg text-gray-600 mb-8">
-            Sistem ERP + POS untuk mengelola bisnis Anda
-          </p>
-          
-          <div className="max-w-4xl mx-auto">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">
-              Menu yang Tersedia untuk Role: {session?.user?.role}
-            </h2>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {menus.map((menu) => (
-                <Link
-                  key={menu.href}
-                  href={menu.href}
-                  className="block p-6 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div className="text-center">
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
-                      {menu.name}
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                      {menu.description}
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <p className="text-muted-foreground">
+          Selamat datang kembali, {session?.user?.name}! Berikut ringkasan bisnis Anda hari ini.
+        </p>
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {quickStats.map((stat) => (
+          <Card key={stat.title}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                {stat.title}
+              </CardTitle>
+              <stat.icon className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stat.value}</div>
+              <p className="text-xs text-muted-foreground">
+                {stat.description}
+              </p>
+              <div className="mt-2">
+                <Badge variant="outline" className="text-xs">
+                  {stat.trend}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        {/* Chart Area */}
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Penjualan Mingguan</CardTitle>
+            <CardDescription>
+              Grafik penjualan 7 hari terakhir
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <div className="h-[200px] flex items-center justify-center text-muted-foreground">
+              Grafik akan ditampilkan di sini
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Recent Activities */}
+        <Card className="col-span-3">
+          <CardHeader>
+            <CardTitle>Aktivitas Terbaru</CardTitle>
+            <CardDescription>
+              Log aktivitas sistem terbaru
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {recentActivities.map((activity, index) => (
+                <div key={index} className="flex items-center space-x-4">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="flex-1 space-y-1">
+                    <p className="text-sm font-medium leading-none">
+                      {activity.action}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      {activity.time}
                     </p>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
-          </div>
-
-          <div className="mt-12 text-sm text-gray-500">
-            <p>
-              Role Anda: <span className="font-medium text-blue-600">{session?.user?.role}</span>
-            </p>
-            <p>
-              Email: <span className="font-medium">{session?.user?.email}</span>
-            </p>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Quick Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Aksi Cepat</CardTitle>
+          <CardDescription>
+            Akses cepat ke fitur yang sering digunakan
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="flex items-center space-x-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
+              <ShoppingCart className="h-8 w-8 text-blue-500" />
+              <div>
+                <p className="font-medium">Buka POS</p>
+                <p className="text-sm text-muted-foreground">Mulai transaksi penjualan</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
+              <Package className="h-8 w-8 text-green-500" />
+              <div>
+                <p className="font-medium">Tambah Produk</p>
+                <p className="text-sm text-muted-foreground">Daftarkan produk baru</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
+              <Users className="h-8 w-8 text-purple-500" />
+              <div>
+                <p className="font-medium">Tambah Pelanggan</p>
+                <p className="text-sm text-muted-foreground">Daftarkan pelanggan baru</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4 p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
+              <TrendingUp className="h-8 w-8 text-orange-500" />
+              <div>
+                <p className="font-medium">Lihat Laporan</p>
+                <p className="text-sm text-muted-foreground">Analisis performa bisnis</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }
