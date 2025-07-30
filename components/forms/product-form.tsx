@@ -30,7 +30,7 @@ import { ProductCreateInput, SATUAN_PRODUK } from "@/lib/models/product";
 import { Category } from "@/lib/models/category";
 
 const productSchema = z.object({
-  kode: z.string().min(1, "Kode produk wajib diisi"),
+  kode: z.string().optional(),
   nama: z.string().min(1, "Nama produk wajib diisi"),
   deskripsi: z.string().optional(),
   kategori: z
@@ -101,13 +101,14 @@ export function ProductForm({
 }: ProductFormProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const [autoGenerateKode, setAutoGenerateKode] = useState(true);
+  // Kode produk selalu otomatis jika kosong
   const [newCategoryName, setNewCategoryName] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues,
+    mode: "onChange",
   });
 
   const selectedSatuan = form.watch("satuan");
@@ -145,10 +146,12 @@ export function ProductForm({
           : 0;
         const newKode = `PRD${String(lastNumber + 1).padStart(6, "0")}`;
         form.setValue("kode", newKode);
+        return newKode;
       }
     } catch (error) {
       console.error("Error generating kode:", error);
     }
+    return "";
   };
 
   const addNewCategory = async () => {
@@ -181,14 +184,16 @@ export function ProductForm({
 
   const handleSubmit = async (data: ProductFormData) => {
     try {
-      // Generate kode otomatis jika diperlukan
-      if (autoGenerateKode && !data.kode) {
-        await generateKode();
-        const kode = form.getValues("kode");
-        data.kode = kode;
+      // Pastikan kode produk terisi
+      if (!data.kode) {
+        const kode = await generateKode();
+        data.kode = kode || "";
       }
-
-      await onSubmit(data);
+      // Pastikan kode selalu string
+      await onSubmit({
+        ...data,
+        kode: data.kode || "",
+      });
     } catch (error) {
       console.error("Submit error:", error);
     }
@@ -201,33 +206,18 @@ export function ProductForm({
           {/* Kode Produk */}
           <div className="space-y-2">
             <Label>SKU/Kode Produk</Label>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <FormField
-                control={form.control}
-                name="kode"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormControl>
-                      <Input
-                        {...field}
-                        placeholder="Otomatis jika kosong"
-                        disabled={autoGenerateKode}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => setAutoGenerateKode(!autoGenerateKode)}
-                className="whitespace-nowrap"
-              >
-                {autoGenerateKode ? "Manual" : "Auto"}
-              </Button>
-            </div>
+            <FormField
+              control={form.control}
+              name="kode"
+              render={({ field }) => (
+                <FormItem className="flex-1">
+                  <FormControl>
+                    <Input {...field} placeholder="Otomatis jika kosong" />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
           {/* Nama Produk */}
@@ -268,7 +258,7 @@ export function ProductForm({
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Kategori */}
-          <div className="space-y-2">
+          <div className="space-y-2 col-span-1 sm:col-span-2">
             <Label>Kategori *</Label>
             <div className="flex flex-col gap-2">
               <FormField
@@ -283,24 +273,28 @@ export function ProductForm({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                      {loadingCategories ? (
-                      <SelectItem value="loading" disabled>
-                      Memuat...
-                      </SelectItem>
-                      ) : categories.length === 0 ? (
-                      <SelectItem value="empty" disabled>
-                      Tidak ada kategori
-                      </SelectItem>
-                      ) : (
-                      categories.map((category) => (
-                      <SelectItem
-                      key={category._id?.toString() || category.nama}
-                      value={category._id?.toString() || category.nama}
-                      >
-                      {category.nama}
-                      </SelectItem>
-                      ))
-                      )}
+                        {loadingCategories ? (
+                          <SelectItem value="loading-placeholder" disabled>
+                            Memuat...
+                          </SelectItem>
+                        ) : categories.length === 0 ? (
+                          <SelectItem value="empty-placeholder" disabled>
+                            Tidak ada kategori
+                          </SelectItem>
+                        ) : (
+                          categories.map((category) => (
+                            <SelectItem
+                              key={category._id?.toString() || category.nama}
+                              value={
+                                category._id?.toString() ||
+                                category.nama ||
+                                "unknown"
+                              }
+                            >
+                              {category.nama}
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -351,9 +345,6 @@ export function ProductForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                  <SelectItem value="placeholder" disabled>
-                  Pilih satuan
-                  </SelectItem>
                     {SATUAN_PRODUK.map((satuan) => (
                       <SelectItem key={satuan} value={satuan}>
                         {satuan}
@@ -498,7 +489,7 @@ export function ProductForm({
           control={form.control}
           name="status"
           render={({ field }) => (
-            <FormItem>
+            <FormItem className="col-span-1 sm:col-span-2">
               <FormLabel>Status</FormLabel>
               <Select onValueChange={field.onChange} value={field.value}>
                 <FormControl>
@@ -507,9 +498,6 @@ export function ProductForm({
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="" disabled>
-                    Pilih status
-                  </SelectItem>
                   <SelectItem value="aktif">Aktif</SelectItem>
                   <SelectItem value="nonaktif">Non-aktif</SelectItem>
                 </SelectContent>
@@ -525,10 +513,9 @@ export function ProductForm({
             type="submit"
             disabled={
               loading ||
-              form.getValues("kategori") === "" ||
-              form.getValues("satuan") === "" ||
-              form.getValues("nama") === "" ||
-              form.getValues("kode") === ""
+              !form.watch("kategori") ||
+              !form.watch("satuan") ||
+              !form.watch("nama")
             }
             className="w-full sm:w-auto order-2 sm:order-1"
           >
@@ -540,14 +527,6 @@ export function ProductForm({
             ) : (
               "Simpan Produk"
             )}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            className="w-full sm:w-auto order-1 sm:order-2"
-          >
-            Batal
           </Button>
         </div>
       </form>
