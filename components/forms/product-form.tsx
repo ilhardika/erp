@@ -111,7 +111,9 @@ export function ProductForm({
   const [addingSatuan, setAddingSatuan] = useState(false);
   const [deleteSatuanId, setDeleteSatuanId] = useState<string | null>(null);
 
-  // Move fetchSatuans above useEffect and all usages
+  // State untuk produk, agar bisa cek satuan yang sedang dipakai
+  const [allProducts, setAllProducts] = useState<any[]>([]);
+
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -192,10 +194,25 @@ export function ProductForm({
     }
   };
 
+  // Fetch produk, kategori, satuan saat mount
   useEffect(() => {
     fetchCategories();
     fetchSatuans();
+    fetchAllProducts();
   }, []);
+
+  // Fungsi fetch produk
+  const fetchAllProducts = async () => {
+    try {
+      const response = await fetch("/api/products");
+      if (response.ok) {
+        const data = await response.json();
+        setAllProducts(data.products || []);
+      }
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
+  };
 
   const fetchCategories = async () => {
     try {
@@ -422,66 +439,59 @@ export function ProductForm({
                             >
                               {category.nama}
                             </SelectItem>
-                            {deleteConfirmId === String(category._id) ? (
-                              <div className="absolute right-0 top-0 bg-white border rounded shadow p-2 flex gap-2 z-10">
-                                <span className="text-xs">Hapus kategori?</span>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  className="px-2 h-6 text-xs bg-red-500 hover:bg-red-600 text-white"
-                                  onClick={async (e) => {
-                                    e.stopPropagation();
-                                    const response = await fetch(
-                                      `/api/categories/${category._id}`,
-                                      {
-                                        method: "DELETE",
-                                      }
-                                    );
-                                    if (response.ok) {
-                                      setCategories((prev) =>
-                                        prev.filter(
-                                          (c) => c._id !== category._id
-                                        )
-                                      );
-                                      if (
-                                        form.watch("kategori") ===
-                                        String(category._id)
-                                      ) {
-                                        form.setValue("kategori", "");
-                                      }
-                                    }
-                                    setDeleteConfirmId(null);
-                                  }}
-                                >
-                                  Ya
-                                </Button>
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  className="px-2 h-6 text-xs"
-                                  variant="outline"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteConfirmId(null);
-                                  }}
-                                >
-                                  Tidak
-                                </Button>
-                              </div>
-                            ) : (
-                              <button
-                                type="button"
-                                aria-label="Hapus kategori"
-                                className="ml-2 text-red-500 hover:text-red-700 px-2 py-0.5 rounded border border-transparent hover:border-red-300 flex items-center justify-center"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteConfirmId(String(category._id));
-                                }}
-                              >
-                                <span className="sr-only">Hapus</span>
-                                <X className="h-4 w-4" />
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              aria-label="Hapus kategori"
+                              className={`ml-2 text-red-500 px-2 py-0.5 rounded border border-transparent flex items-center justify-center ${
+                                allProducts &&
+                                allProducts.some(
+                                  (product) =>
+                                    String(product.kategori) ===
+                                    String(category._id)
+                                )
+                                  ? "opacity-50 cursor-not-allowed"
+                                  : "hover:text-red-700 hover:border-red-300"
+                              }`}
+                              disabled={
+                                allProducts &&
+                                allProducts.some(
+                                  (product) =>
+                                    String(product.kategori) ===
+                                    String(category._id)
+                                )
+                              }
+                              onClick={async (e) => {
+                                e.stopPropagation();
+                                if (
+                                  allProducts &&
+                                  allProducts.some(
+                                    (product) =>
+                                      String(product.kategori) ===
+                                      String(category._id)
+                                  )
+                                )
+                                  return;
+                                // Langsung delete kategori
+                                const response = await fetch(
+                                  `/api/categories/${category._id}`,
+                                  { method: "DELETE" }
+                                );
+                                if (response.ok) {
+                                  setCategories((prev) =>
+                                    prev.filter((c) => c._id !== category._id)
+                                  );
+                                  if (
+                                    form.watch("kategori") ===
+                                    String(category._id)
+                                  ) {
+                                    form.setValue("kategori", "");
+                                  }
+                                }
+                              }}
+                            >
+                              <span className="sr-only">Hapus</span>
+                              <X className="h-4 w-4" />
+                            </button>
                           </div>
                         ))}
                         <div className="flex items-center gap-2 px-2 py-2 border-t mt-2">
@@ -596,57 +606,56 @@ export function ProductForm({
                               >
                                 {satuan.nama}
                               </SelectItem>
-                              {deleteSatuanId === satuan._id ? (
-                                <div className="absolute right-0 top-0 bg-white border rounded shadow p-2 flex gap-2 z-10">
-                                  <span className="text-xs">Hapus satuan?</span>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    className="px-2 h-6 text-xs bg-red-500 hover:bg-red-600 text-white"
-                                    onClick={async (e) => {
-                                      e.stopPropagation();
-                                      await fetch(
-                                        `/api/satuans/${satuan._id}`,
-                                        {
-                                          method: "DELETE",
-                                        }
-                                      );
-                                      setDeleteSatuanId(null);
-                                      if (form.watch("satuan") === satuan._id) {
-                                        form.setValue("satuan", "");
-                                      }
-                                      fetchSatuans();
-                                    }}
-                                  >
-                                    Ya
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    size="sm"
-                                    className="px-2 h-6 text-xs"
-                                    variant="outline"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setDeleteSatuanId(null);
-                                    }}
-                                  >
-                                    Tidak
-                                  </Button>
-                                </div>
-                              ) : (
-                                <button
-                                  type="button"
-                                  aria-label="Hapus satuan"
-                                  className="ml-2 text-red-500 hover:text-red-700 px-2 py-0.5 rounded border border-transparent hover:border-red-300 flex items-center justify-center"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setDeleteSatuanId(satuan._id);
-                                  }}
-                                >
-                                  <span className="sr-only">Hapus</span>
-                                  <X className="h-4 w-4" />
-                                </button>
-                              )}
+                              <button
+                                type="button"
+                                aria-label="Hapus satuan"
+                                className={`ml-2 text-red-500 px-2 py-0.5 rounded border border-transparent flex items-center justify-center ${
+                                  allProducts &&
+                                  allProducts.some(
+                                    (product) =>
+                                      String(product.satuan) ===
+                                      String(satuan._id)
+                                  )
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : "hover:text-red-700 hover:border-red-300"
+                                }`}
+                                disabled={
+                                  allProducts &&
+                                  allProducts.some(
+                                    (product) =>
+                                      String(product.satuan) ===
+                                      String(satuan._id)
+                                  )
+                                }
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (
+                                    allProducts &&
+                                    allProducts.some(
+                                      (product) =>
+                                        String(product.satuan) ===
+                                        String(satuan._id)
+                                    )
+                                  )
+                                    return;
+                                  // Langsung delete satuan
+                                  const response = await fetch(
+                                    `/api/satuans/${satuan._id}`,
+                                    { method: "DELETE" }
+                                  );
+                                  if (response.ok) {
+                                    setSatuans((prev) =>
+                                      prev.filter((s) => s._id !== satuan._id)
+                                    );
+                                    if (form.watch("satuan") === satuan._id) {
+                                      form.setValue("satuan", "");
+                                    }
+                                  }
+                                }}
+                              >
+                                <span className="sr-only">Hapus</span>
+                                <X className="h-4 w-4" />
+                              </button>
                             </div>
                           ))}
                           <div className="flex items-center gap-2 px-2 py-2 border-t mt-2 w-full">

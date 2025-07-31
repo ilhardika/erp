@@ -449,7 +449,7 @@ export default function ProductsPage() {
                                 <span className="font-medium">
                                   {product.stok}
                                 </span>
-                                <span className="text-muted-foreground text-sm ml-1">
+                                <span className="text-sm ml-1">
                                   {satuanNama}
                                 </span>
                               </TableCell>
