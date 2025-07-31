@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus, Loader2 } from "lucide-react";
+import { Plus, Loader2, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +78,9 @@ interface ProductFormProps {
   onSubmit: (data: ProductCreateInput) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
+  defaultValues?: Partial<ProductFormData>;
+  onCategoryAdded?: () => void;
+  onSatuanAdded?: () => void;
 }
 
 // Mapping satuan ke unit berat yang sesuai
@@ -98,6 +101,9 @@ export function ProductForm({
   onSubmit,
   onCancel,
   loading = false,
+  defaultValues,
+  onCategoryAdded,
+  onSatuanAdded,
 }: ProductFormProps) {
   const [satuans, setSatuans] = useState<{ _id: string; nama: string }[]>([]);
   const [loadingSatuans, setLoadingSatuans] = useState(true);
@@ -115,7 +121,21 @@ export function ProductForm({
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
-    defaultValues,
+    defaultValues: defaultValues || {
+      kode: "",
+      nama: "",
+      kategori: "",
+      hargaBeli: 0,
+      hargaJual: 0,
+      stok: 0,
+      stokMinimal: 1,
+      satuan: "",
+      status: "aktif",
+      deskripsi: "",
+      barcode: "",
+      berat: undefined,
+      gambar: "",
+    },
     mode: "onChange",
   });
 
@@ -123,6 +143,39 @@ export function ProductForm({
   const weightUnit = selectedSatuan
     ? satuanToWeightUnit[selectedSatuan as keyof typeof satuanToWeightUnit]
     : "gram";
+
+  // Sinkronisasi value kategori & satuan agar label selalu muncul
+  useEffect(() => {
+    // Kategori
+    if (form.watch("kategori") && categories.length > 0) {
+      const found = categories.find(
+        (cat: Category) => cat._id?.toString() === form.watch("kategori")
+      );
+      if (!found) {
+        const byName = categories.find(
+          (cat: Category) => cat.nama === newCategoryName.trim()
+        );
+        if (byName) {
+          form.setValue("kategori", byName._id?.toString() ?? "");
+        }
+      }
+    }
+    // Satuan
+    if (form.watch("satuan") && satuans.length > 0) {
+      const found = satuans.find(
+        (sat: { _id: string; nama: string }) => sat._id === form.watch("satuan")
+      );
+      if (!found) {
+        const byName = satuans.find(
+          (sat: { _id: string; nama: string }) =>
+            sat.nama === newSatuanName.trim()
+        );
+        if (byName) {
+          form.setValue("satuan", byName._id);
+        }
+      }
+    }
+  }, [categories, satuans, form, newCategoryName, newSatuanName]);
 
   const fetchSatuans = async () => {
     try {
@@ -180,19 +233,28 @@ export function ProductForm({
 
   const addNewCategory = async () => {
     if (!newCategoryName.trim()) return;
-
+    setAddingCategory(true);
     try {
-      setAddingCategory(true);
       const response = await fetch("/api/categories", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nama: newCategoryName.trim() }),
       });
-
       if (response.ok) {
-        const newCategory = await response.json();
-        setCategories((prev) => [...prev, newCategory]);
-        form.setValue("kategori", newCategory._id);
+        // After adding, refetch categories from backend
+        const getResponse = await fetch("/api/categories?status=aktif");
+        if (getResponse.ok) {
+          const allCategories = await getResponse.json();
+          setCategories(allCategories);
+          // Find the newly added category by name
+          const found = allCategories.find(
+            (cat: Category) => cat.nama === newCategoryName.trim()
+          );
+          if (found) {
+            form.setValue("kategori", found._id);
+          }
+          if (onCategoryAdded) onCategoryAdded();
+        }
         setNewCategoryName("");
       } else {
         const error = await response.json();
@@ -222,6 +284,39 @@ export function ProductForm({
       console.error("Submit error:", error);
     }
   };
+
+  // Sinkronisasi value kategori & satuan agar label selalu muncul
+  useEffect(() => {
+    // Kategori
+    if (form.watch("kategori") && categories.length > 0) {
+      const found = categories.find(
+        (cat: Category) => cat._id?.toString() === form.watch("kategori")
+      );
+      if (!found) {
+        const byName = categories.find(
+          (cat: Category) => cat.nama === newCategoryName.trim()
+        );
+        if (byName) {
+          form.setValue("kategori", byName._id?.toString() ?? "");
+        }
+      }
+    }
+    // Satuan
+    if (form.watch("satuan") && satuans.length > 0) {
+      const found = satuans.find(
+        (sat: { _id: string; nama: string }) => sat._id === form.watch("satuan")
+      );
+      if (!found) {
+        const byName = satuans.find(
+          (sat: { _id: string; nama: string }) =>
+            sat.nama === newSatuanName.trim()
+        );
+        if (byName) {
+          form.setValue("satuan", byName._id);
+        }
+      }
+    }
+  }, [categories, satuans, form, newCategoryName, newSatuanName]);
 
   return (
     <Form {...form}>
@@ -291,26 +386,8 @@ export function ProductForm({
                 render={({ field }) => (
                   <FormItem>
                     <Select
-                      onValueChange={async (value) => {
-                        if (value === "__add_new__") {
-                          const newName = prompt("Nama kategori baru:");
-                          if (newName && newName.trim()) {
-                            const response = await fetch("/api/categories", {
-                              method: "POST",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({ nama: newName.trim() }),
-                            });
-                            if (response.ok) {
-                              const newCategory = await response.json();
-                              setCategories((prev) => [...prev, newCategory]);
-                              field.onChange(newCategory._id);
-                            } else {
-                              alert("Gagal menambah kategori");
-                            }
-                          }
-                        } else {
-                          field.onChange(value);
-                        }
+                      onValueChange={(value) => {
+                        field.onChange(value);
                       }}
                       value={field.value}
                     >
@@ -402,18 +479,7 @@ export function ProductForm({
                                 }}
                               >
                                 <span className="sr-only">Hapus</span>
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  className="h-4 w-4"
-                                  viewBox="0 0 20 20"
-                                  fill="currentColor"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10l-4.95-4.95A1 1 0 115.05 3.636L10 8.586z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
+                                <X className="h-4 w-4" />
                               </button>
                             )}
                           </div>
@@ -434,21 +500,38 @@ export function ProductForm({
                             onClick={async () => {
                               if (!newCategoryName.trim()) return;
                               setAddingCategory(true);
-                              const response = await fetch("/api/categories", {
-                                method: "POST",
-                                headers: {
-                                  "Content-Type": "application/json",
-                                },
-                                body: JSON.stringify({
-                                  nama: newCategoryName.trim(),
-                                }),
-                              });
-                              if (response.ok) {
-                                const newCategory = await response.json();
-                                setCategories((prev) => [...prev, newCategory]);
+                              const postResponse = await fetch(
+                                "/api/categories",
+                                {
+                                  method: "POST",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({
+                                    nama: newCategoryName.trim(),
+                                  }),
+                                }
+                              );
+                              if (postResponse.ok) {
+                                // Fetch latest categories dari backend
+                                const getResponse = await fetch(
+                                  "/api/categories?status=aktif"
+                                );
+                                if (getResponse.ok) {
+                                  const allCategories =
+                                    await getResponse.json();
+                                  setCategories(allCategories);
+                                  // Find the newly added category by name
+                                  const found = allCategories.find(
+                                    (cat: Category) =>
+                                      cat.nama === newCategoryName.trim()
+                                  );
+                                  if (found) {
+                                    form.setValue("kategori", found._id);
+                                  }
+                                  if (onCategoryAdded) onCategoryAdded();
+                                }
                                 setNewCategoryName("");
-                                await fetchCategories();
-                                form.setValue("kategori", newCategory._id);
                               }
                               setAddingCategory(false);
                             }}
@@ -561,18 +644,7 @@ export function ProductForm({
                                   }}
                                 >
                                   <span className="sr-only">Hapus</span>
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    className="h-4 w-4"
-                                    viewBox="0 0 20 20"
-                                    fill="currentColor"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M10 8.586l4.95-4.95a1 1 0 111.414 1.414L11.414 10l4.95 4.95a1 1 0 01-1.414 1.414L10 11.414l-4.95 4.95a1 1 0 01-1.414-1.414L8.586 10l-4.95-4.95A1 1 0 115.05 3.636L10 8.586z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
+                                  <X className="h-4 w-4" />
                                 </button>
                               )}
                             </div>
@@ -593,20 +665,37 @@ export function ProductForm({
                               onClick={async () => {
                                 if (!newSatuanName.trim()) return;
                                 setAddingSatuan(true);
-                                const response = await fetch("/api/satuans", {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    nama: newSatuanName.trim(),
-                                  }),
-                                });
-                                if (response.ok) {
-                                  const newSatuan = await response.json();
+                                const postResponse = await fetch(
+                                  "/api/satuans",
+                                  {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      nama: newSatuanName.trim(),
+                                    }),
+                                  }
+                                );
+                                if (postResponse.ok) {
+                                  // Fetch latest satuans dari backend
+                                  const getResponse = await fetch(
+                                    "/api/satuans"
+                                  );
+                                  if (getResponse.ok) {
+                                    const allSatuans = await getResponse.json();
+                                    setSatuans(allSatuans);
+                                    // Find the newly added satuan by name
+                                    const found = allSatuans.find(
+                                      (sat: { _id: string; nama: string }) =>
+                                        sat.nama === newSatuanName.trim()
+                                    );
+                                    if (found) {
+                                      form.setValue("satuan", found._id);
+                                    }
+                                    if (onSatuanAdded) onSatuanAdded();
+                                  }
                                   setNewSatuanName("");
-                                  form.setValue("satuan", newSatuan._id);
-                                  fetchSatuans();
                                 }
                                 setAddingSatuan(false);
                               }}

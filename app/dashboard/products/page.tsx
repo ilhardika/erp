@@ -25,6 +25,8 @@ import {
 import { ResponsiveModal } from "@/components/ui/responsive-modal";
 import { ProductForm } from "@/components/forms/product-form";
 import { Product, ProductCreateInput } from "@/lib/models/product";
+import { Category } from "@/lib/models/category";
+import { Satuan } from "@/lib/models/satuan";
 
 interface ProductsResponse {
   products: Product[];
@@ -46,9 +48,14 @@ type SortOrder = "asc" | "desc";
 export default function ProductsPage() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [satuans, setSatuans] = useState<Satuan[]>([]);
   const [search, setSearch] = useState("");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [createLoading, setCreateLoading] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [editProduct, setEditProduct] = useState<Product | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
   const [sortField, setSortField] = useState<SortField>("updatedAt");
   const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
   const [deleteLoading, setDeleteLoading] = useState(false);
@@ -92,7 +99,31 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
+    fetchSatuans();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("/api/categories?status=aktif");
+      if (!response.ok) throw new Error("Gagal mengambil data kategori");
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
+
+  const fetchSatuans = async () => {
+    try {
+      const response = await fetch("/api/satuans");
+      if (!response.ok) throw new Error("Gagal mengambil data satuan");
+      const data = await response.json();
+      setSatuans(data);
+    } catch (error) {
+      console.error("Error fetching satuans:", error);
+    }
+  };
 
   // Filter dan sorting
   const filteredAndSortedProducts = useMemo(() => {
@@ -223,6 +254,30 @@ export default function ProductsPage() {
     }
   };
 
+  const handleEditProduct = async (data: ProductCreateInput) => {
+    if (!editProduct) return;
+    try {
+      setEditLoading(true);
+      const response = await fetch(`/api/products/${editProduct._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Gagal mengupdate produk");
+      }
+      await fetchProducts();
+      setShowEditDialog(false);
+      setEditProduct(null);
+    } catch (error) {
+      console.error("Error updating product:", error);
+      alert(error instanceof Error ? error.message : "Gagal mengupdate produk");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 px-2 sm:px-0 min-w-0">
       {/* Header */}
@@ -332,6 +387,39 @@ export default function ProductsPage() {
                         {filteredAndSortedProducts.map((product) => {
                           const stockStatus = getStockStatus(product);
                           const statusBadge = getStatusBadge(product.status);
+                          // Mapping kategori dan satuan
+                          let kategoriId: string = "";
+                          if (
+                            typeof product.kategori === "object" &&
+                            product.kategori !== null &&
+                            "_id" in product.kategori
+                          ) {
+                            kategoriId = String((product.kategori as any)._id);
+                          } else {
+                            kategoriId = String(product.kategori);
+                          }
+                          const kategoriObj = categories.find(
+                            (c) => String(c._id) === String(kategoriId)
+                          );
+                          const kategoriNama = kategoriObj
+                            ? kategoriObj.nama
+                            : "Kategori tidak ditemukan";
+                          let satuanId: string = "";
+                          if (
+                            typeof product.satuan === "object" &&
+                            product.satuan !== null &&
+                            "_id" in product.satuan
+                          ) {
+                            satuanId = String((product.satuan as any)._id);
+                          } else {
+                            satuanId = String(product.satuan);
+                          }
+                          const satuanObj = satuans.find(
+                            (s) => String(s._id) === String(satuanId)
+                          );
+                          const satuanNama = satuanObj
+                            ? satuanObj.nama
+                            : "Satuan tidak ditemukan";
                           return (
                             <TableRow key={product._id?.toString()}>
                               <TableCell className="font-mono text-sm">
@@ -351,7 +439,7 @@ export default function ProductsPage() {
                               </TableCell>
                               <TableCell>
                                 <Badge variant="outline" className="text-xs">
-                                  {product.kategori}
+                                  {kategoriNama}
                                 </Badge>
                               </TableCell>
                               <TableCell className="font-medium">
@@ -362,7 +450,7 @@ export default function ProductsPage() {
                                   {product.stok}
                                 </span>
                                 <span className="text-muted-foreground text-sm ml-1">
-                                  {product.satuan}
+                                  {satuanNama}
                                 </span>
                               </TableCell>
                               <TableCell>
@@ -390,7 +478,8 @@ export default function ProductsPage() {
                                     size="sm"
                                     className="h-8 w-8 p-0"
                                     onClick={() => {
-                                      /* Edit logic here */
+                                      setEditProduct(product);
+                                      setShowEditDialog(true);
                                     }}
                                   >
                                     <Edit className="h-3 w-3" />
@@ -455,7 +544,14 @@ export default function ProductsPage() {
       )}
       <ResponsiveModal
         open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
+        onOpenChange={(open) => {
+          setShowCreateDialog(open);
+          if (!open) {
+            // Refetch kategori dan satuan setelah modal ditutup
+            fetchCategories();
+            fetchSatuans();
+          }
+        }}
         title="Tambah Produk Baru"
         description="Isi form di bawah untuk menambahkan produk baru ke sistem"
       >
@@ -463,7 +559,35 @@ export default function ProductsPage() {
           onSubmit={handleCreateProduct}
           onCancel={() => setShowCreateDialog(false)}
           loading={createLoading}
+          onCategoryAdded={fetchCategories}
+          onSatuanAdded={fetchSatuans}
         />
+      </ResponsiveModal>
+      {/* Edit Product Modal */}
+      <ResponsiveModal
+        open={showEditDialog}
+        onOpenChange={(open) => {
+          setShowEditDialog(open);
+          if (!open) setEditProduct(null);
+        }}
+        title="Edit Produk"
+        description="Ubah data produk di bawah ini"
+      >
+        {editProduct && (
+          <ProductForm
+            onSubmit={handleEditProduct}
+            onCancel={() => {
+              setShowEditDialog(false);
+              setEditProduct(null);
+            }}
+            loading={editLoading}
+            defaultValues={{
+              ...editProduct,
+              kategori: String(editProduct.kategori),
+              satuan: String(editProduct.satuan),
+            }}
+          />
+        )}
       </ResponsiveModal>
     </div>
   );
