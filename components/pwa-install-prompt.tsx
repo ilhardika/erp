@@ -47,14 +47,7 @@ export default function PWAInstallPrompt() {
           gap: 12,
         }}
       >
-        <img
-          src="/icon-192.png"
-          alt="Install"
-          style={{ width: 32, height: 32, marginRight: 8 }}
-        />
-        <span style={{ marginRight: 12 }}>
-          Install aplikasi ERP untuk pengalaman seperti aplikasi native!
-        </span>
+        <span style={{ marginRight: 12 }}>Install aplikasi ERP</span>
         <button
           style={{
             background: "white",
