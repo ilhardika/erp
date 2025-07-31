@@ -14,12 +14,13 @@ export async function createCategory(
   const db = client.db("bizflow");
   const collection = db.collection<Category>("categories");
 
-  // Cek apakah nama sudah ada
+  // Cek apakah nama sudah ada untuk user ini
   const existingCategory = await collection.findOne({
     nama: { $regex: new RegExp(`^${data.nama}$`, "i") },
+    createdBy: userId,
   });
   if (existingCategory) {
-    throw new Error("Nama kategori sudah digunakan");
+    throw new Error("Nama kategori sudah digunakan oleh Anda");
   }
 
   const category: Omit<Category, "_id"> = {
