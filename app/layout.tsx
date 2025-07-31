@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Head from "./head";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Providers from "./providers";
@@ -25,10 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
-      <head>
-        {/* Inject manifest and meta tags from head.tsx */}
-        {require("./head").default()}
-      </head>
+      <Head />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
