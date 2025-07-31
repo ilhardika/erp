@@ -1,9 +1,9 @@
+"use client";
 // Type definition for BeforeInstallPromptEvent
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
-("use client");
 import { useEffect, useState } from "react";
 
 export default function PWAInstallPrompt() {
