@@ -391,10 +391,11 @@ export default function ProductsPage() {
                           let kategoriId: string = "";
                           if (
                             typeof product.kategori === "object" &&
-                            product.kategori !== null &&
-                            "_id" in product.kategori
+                            product.kategori !== null
                           ) {
-                            kategoriId = String((product.kategori as any)._id);
+                            kategoriId = String(
+                              (product.kategori as { _id: string })._id
+                            );
                           } else {
                             kategoriId = String(product.kategori);
                           }
@@ -410,7 +411,9 @@ export default function ProductsPage() {
                             product.satuan !== null &&
                             "_id" in product.satuan
                           ) {
-                            satuanId = String((product.satuan as any)._id);
+                            satuanId = String(
+                              (product.satuan as { _id: string })._id
+                            );
                           } else {
                             satuanId = String(product.satuan);
                           }

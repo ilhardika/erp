@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import type { Product } from "../../lib/models/product";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -112,7 +113,8 @@ export function ProductForm({
   const [deleteSatuanId, setDeleteSatuanId] = useState<string | null>(null);
 
   // State untuk produk, agar bisa cek satuan yang sedang dipakai
-  const [allProducts, setAllProducts] = useState<any[]>([]);
+  // ...existing code...
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
