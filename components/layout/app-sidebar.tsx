@@ -260,13 +260,36 @@ const menuItems = {
 };
 
 export function AppSidebar() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const pathname = usePathname();
 
   // Default ke kasir jika tidak ada role atau role tidak dikenali
   const userRole = (session?.user?.role as keyof typeof menuItems) || "kasir";
   const currentMenuItems = menuItems[userRole] || menuItems.kasir;
 
+  // Skeleton sidebar saat loading
+  if (status === "loading") {
+    return (
+      <Sidebar>
+        <SidebarContent>
+          <div className="px-3 py-3 border-b animate-pulse">
+            <div className="h-5 w-24 bg-gray-200 rounded mb-2" />
+            <div className="h-3 w-32 bg-gray-200 rounded" />
+          </div>
+          <div className="space-y-4 mt-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="h-8 w-full bg-gray-200 rounded" />
+            ))}
+          </div>
+          <div className="mt-auto p-4">
+            <div className="h-10 w-full bg-gray-200 rounded" />
+          </div>
+        </SidebarContent>
+      </Sidebar>
+    );
+  }
+
+  // Setelah session siap, render menu sesuai role
   return (
     <Sidebar>
       <SidebarContent>
