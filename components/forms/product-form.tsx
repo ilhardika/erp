@@ -1,23 +1,16 @@
+
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { Product } from "../../lib/models/product";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Plus, Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Form,
   FormControl,
@@ -26,81 +19,43 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Badge } from "@/components/ui/badge";
-import { ProductCreateInput, SATUAN_PRODUK } from "@/lib/models/product";
+import { CreatableSelect } from "@/components/ui/CreatableSelect";
+import { ProductCreateInput } from "@/lib/models/product";
 import { Category } from "@/lib/models/category";
+import { UI_TEXT } from "@/lib/constants";
+import { productSchema } from "@/lib/schemas";
+import { createCategoryApi, deleteCategoryApi } from "@/lib/actions/categories";
+import { createSatuanApi, deleteSatuanApi } from "@/lib/actions/satuans";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const productSchema = z.object({
-  kode: z.string().optional(),
-  nama: z.string().min(1, "Nama produk wajib diisi"),
-  deskripsi: z.string().optional(),
-  kategori: z
-    .string()
-    .min(1, "Kategori wajib dipilih")
-    .refine((val) => val !== "", {
-      message: "Kategori wajib dipilih",
-    }),
-  hargaBeli: z.number().min(0, "Harga beli tidak boleh negatif"),
-  hargaJual: z.number().min(0, "Harga jual tidak boleh negatif"),
-  stok: z.number().min(0, "Stok tidak boleh negatif"),
-  stokMinimal: z.number().min(0, "Stok minimal tidak boleh negatif"),
-  satuan: z
-    .string()
-    .min(1, "Satuan wajib dipilih")
-    .refine((val) => val !== "", {
-      message: "Satuan wajib dipilih",
-    }),
-  barcode: z.string().optional(),
-  berat: z.number().optional(),
-  gambar: z.string().optional(),
-  status: z.enum(["aktif", "nonaktif"]),
-});
 
-// Default values for useForm
-const defaultValues: ProductFormData = {
-  kode: "",
-  nama: "",
-  kategori: "",
-  hargaBeli: 0,
-  hargaJual: 0,
-  stok: 0,
-  stokMinimal: 1,
-  satuan: "",
-  status: "aktif",
-  deskripsi: "",
-  barcode: "",
-  berat: undefined,
-  gambar: "",
+type ProductFormData = {
+  kode: string;
+  nama: string;
+  kategori: string;
+  hargaBeli: number;
+  hargaJual: number;
+  stok: number;
+  stokMinimal: number;
+  satuan: string;
+  status?: "aktif" | "nonaktif";
+  deskripsi?: string;
+  barcode?: string;
+  berat?: number;
+  gambar?: string;
 };
-
-type ProductFormData = z.infer<typeof productSchema>;
 
 interface ProductFormProps {
   onSubmit: (data: ProductCreateInput) => Promise<void>;
-  onCancel: () => void;
   loading?: boolean;
   defaultValues?: Partial<ProductFormData>;
   onCategoryAdded?: () => void;
   onSatuanAdded?: () => void;
+  onCancel?: () => void;
 }
-
-// Mapping satuan ke unit berat yang sesuai
-const satuanToWeightUnit = {
-  kg: "kg",
-  gram: "gram",
-  liter: "liter",
-  ml: "ml",
-  pcs: "gram",
-  meter: "meter",
-  cm: "cm",
-  box: "kg",
-  pack: "kg",
-  lusin: "kg",
-};
 
 export function ProductForm({
   onSubmit,
-  onCancel,
   loading = false,
   defaultValues,
   onCategoryAdded,
@@ -108,80 +63,33 @@ export function ProductForm({
 }: ProductFormProps) {
   const [satuans, setSatuans] = useState<{ _id: string; nama: string }[]>([]);
   const [loadingSatuans, setLoadingSatuans] = useState(true);
-  const [newSatuanName, setNewSatuanName] = useState("");
   const [addingSatuan, setAddingSatuan] = useState(false);
-  const [deleteSatuanId, setDeleteSatuanId] = useState<string | null>(null);
-
-  // State untuk produk, agar bisa cek satuan yang sedang dipakai
-  // ...existing code...
   const [allProducts, setAllProducts] = useState<Product[]>([]);
-
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loadingCategories, setLoadingCategories] = useState(true);
-  // Kode produk selalu otomatis jika kosong
-  const [newCategoryName, setNewCategoryName] = useState("");
   const [addingCategory, setAddingCategory] = useState(false);
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
-    defaultValues: defaultValues || {
-      kode: "",
-      nama: "",
-      kategori: "",
-      hargaBeli: 0,
-      hargaJual: 0,
-      stok: 0,
-      stokMinimal: 1,
-      satuan: "",
-      status: "aktif",
-      deskripsi: "",
-      barcode: "",
-      berat: undefined,
-      gambar: "",
-    },
+    defaultValues: {
+      kode: defaultValues?.kode || "",
+      nama: defaultValues?.nama || "",
+      kategori: defaultValues?.kategori || "",
+      hargaBeli: defaultValues?.hargaBeli || 0,
+      hargaJual: defaultValues?.hargaJual || 0,
+      stok: defaultValues?.stok || 0,
+      stokMinimal: defaultValues?.stokMinimal || 1,
+      satuan: defaultValues?.satuan || "",
+      status: defaultValues?.status ?? "aktif",
+      deskripsi: defaultValues?.deskripsi || "",
+      barcode: defaultValues?.barcode || "",
+      berat: defaultValues?.berat || undefined,
+      gambar: defaultValues?.gambar || "",
+    } as ProductFormData,
     mode: "onChange",
   });
 
-  const selectedSatuan = form.watch("satuan");
-  const weightUnit = selectedSatuan
-    ? satuanToWeightUnit[selectedSatuan as keyof typeof satuanToWeightUnit]
-    : "gram";
-
-  // Sinkronisasi value kategori & satuan agar label selalu muncul
-  useEffect(() => {
-    // Kategori
-    if (form.watch("kategori") && categories.length > 0) {
-      const found = categories.find(
-        (cat: Category) => cat._id?.toString() === form.watch("kategori")
-      );
-      if (!found) {
-        const byName = categories.find(
-          (cat: Category) => cat.nama === newCategoryName.trim()
-        );
-        if (byName) {
-          form.setValue("kategori", byName._id?.toString() ?? "");
-        }
-      }
-    }
-    // Satuan
-    if (form.watch("satuan") && satuans.length > 0) {
-      const found = satuans.find(
-        (sat: { _id: string; nama: string }) => sat._id === form.watch("satuan")
-      );
-      if (!found) {
-        const byName = satuans.find(
-          (sat: { _id: string; nama: string }) =>
-            sat.nama === newSatuanName.trim()
-        );
-        if (byName) {
-          form.setValue("satuan", byName._id);
-        }
-      }
-    }
-  }, [categories, satuans, form, newCategoryName, newSatuanName]);
-
-  const fetchSatuans = async () => {
+  const fetchSatuans = useCallback(async () => {
     try {
       setLoadingSatuans(true);
       const response = await fetch("/api/satuans");
@@ -194,17 +102,9 @@ export function ProductForm({
     } finally {
       setLoadingSatuans(false);
     }
-  };
-
-  // Fetch produk, kategori, satuan saat mount
-  useEffect(() => {
-    fetchCategories();
-    fetchSatuans();
-    fetchAllProducts();
   }, []);
 
-  // Fungsi fetch produk
-  const fetchAllProducts = async () => {
+  const fetchAllProducts = useCallback(async () => {
     try {
       const response = await fetch("/api/products");
       if (response.ok) {
@@ -214,9 +114,9 @@ export function ProductForm({
     } catch (error) {
       console.error("Error fetching products:", error);
     }
-  };
+  }, []);
 
-  const fetchCategories = async () => {
+  const fetchCategories = useCallback(async () => {
     try {
       setLoadingCategories(true);
       const response = await fetch("/api/categories?status=aktif");
@@ -229,9 +129,73 @@ export function ProductForm({
     } finally {
       setLoadingCategories(false);
     }
-  };
+  }, []);
 
-  const generateKode = async () => {
+  useEffect(() => {
+    fetchCategories();
+    fetchSatuans();
+    fetchAllProducts();
+  }, [fetchCategories, fetchSatuans, fetchAllProducts]);
+
+  const handleCreateCategory = useCallback(async (name: string) => {
+    setAddingCategory(true);
+    try {
+      await createCategoryApi(name);
+      await fetchCategories();
+      if (onCategoryAdded) onCategoryAdded();
+    } catch (error) {
+      console.error("Error creating category:", error);
+      alert(error instanceof Error ? error.message : "Gagal menambah kategori");
+    } finally {
+      setAddingCategory(false);
+    }
+  }, [fetchCategories, onCategoryAdded]);
+
+  const handleDeleteCategory = useCallback(async (id: string) => {
+    try {
+      await deleteCategoryApi(id);
+      await fetchCategories();
+      form.setValue("kategori", ""); // Clear selected category if deleted
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      alert(error instanceof Error ? error.message : "Gagal menghapus kategori");
+    }
+  }, [fetchCategories, form]);
+
+  const isCategoryInUse = useCallback((id: string) => {
+    return allProducts.some((p) => p.kategori === id);
+  }, [allProducts]);
+
+  const handleCreateSatuan = useCallback(async (name: string) => {
+    setAddingSatuan(true);
+    try {
+      await createSatuanApi(name);
+      await fetchSatuans();
+      if (onSatuanAdded) onSatuanAdded();
+    } catch (error) {
+      console.error("Error creating satuan:", error);
+      alert(error instanceof Error ? error.message : "Gagal menambah satuan");
+    } finally {
+      setAddingSatuan(false);
+    }
+  }, [fetchSatuans, onSatuanAdded]);
+
+  const handleDeleteSatuan = useCallback(async (id: string) => {
+    try {
+      await deleteSatuanApi(id);
+      await fetchSatuans();
+      form.setValue("satuan", ""); // Clear selected satuan if deleted
+    } catch (error) {
+      console.error("Error deleting satuan:", error);
+      alert(error instanceof Error ? error.message : "Gagal menghapus satuan");
+    }
+  }, [fetchSatuans, form]);
+
+  const isSatuanInUse = useCallback((id: string) => {
+    return allProducts.some((p) => p.satuan === id);
+  }, [allProducts]);
+
+  const generateKode = useCallback(async () => {
     try {
       const response = await fetch("/api/products?limit=1");
       if (response.ok) {
@@ -248,53 +212,14 @@ export function ProductForm({
       console.error("Error generating kode:", error);
     }
     return "";
-  };
+  }, [form]);
 
-  const addNewCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    setAddingCategory(true);
+  const handleSubmit = useCallback(async (data: ProductFormData) => {
     try {
-      const response = await fetch("/api/categories", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nama: newCategoryName.trim() }),
-      });
-      if (response.ok) {
-        // After adding, refetch categories from backend
-        const getResponse = await fetch("/api/categories?status=aktif");
-        if (getResponse.ok) {
-          const allCategories = await getResponse.json();
-          setCategories(allCategories);
-          // Find the newly added category by name
-          const found = allCategories.find(
-            (cat: Category) => cat.nama === newCategoryName.trim()
-          );
-          if (found) {
-            form.setValue("kategori", found._id);
-          }
-          if (onCategoryAdded) onCategoryAdded();
-        }
-        setNewCategoryName("");
-      } else {
-        const error = await response.json();
-        alert(error.error || "Gagal menambah kategori");
-      }
-    } catch (error) {
-      console.error("Error adding category:", error);
-      alert("Gagal menambah kategori");
-    } finally {
-      setAddingCategory(false);
-    }
-  };
-
-  const handleSubmit = async (data: ProductFormData) => {
-    try {
-      // Pastikan kode produk terisi
       if (!data.kode) {
         const kode = await generateKode();
         data.kode = kode || "";
       }
-      // Pastikan kode selalu string
       await onSubmit({
         ...data,
         kode: data.kode || "",
@@ -302,71 +227,33 @@ export function ProductForm({
     } catch (error) {
       console.error("Submit error:", error);
     }
-  };
-
-  // Sinkronisasi value kategori & satuan agar label selalu muncul
-  useEffect(() => {
-    // Kategori
-    if (form.watch("kategori") && categories.length > 0) {
-      const found = categories.find(
-        (cat: Category) => cat._id?.toString() === form.watch("kategori")
-      );
-      if (!found) {
-        const byName = categories.find(
-          (cat: Category) => cat.nama === newCategoryName.trim()
-        );
-        if (byName) {
-          form.setValue("kategori", byName._id?.toString() ?? "");
-        }
-      }
-    }
-    // Satuan
-    if (form.watch("satuan") && satuans.length > 0) {
-      const found = satuans.find(
-        (sat: { _id: string; nama: string }) => sat._id === form.watch("satuan")
-      );
-      if (!found) {
-        const byName = satuans.find(
-          (sat: { _id: string; nama: string }) =>
-            sat.nama === newSatuanName.trim()
-        );
-        if (byName) {
-          form.setValue("satuan", byName._id);
-        }
-      }
-    }
-  }, [categories, satuans, form, newCategoryName, newSatuanName]);
+  }, [onSubmit, generateKode]);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4">
-          {/* Kode Produk */}
-          <div className="space-y-2">
-            <Label>SKU/Kode Produk</Label>
-            <FormField
-              control={form.control}
-              name="kode"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormControl>
-                    <Input {...field} placeholder="Otomatis jika kosong" />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          {/* Nama Produk */}
+          <FormField
+            control={form.control}
+            name="kode"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{UI_TEXT.PRODUCT_SKU_LABEL}</FormLabel>
+                <FormControl>
+                  <Input {...field} placeholder={UI_TEXT.PRODUCT_SKU_PLACEHOLDER} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="nama"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Nama Produk *</FormLabel>
+                <FormLabel>{UI_TEXT.PRODUCT_NAME_LABEL}</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder="Masukkan nama produk" />
+                  <Input {...field} placeholder={UI_TEXT.PRODUCT_NAME_PLACEHOLDER} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -374,17 +261,16 @@ export function ProductForm({
           />
         </div>
 
-        {/* Deskripsi */}
         <FormField
           control={form.control}
           name="deskripsi"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Deskripsi</FormLabel>
+              <FormLabel>{UI_TEXT.PRODUCT_DESCRIPTION_LABEL}</FormLabel>
               <FormControl>
                 <Textarea
                   {...field}
-                  placeholder="Deskripsi produk (opsional)"
+                  placeholder={`${UI_TEXT.PRODUCT_DESCRIPTION_PLACEHOLDER} ${UI_TEXT.OPTIONAL}`}
                   className="resize-none"
                   rows={2}
                 />
@@ -395,353 +281,46 @@ export function ProductForm({
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Kategori */}
-          <div className="space-y-2 col-span-1 sm:col-span-2">
-            <Label>Kategori *</Label>
-            <div className="flex flex-col gap-2">
-              <FormField
-                control={form.control}
-                name="kategori"
-                render={({ field }) => (
-                  <FormItem>
-                    <Select
-                      onValueChange={(value) => {
-                        field.onChange(value);
-                      }}
-                      value={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Pilih kategori" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {loadingCategories ? (
-                          <SelectItem value="loading-placeholder" disabled>
-                            Memuat...
-                          </SelectItem>
-                        ) : null}
-                        {categories.length === 0 && !loadingCategories ? (
-                          <SelectItem value="empty-placeholder" disabled>
-                            Tidak ada kategori
-                          </SelectItem>
-                        ) : null}
-                        {categories.map((category) => (
-                          <div
-                            key={category._id?.toString() || category.nama}
-                            className="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded relative"
-                          >
-                            <SelectItem
-                              value={
-                                category._id?.toString() ||
-                                category.nama ||
-                                "unknown"
-                              }
-                              className="flex-1"
-                            >
-                              {category.nama}
-                            </SelectItem>
-                            <button
-                              type="button"
-                              aria-label="Hapus kategori"
-                              className={`ml-2 text-red-500 px-2 py-0.5 rounded border border-transparent flex items-center justify-center ${
-                                allProducts &&
-                                allProducts.some(
-                                  (product) =>
-                                    String(product.kategori) ===
-                                    String(category._id)
-                                )
-                                  ? "opacity-50 cursor-not-allowed"
-                                  : "hover:text-red-700 hover:border-red-300"
-                              }`}
-                              disabled={
-                                allProducts &&
-                                allProducts.some(
-                                  (product) =>
-                                    String(product.kategori) ===
-                                    String(category._id)
-                                )
-                              }
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                if (
-                                  allProducts &&
-                                  allProducts.some(
-                                    (product) =>
-                                      String(product.kategori) ===
-                                      String(category._id)
-                                  )
-                                )
-                                  return;
-                                // Langsung delete kategori
-                                const response = await fetch(
-                                  `/api/categories/${category._id}`,
-                                  { method: "DELETE" }
-                                );
-                                if (response.ok) {
-                                  setCategories((prev) =>
-                                    prev.filter((c) => c._id !== category._id)
-                                  );
-                                  if (
-                                    form.watch("kategori") ===
-                                    String(category._id)
-                                  ) {
-                                    form.setValue("kategori", "");
-                                  }
-                                }
-                              }}
-                            >
-                              <span className="sr-only">Hapus</span>
-                              <X className="h-4 w-4" />
-                            </button>
-                          </div>
-                        ))}
-                        <div className="flex items-center gap-2 px-2 py-2 border-t mt-2">
-                          <Input
-                            value={newCategoryName}
-                            onChange={(e) => setNewCategoryName(e.target.value)}
-                            placeholder="Nama kategori baru"
-                            className="flex-1 h-6 text-xs px-2 py-1 w-full"
-                            disabled={addingCategory}
-                          />
-                          <Button
-                            type="button"
-                            size="sm"
-                            className="h-6 px-2 text-xs min-w-[56px]"
-                            disabled={addingCategory || !newCategoryName.trim()}
-                            onClick={async () => {
-                              if (!newCategoryName.trim()) return;
-                              setAddingCategory(true);
-                              const postResponse = await fetch(
-                                "/api/categories",
-                                {
-                                  method: "POST",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({
-                                    nama: newCategoryName.trim(),
-                                  }),
-                                }
-                              );
-                              if (postResponse.ok) {
-                                // Fetch latest categories dari backend
-                                const getResponse = await fetch(
-                                  "/api/categories?status=aktif"
-                                );
-                                if (getResponse.ok) {
-                                  const allCategories =
-                                    await getResponse.json();
-                                  setCategories(allCategories);
-                                  // Find the newly added category by name
-                                  const found = allCategories.find(
-                                    (cat: Category) =>
-                                      cat.nama === newCategoryName.trim()
-                                  );
-                                  if (found) {
-                                    form.setValue("kategori", found._id);
-                                  }
-                                  if (onCategoryAdded) onCategoryAdded();
-                                }
-                                setNewCategoryName("");
-                              }
-                              setAddingCategory(false);
-                            }}
-                          >
-                            {addingCategory ? (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            ) : (
-                              "Tambah"
-                            )}
-                          </Button>
-                        </div>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              {/* End flex container for category dropdown */}
-            </div>
-          </div>
-
-          {/* Satuan */}
-          <div className="space-y-2 col-span-1 sm:col-span-2">
-            <FormLabel>Satuan *</FormLabel>
-            <FormField
-              control={form.control}
-              name="satuan"
-              render={({ field }) => (
-                <FormItem className="w-full flex flex-col">
-                  <Select
-                    onValueChange={(value) => {
-                      if (value === "") return;
-                      field.onChange(value);
-                    }}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Pilih satuan" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent className="w-full">
-                      {loadingSatuans ? (
-                        <SelectItem value="loading-placeholder" disabled>
-                          Memuat...
-                        </SelectItem>
-                      ) : (
-                        <>
-                          {satuans.length === 0 && (
-                            <SelectItem value="empty-placeholder" disabled>
-                              Tidak ada satuan
-                            </SelectItem>
-                          )}
-                          {satuans.map((satuan) => (
-                            <div
-                              key={satuan._id}
-                              className="flex items-center justify-between px-2 py-1 hover:bg-gray-100 rounded relative w-full"
-                            >
-                              <SelectItem
-                                value={satuan._id}
-                                className="flex-1 w-full"
-                              >
-                                {satuan.nama}
-                              </SelectItem>
-                              <button
-                                type="button"
-                                aria-label="Hapus satuan"
-                                className={`ml-2 text-red-500 px-2 py-0.5 rounded border border-transparent flex items-center justify-center ${
-                                  allProducts &&
-                                  allProducts.some(
-                                    (product) =>
-                                      String(product.satuan) ===
-                                      String(satuan._id)
-                                  )
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : "hover:text-red-700 hover:border-red-300"
-                                }`}
-                                disabled={
-                                  allProducts &&
-                                  allProducts.some(
-                                    (product) =>
-                                      String(product.satuan) ===
-                                      String(satuan._id)
-                                  )
-                                }
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  if (
-                                    allProducts &&
-                                    allProducts.some(
-                                      (product) =>
-                                        String(product.satuan) ===
-                                        String(satuan._id)
-                                    )
-                                  )
-                                    return;
-                                  // Langsung delete satuan
-                                  const response = await fetch(
-                                    `/api/satuans/${satuan._id}`,
-                                    { method: "DELETE" }
-                                  );
-                                  if (response.ok) {
-                                    setSatuans((prev) =>
-                                      prev.filter((s) => s._id !== satuan._id)
-                                    );
-                                    if (form.watch("satuan") === satuan._id) {
-                                      form.setValue("satuan", "");
-                                    }
-                                  }
-                                }}
-                              >
-                                <span className="sr-only">Hapus</span>
-                                <X className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ))}
-                          <div className="flex items-center gap-2 px-2 py-2 border-t mt-2 w-full">
-                            <Input
-                              value={newSatuanName}
-                              onChange={(e) => setNewSatuanName(e.target.value)}
-                              placeholder="Nama satuan baru"
-                              className="flex-1 h-6 text-xs px-2 py-1 w-full"
-                              disabled={addingSatuan}
-                            />
-                            <Button
-                              type="button"
-                              size="sm"
-                              className="h-6 px-2 text-xs min-w-[56px]"
-                              disabled={addingSatuan || !newSatuanName.trim()}
-                              onClick={async () => {
-                                if (!newSatuanName.trim()) return;
-                                setAddingSatuan(true);
-                                const postResponse = await fetch(
-                                  "/api/satuans",
-                                  {
-                                    method: "POST",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      nama: newSatuanName.trim(),
-                                    }),
-                                  }
-                                );
-                                if (postResponse.ok) {
-                                  // Fetch latest satuans dari backend
-                                  const getResponse = await fetch(
-                                    "/api/satuans"
-                                  );
-                                  if (getResponse.ok) {
-                                    const allSatuans = await getResponse.json();
-                                    setSatuans(allSatuans);
-                                    // Find the newly added satuan by name
-                                    const found = allSatuans.find(
-                                      (sat: { _id: string; nama: string }) =>
-                                        sat.nama === newSatuanName.trim()
-                                    );
-                                    if (found) {
-                                      form.setValue("satuan", found._id);
-                                    }
-                                    if (onSatuanAdded) onSatuanAdded();
-                                  }
-                                  setNewSatuanName("");
-                                }
-                                setAddingSatuan(false);
-                              }}
-                            >
-                              {addingSatuan ? (
-                                <Loader2 className="h-3 w-3 animate-spin" />
-                              ) : (
-                                "Tambah"
-                              )}
-                            </Button>
-                          </div>
-                        </>
-                      )}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
+          <CreatableSelect<ProductFormData>
+            control={form.control}
+            name="kategori"
+            label={UI_TEXT.CATEGORY_LABEL}
+            placeholder={UI_TEXT.CATEGORY_PLACEHOLDER}
+            items={categories.map((cat) => ({ _id: String(cat._id ?? ''), nama: cat.nama }))}
+            loading={loadingCategories}
+            adding={addingCategory}
+            onItemCreate={handleCreateCategory}
+            onItemDelete={handleDeleteCategory}
+            isItemInUse={isCategoryInUse}
+            newItemPlaceholder={UI_TEXT.CATEGORY_NEW_PLACEHOLDER}
+          />
+          <CreatableSelect<ProductFormData>
+            control={form.control}
+            name="satuan"
+            label={UI_TEXT.SATUAN_LABEL}
+            placeholder={UI_TEXT.SATUAN_PLACEHOLDER}
+            items={satuans.map((sat) => ({ _id: String(sat._id ?? ''), nama: sat.nama }))}
+            loading={loadingSatuans}
+            adding={addingSatuan}
+            onItemCreate={handleCreateSatuan}
+            onItemDelete={handleDeleteSatuan}
+            isItemInUse={isSatuanInUse}
+            newItemPlaceholder={UI_TEXT.SATUAN_NEW_PLACEHOLDER}
+          />
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Harga Beli */}
           <FormField
             control={form.control}
             name="hargaBeli"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Harga Beli *</FormLabel>
+                <FormLabel>{UI_TEXT.PRODUCT_BUY_PRICE_LABEL}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     type="number"
-                    placeholder="0"
+                    placeholder={UI_TEXT.PRODUCT_PRICE_PLACEHOLDER}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
@@ -749,19 +328,17 @@ export function ProductForm({
               </FormItem>
             )}
           />
-
-          {/* Harga Jual */}
           <FormField
             control={form.control}
             name="hargaJual"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Harga Jual *</FormLabel>
+                <FormLabel>{UI_TEXT.PRODUCT_SELL_PRICE_LABEL}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     type="number"
-                    placeholder="0"
+                    placeholder={UI_TEXT.PRODUCT_PRICE_PLACEHOLDER}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
@@ -772,18 +349,17 @@ export function ProductForm({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Stok */}
           <FormField
             control={form.control}
             name="stok"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Stok Awal</FormLabel>
+                <FormLabel>{UI_TEXT.PRODUCT_STOCK_LABEL}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     type="number"
-                    placeholder="0"
+                    placeholder={UI_TEXT.PRODUCT_STOCK_PLACEHOLDER}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
@@ -791,19 +367,17 @@ export function ProductForm({
               </FormItem>
             )}
           />
-
-          {/* Stok Minimal */}
           <FormField
             control={form.control}
             name="stokMinimal"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Stok Minimal</FormLabel>
+                <FormLabel>{UI_TEXT.PRODUCT_MIN_STOCK_LABEL}</FormLabel>
                 <FormControl>
                   <Input
                     {...field}
                     type="number"
-                    placeholder="1"
+                    placeholder={UI_TEXT.PRODUCT_MIN_STOCK_PLACEHOLDER}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />
                 </FormControl>
@@ -814,19 +388,14 @@ export function ProductForm({
         </div>
 
         <div className="grid grid-cols-1 gap-4">
-          {/* Barcode */}
           <FormField
             control={form.control}
             name="barcode"
             render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel>Barcode</FormLabel>
+              <FormItem>
+                <FormLabel>{UI_TEXT.PRODUCT_BARCODE_LABEL}</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="Barcode produk (opsional)"
-                    className="w-full"
-                  />
+                  <Input {...field} placeholder={UI_TEXT.PRODUCT_BARCODE_PLACEHOLDER + " " + UI_TEXT.OPTIONAL} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -834,22 +403,21 @@ export function ProductForm({
           />
         </div>
 
-        {/* Status */}
         <FormField
           control={form.control}
           name="status"
           render={({ field }) => (
-            <FormItem className="w-full">
-              <FormLabel>Status</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+            <FormItem>
+              <FormLabel>{UI_TEXT.PRODUCT_STATUS_LABEL}</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger className="w-full">
-                    <SelectValue />
+                  <SelectTrigger>
+                    <SelectValue placeholder="Pilih status" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="aktif">Aktif</SelectItem>
-                  <SelectItem value="nonaktif">Non-aktif</SelectItem>
+                  <SelectItem value="aktif">{UI_TEXT.PRODUCT_STATUS_ACTIVE}</SelectItem>
+                  <SelectItem value="nonaktif">{UI_TEXT.PRODUCT_STATUS_INACTIVE}</SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -857,25 +425,19 @@ export function ProductForm({
           )}
         />
 
-        {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <Button
             type="submit"
-            disabled={
-              loading ||
-              !form.watch("kategori") ||
-              !form.watch("satuan") ||
-              !form.watch("nama")
-            }
-            className="w-full sm:w-auto order-2 sm:order-1"
+            disabled={loading}
+            className="w-full sm:w-auto"
           >
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Menyimpan...
+                {UI_TEXT.SAVING}
               </>
             ) : (
-              "Simpan Produk"
+              UI_TEXT.SAVE_PRODUCT
             )}
           </Button>
         </div>
