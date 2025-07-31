@@ -25,6 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="id">
+      <head>
+        {/* Inject manifest and meta tags from head.tsx */}
+        {require("./head").default()}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
