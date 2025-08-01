@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BizFlow",
+  title: "Bizflow",
   description: "Sistem ERP dan POS untuk mengelola bisnis Anda",
 };
 

@@ -294,7 +294,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <div className="px-3 py-3 border-b">
-          <h2 className="text-base sm:text-lg font-semibold">BizFlow</h2>
+          <h2 className="text-base sm:text-lg font-semibold">Bizflow</h2>
           <p className="text-xs sm:text-sm text-muted-foreground truncate">
             {session?.user?.name} ({userRole})
           </p>

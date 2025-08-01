@@ -13,7 +13,7 @@ export async function createCategory(
   userId: string
 ): Promise<Category> {
   const client = await clientPromise;
-  const db = client.db("bizflow");
+  const db = client.db("Bizflow");
   const collection = db.collection<Category>("categories");
 
   // Cek apakah nama sudah ada untuk user ini
@@ -47,7 +47,7 @@ export async function getCategories(
   status?: string
 ): Promise<Category[]> {
   const client = await clientPromise;
-  const db = client.db("bizflow");
+  const db = client.db("Bizflow");
   const collection = db.collection<Category>("categories");
 
   const filter: Record<string, unknown> = { createdBy: userId };
@@ -60,7 +60,7 @@ export async function getCategories(
 
 export async function getCategoryById(id: string): Promise<Category | null> {
   const client = await clientPromise;
-  const db = client.db("bizflow");
+  const db = client.db("Bizflow");
   const collection = db.collection<Category>("categories");
 
   return await collection.findOne({ _id: new ObjectId(id) });
@@ -71,7 +71,7 @@ export async function updateCategory(
   data: CategoryUpdateInput
 ): Promise<Category | null> {
   const client = await clientPromise;
-  const db = client.db("bizflow");
+  const db = client.db("Bizflow");
   const collection = db.collection<Category>("categories");
 
   // Cek apakah nama sudah ada (kecuali untuk kategori yang sedang diedit)
@@ -101,7 +101,7 @@ export async function updateCategory(
 
 export async function deleteCategory(id: string): Promise<boolean> {
   const client = await clientPromise;
-  const db = client.db("bizflow");
+  const db = client.db("Bizflow");
 
   // Cek apakah kategori masih digunakan oleh produk
   const productsCollection = db.collection("products");

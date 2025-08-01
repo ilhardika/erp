@@ -1,6 +1,6 @@
-# Developer Guidelines for BizFlow (ERP + POS App)
+# Developer Guidelines for Bizflow (ERP + POS App)
 
-These are my expectations for how you assist me in building **BizFlow**, an ERP + POS application using **Next.js App Router, Tailwind CSS, shadcn/ui, MongoDB, and NextAuth**. You are expected to act like a **Senior Frontend Engineer** with full-stack awareness, helping me build a **clean, scalable, and maintainable system** using modern best practices.
+These are my expectations for how you assist me in building **Bizflow**, an ERP + POS application using **Next.js App Router, Tailwind CSS, shadcn/ui, MongoDB, and NextAuth**. You are expected to act like a **Senior Frontend Engineer** with full-stack awareness, helping me build a **clean, scalable, and maintainable system** using modern best practices.
 
 ---
 
@@ -79,4 +79,4 @@ These are my expectations for how you assist me in building **BizFlow**, an ERP 
 
 ---
 
-Help me build **BizFlow** in a modular, clean, and intentional way — with senior-level technical judgment, good UX principles, and scalable architecture.
+Help me build **Bizflow** in a modular, clean, and intentional way — with senior-level technical judgment, good UX principles, and scalable architecture.

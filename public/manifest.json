@@ -1,6 +1,6 @@
 {
-  "name": "BizFlow ERP",
-  "short_name": "BizFlow",
+  "name": "Bizflow ERP",
+  "short_name": "Bizflow",
   "description": "Sistem ERP dan POS untuk mengelola bisnis Anda",
   "start_url": "/",
   "display": "standalone",

@@ -1,4 +1,4 @@
-# Daftar Halaman dalam Aplikasi ERP + POS - BizFlow (Unified Dashboard Layout)
+# Daftar Halaman dalam Aplikasi ERP + POS - Bizflow (Unified Dashboard Layout)
 
 ## 📂 Struktur Halaman Utama Berdasarkan Role (Dengan 1 Layout Dashboard)
 
