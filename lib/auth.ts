@@ -18,7 +18,7 @@ export const authOptions: NextAuthOptions = {
 
         try {
           const client = await clientPromise;
-          const users = client.db("Bizflow").collection("users");
+          const users = client.db("bizflow").collection("users");
 
           const user = await users.findOne({
             email: credentials.email.toLowerCase(),

@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     const client = await clientPromise;
-    const users = client.db("Bizflow").collection("users");
+    const users = client.db("bizflow").collection("users");
 
     // Check if user already exists
     const existingUser = await users.findOne({

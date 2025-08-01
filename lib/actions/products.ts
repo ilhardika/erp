@@ -11,7 +11,7 @@ export async function createProduct(
   userId: string
 ): Promise<Product> {
   const client = await clientPromise;
-  const db = client.db("Bizflow");
+  const db = client.db("bizflow");
   const collection = db.collection<Product>("products");
 
   // Generate kode produk otomatis jika tidak ada
@@ -56,7 +56,7 @@ export async function getProducts(
   status?: string
 ) {
   const client = await clientPromise;
-  const db = client.db("Bizflow");
+  const db = client.db("bizflow");
   const collection = db.collection<Product>("products");
 
   // Build filter
@@ -101,7 +101,7 @@ export async function getProducts(
 
 export async function getProductById(id: string): Promise<Product | null> {
   const client = await clientPromise;
-  const db = client.db("Bizflow");
+  const db = client.db("bizflow");
   const collection = db.collection<Product>("products");
 
   return await collection.findOne({ _id: new ObjectId(id) });
@@ -112,7 +112,7 @@ export async function updateProduct(
   data: ProductUpdateInput
 ): Promise<Product | null> {
   const client = await clientPromise;
-  const db = client.db("Bizflow");
+  const db = client.db("bizflow");
   const collection = db.collection<Product>("products");
 
   const updateData = {
@@ -131,7 +131,7 @@ export async function updateProduct(
 
 export async function deleteProduct(id: string): Promise<boolean> {
   const client = await clientPromise;
-  const db = client.db("Bizflow");
+  const db = client.db("bizflow");
   const collection = db.collection<Product>("products");
 
   const result = await collection.deleteOne({ _id: new ObjectId(id) });
@@ -147,7 +147,7 @@ export async function updateStok(
 
 export async function getLowStockProducts(): Promise<Product[]> {
   const client = await clientPromise;
-  const db = client.db("Bizflow");
+  const db = client.db("bizflow");
   const collection = db.collection<Product>("products");
 
   return await collection
