@@ -4,8 +4,8 @@
   "description": "Sistem ERP dan POS untuk mengelola bisnis Anda",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0CB0FE",
-  "theme_color": "#0CB0FE",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
   "orientation": "portrait",
   "icons": [
     {
