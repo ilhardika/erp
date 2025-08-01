@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -26,8 +25,13 @@ import { UI_TEXT } from "@/lib/constants";
 import { productSchema } from "@/lib/schemas";
 import { createCategoryApi, deleteCategoryApi } from "@/lib/actions/categories";
 import { createSatuanApi, deleteSatuanApi } from "@/lib/actions/satuans";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type ProductFormData = {
   kode: string;
@@ -137,63 +141,87 @@ export function ProductForm({
     fetchAllProducts();
   }, [fetchCategories, fetchSatuans, fetchAllProducts]);
 
-  const handleCreateCategory = useCallback(async (name: string) => {
-    setAddingCategory(true);
-    try {
-      await createCategoryApi(name);
-      await fetchCategories();
-      if (onCategoryAdded) onCategoryAdded();
-    } catch (error) {
-      console.error("Error creating category:", error);
-      alert(error instanceof Error ? error.message : "Gagal menambah kategori");
-    } finally {
-      setAddingCategory(false);
-    }
-  }, [fetchCategories, onCategoryAdded]);
+  const handleCreateCategory = useCallback(
+    async (name: string) => {
+      setAddingCategory(true);
+      try {
+        await createCategoryApi(name);
+        await fetchCategories();
+        if (onCategoryAdded) onCategoryAdded();
+      } catch (error) {
+        console.error("Error creating category:", error);
+        alert(
+          error instanceof Error ? error.message : "Gagal menambah kategori"
+        );
+      } finally {
+        setAddingCategory(false);
+      }
+    },
+    [fetchCategories, onCategoryAdded]
+  );
 
-  const handleDeleteCategory = useCallback(async (id: string) => {
-    try {
-      await deleteCategoryApi(id);
-      await fetchCategories();
-      form.setValue("kategori", ""); // Clear selected category if deleted
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      alert(error instanceof Error ? error.message : "Gagal menghapus kategori");
-    }
-  }, [fetchCategories, form]);
+  const handleDeleteCategory = useCallback(
+    async (id: string) => {
+      try {
+        await deleteCategoryApi(id);
+        await fetchCategories();
+        form.setValue("kategori", ""); // Clear selected category if deleted
+      } catch (error) {
+        console.error("Error deleting category:", error);
+        alert(
+          error instanceof Error ? error.message : "Gagal menghapus kategori"
+        );
+      }
+    },
+    [fetchCategories, form]
+  );
 
-  const isCategoryInUse = useCallback((id: string) => {
-    return allProducts.some((p) => p.kategori === id);
-  }, [allProducts]);
+  const isCategoryInUse = useCallback(
+    (id: string) => {
+      return allProducts.some((p) => p.kategori === id);
+    },
+    [allProducts]
+  );
 
-  const handleCreateSatuan = useCallback(async (name: string) => {
-    setAddingSatuan(true);
-    try {
-      await createSatuanApi(name);
-      await fetchSatuans();
-      if (onSatuanAdded) onSatuanAdded();
-    } catch (error) {
-      console.error("Error creating satuan:", error);
-      alert(error instanceof Error ? error.message : "Gagal menambah satuan");
-    } finally {
-      setAddingSatuan(false);
-    }
-  }, [fetchSatuans, onSatuanAdded]);
+  const handleCreateSatuan = useCallback(
+    async (name: string) => {
+      setAddingSatuan(true);
+      try {
+        await createSatuanApi(name);
+        await fetchSatuans();
+        if (onSatuanAdded) onSatuanAdded();
+      } catch (error) {
+        console.error("Error creating satuan:", error);
+        alert(error instanceof Error ? error.message : "Gagal menambah satuan");
+      } finally {
+        setAddingSatuan(false);
+      }
+    },
+    [fetchSatuans, onSatuanAdded]
+  );
 
-  const handleDeleteSatuan = useCallback(async (id: string) => {
-    try {
-      await deleteSatuanApi(id);
-      await fetchSatuans();
-      form.setValue("satuan", ""); // Clear selected satuan if deleted
-    } catch (error) {
-      console.error("Error deleting satuan:", error);
-      alert(error instanceof Error ? error.message : "Gagal menghapus satuan");
-    }
-  }, [fetchSatuans, form]);
+  const handleDeleteSatuan = useCallback(
+    async (id: string) => {
+      try {
+        await deleteSatuanApi(id);
+        await fetchSatuans();
+        form.setValue("satuan", ""); // Clear selected satuan if deleted
+      } catch (error) {
+        console.error("Error deleting satuan:", error);
+        alert(
+          error instanceof Error ? error.message : "Gagal menghapus satuan"
+        );
+      }
+    },
+    [fetchSatuans, form]
+  );
 
-  const isSatuanInUse = useCallback((id: string) => {
-    return allProducts.some((p) => p.satuan === id);
-  }, [allProducts]);
+  const isSatuanInUse = useCallback(
+    (id: string) => {
+      return allProducts.some((p) => p.satuan === id);
+    },
+    [allProducts]
+  );
 
   const generateKode = useCallback(async () => {
     try {
@@ -214,20 +242,23 @@ export function ProductForm({
     return "";
   }, [form]);
 
-  const handleSubmit = useCallback(async (data: ProductFormData) => {
-    try {
-      if (!data.kode) {
-        const kode = await generateKode();
-        data.kode = kode || "";
+  const handleSubmit = useCallback(
+    async (data: ProductFormData) => {
+      try {
+        if (!data.kode) {
+          const kode = await generateKode();
+          data.kode = kode || "";
+        }
+        await onSubmit({
+          ...data,
+          kode: data.kode || "",
+        });
+      } catch (error) {
+        console.error("Submit error:", error);
       }
-      await onSubmit({
-        ...data,
-        kode: data.kode || "",
-      });
-    } catch (error) {
-      console.error("Submit error:", error);
-    }
-  }, [onSubmit, generateKode]);
+    },
+    [onSubmit, generateKode]
+  );
 
   return (
     <Form {...form}>
@@ -240,7 +271,10 @@ export function ProductForm({
               <FormItem>
                 <FormLabel>{UI_TEXT.PRODUCT_SKU_LABEL}</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder={UI_TEXT.PRODUCT_SKU_PLACEHOLDER} />
+                  <Input
+                    {...field}
+                    placeholder={UI_TEXT.PRODUCT_SKU_PLACEHOLDER}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -253,7 +287,10 @@ export function ProductForm({
               <FormItem>
                 <FormLabel>{UI_TEXT.PRODUCT_NAME_LABEL}</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder={UI_TEXT.PRODUCT_NAME_PLACEHOLDER} />
+                  <Input
+                    {...field}
+                    placeholder={UI_TEXT.PRODUCT_NAME_PLACEHOLDER}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -286,7 +323,10 @@ export function ProductForm({
             name="kategori"
             label={UI_TEXT.CATEGORY_LABEL}
             placeholder={UI_TEXT.CATEGORY_PLACEHOLDER}
-            items={categories.map((cat) => ({ _id: String(cat._id ?? ''), nama: cat.nama }))}
+            items={categories.map((cat) => ({
+              _id: String(cat._id ?? ""),
+              nama: cat.nama,
+            }))}
             loading={loadingCategories}
             adding={addingCategory}
             onItemCreate={handleCreateCategory}
@@ -299,7 +339,10 @@ export function ProductForm({
             name="satuan"
             label={UI_TEXT.SATUAN_LABEL}
             placeholder={UI_TEXT.SATUAN_PLACEHOLDER}
-            items={satuans.map((sat) => ({ _id: String(sat._id ?? ''), nama: sat.nama }))}
+            items={satuans.map((sat) => ({
+              _id: String(sat._id ?? ""),
+              nama: sat.nama,
+            }))}
             loading={loadingSatuans}
             adding={addingSatuan}
             onItemCreate={handleCreateSatuan}
@@ -395,7 +438,14 @@ export function ProductForm({
               <FormItem>
                 <FormLabel>{UI_TEXT.PRODUCT_BARCODE_LABEL}</FormLabel>
                 <FormControl>
-                  <Input {...field} placeholder={UI_TEXT.PRODUCT_BARCODE_PLACEHOLDER + " " + UI_TEXT.OPTIONAL} />
+                  <Input
+                    {...field}
+                    placeholder={
+                      UI_TEXT.PRODUCT_BARCODE_PLACEHOLDER +
+                      " " +
+                      UI_TEXT.OPTIONAL
+                    }
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -411,13 +461,17 @@ export function ProductForm({
               <FormLabel>{UI_TEXT.PRODUCT_STATUS_LABEL}</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Pilih status" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
-                  <SelectItem value="aktif">{UI_TEXT.PRODUCT_STATUS_ACTIVE}</SelectItem>
-                  <SelectItem value="nonaktif">{UI_TEXT.PRODUCT_STATUS_INACTIVE}</SelectItem>
+                  <SelectItem value="aktif">
+                    {UI_TEXT.PRODUCT_STATUS_ACTIVE}
+                  </SelectItem>
+                  <SelectItem value="nonaktif">
+                    {UI_TEXT.PRODUCT_STATUS_INACTIVE}
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <FormMessage />
@@ -426,11 +480,7 @@ export function ProductForm({
         />
 
         <div className="flex flex-col sm:flex-row gap-3 pt-4">
-          <Button
-            type="submit"
-            disabled={loading}
-            className="w-full sm:w-auto"
-          >
+          <Button type="submit" disabled={loading} className="w-full sm:w-auto">
             {loading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

@@ -55,9 +55,9 @@ export function CreatableSelect<T extends FieldValues>({
 }: CreatableSelectProps<T>) {
   const [newItemName, setNewItemName] = useState("");
 
-// removed leftover duplicate function body and return
+  // removed leftover duplicate function body and return
 
-// removed duplicate non-generic CreatableSelect
+  // removed duplicate non-generic CreatableSelect
 
   const handleCreate = async () => {
     if (!newItemName.trim()) return;
@@ -80,7 +80,7 @@ export function CreatableSelect<T extends FieldValues>({
                 disabled={loading}
               >
                 <FormControl>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder={placeholder} />
                   </SelectTrigger>
                 </FormControl>
