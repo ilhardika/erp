@@ -1,4 +1,3 @@
-
 export const UI_TEXT = {
   // General
   ADD: "Tambah",
@@ -12,7 +11,7 @@ export const UI_TEXT = {
 
   // Product Form
   PRODUCT_SKU_LABEL: "SKU/Kode Produk",
-  PRODUCT_SKU_PLACEHOLDER: "Otomatis jika kosong",
+  PRODUCT_SKU_PLACEHOLDER: "Otomatis generate jika kosong",
   PRODUCT_NAME_LABEL: "Nama Produk *",
   PRODUCT_NAME_PLACEHOLDER: "Masukkan nama produk",
   PRODUCT_DESCRIPTION_LABEL: "Deskripsi",

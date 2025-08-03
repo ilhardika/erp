@@ -23,11 +23,7 @@ import { ProductCreateInput } from "@/lib/models/product";
 import { Category } from "@/lib/models/category";
 import { UI_TEXT } from "@/lib/constants";
 import { productSchema } from "@/lib/schemas";
-import {
-  createCategoryApi,
-  deleteCategoryApi,
-} from "@/lib/client-actions/categories";
-import { createSatuanApi, deleteSatuanApi } from "@/lib/client-actions/satuans";
+// ...existing code...
 import {
   Select,
   SelectContent,
@@ -79,7 +75,7 @@ export function ProductForm({
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      kode: defaultValues?.kode || "",
+      kode: defaultValues?.kode || undefined,
       nama: defaultValues?.nama || "",
       kategori: defaultValues?.kategori || "",
       hargaBeli: defaultValues?.hargaBeli || 0,
@@ -148,7 +144,15 @@ export function ProductForm({
     async (name: string) => {
       setAddingCategory(true);
       try {
-        await createCategoryApi(name);
+        const response = await fetch("/api/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nama: name }),
+        });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Gagal menambah kategori");
+        }
         await fetchCategories();
         if (onCategoryAdded) onCategoryAdded();
       } catch (error) {
@@ -166,7 +170,13 @@ export function ProductForm({
   const handleDeleteCategory = useCallback(
     async (id: string) => {
       try {
-        await deleteCategoryApi(id);
+        const response = await fetch(`/api/categories/${id}`, {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Gagal menghapus kategori");
+        }
         await fetchCategories();
         form.setValue("kategori", ""); // Clear selected category if deleted
       } catch (error) {
@@ -190,7 +200,15 @@ export function ProductForm({
     async (name: string) => {
       setAddingSatuan(true);
       try {
-        await createSatuanApi(name);
+        const response = await fetch("/api/satuans", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nama: name }),
+        });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Gagal menambah satuan");
+        }
         await fetchSatuans();
         if (onSatuanAdded) onSatuanAdded();
       } catch (error) {
@@ -206,7 +224,13 @@ export function ProductForm({
   const handleDeleteSatuan = useCallback(
     async (id: string) => {
       try {
-        await deleteSatuanApi(id);
+        const response = await fetch(`/api/satuans/${id}`, {
+          method: "DELETE",
+        });
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || "Gagal menghapus satuan");
+        }
         await fetchSatuans();
         form.setValue("satuan", ""); // Clear selected satuan if deleted
       } catch (error) {
@@ -248,13 +272,13 @@ export function ProductForm({
   const handleSubmit = useCallback(
     async (data: ProductFormData) => {
       try {
-        if (!data.kode) {
-          const kode = await generateKode();
-          data.kode = kode || "";
+        let kode = data.kode;
+        if (!kode) {
+          kode = await generateKode();
         }
         await onSubmit({
           ...data,
-          kode: data.kode || "",
+          kode: kode || "",
         });
       } catch (error) {
         console.error("Submit error:", error);
@@ -279,7 +303,7 @@ export function ProductForm({
                     placeholder={UI_TEXT.PRODUCT_SKU_PLACEHOLDER}
                   />
                 </FormControl>
-                <FormMessage />
+                {/* Tidak perlu validasi error untuk field kosong */}
               </FormItem>
             )}
           />
