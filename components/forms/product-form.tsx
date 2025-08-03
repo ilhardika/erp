@@ -23,8 +23,11 @@ import { ProductCreateInput } from "@/lib/models/product";
 import { Category } from "@/lib/models/category";
 import { UI_TEXT } from "@/lib/constants";
 import { productSchema } from "@/lib/schemas";
-import { createCategoryApi, deleteCategoryApi } from "@/lib/actions/categories";
-import { createSatuanApi, deleteSatuanApi } from "@/lib/actions/satuans";
+import {
+  createCategoryApi,
+  deleteCategoryApi,
+} from "@/lib/client-actions/categories";
+import { createSatuanApi, deleteSatuanApi } from "@/lib/client-actions/satuans";
 import {
   Select,
   SelectContent,
