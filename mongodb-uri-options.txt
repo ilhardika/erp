@@ -1,0 +1,11 @@
+# MongoDB Atlas alternative connection approach
+# Add to .env.local if DNS issues persist
+
+# Option 1: Use MongoDB connection string with DNS resolver options
+MONGODB_URI=mongodb+srv://ilhamhardika48:XVZZqUHZ1b3HoDCx@cluster-erp.pz7qsmu.mongodb.net/bizflow?retryWrites=true&w=majority&ssl=true
+
+# Option 2: If DNS still fails, can try with direct cluster nodes (need to get from Atlas)
+# MONGODB_URI=mongodb://cluster-erp-shard-00-00.pz7qsmu.mongodb.net:27017,cluster-erp-shard-00-01.pz7qsmu.mongodb.net:27017,cluster-erp-shard-00-02.pz7qsmu.mongodb.net:27017/bizflow?ssl=true&replicaSet=atlas-xxxxx-shard-0&authSource=admin&retryWrites=true&w=majority
+
+# Option 3: Use local MongoDB for development (current working setup)
+# MONGODB_URI=mongodb://localhost:27017/bizflow

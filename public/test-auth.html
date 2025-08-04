@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Auth Test</title>
+  </head>
+  <body>
+    <h1>Auth Test</h1>
+    <div>
+      <h3>Test Login</h3>
+      <input
+        type="email"
+        id="email"
+        placeholder="Email"
+        value="admin@test.com"
+      />
+      <input
+        type="password"
+        id="password"
+        placeholder="Password"
+        value="admin123"
+      />
+      <button onclick="testLogin()">Test Login</button>
+      <div id="result"></div>
+    </div>
+
+    <script>
+      async function testLogin() {
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const resultDiv = document.getElementById("result");
+
+        try {
+          console.log("Starting login test...");
+          resultDiv.innerHTML = "Testing login...";
+
+          // Test direct API call
+          const response = await fetch("/api/auth/callback/credentials", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: email,
+              password: password,
+              callbackUrl: "/dashboard",
+              redirect: "false",
+            }),
+          });
+
+          console.log("Response:", response);
+          const data = await response.text();
+          console.log("Response data:", data);
+
+          resultDiv.innerHTML = `
+                    <strong>Response Status:</strong> ${response.status}<br>
+                    <strong>Response Data:</strong> ${data}
+                `;
+        } catch (error) {
+          console.error("Login error:", error);
+          resultDiv.innerHTML = `<strong>Error:</strong> ${error.message}`;
+        }
+      }
+    </script>
+  </body>
+</html>
