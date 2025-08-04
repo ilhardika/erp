@@ -16,7 +16,7 @@ import {
   Building,
   Info,
 } from "lucide-react";
-import { AlertDialog } from "@/components/ui/alert-dialog";
+import { Dialog } from "@/components/ui/dialog";
 
 export default function ProductViewPage() {
   const [product, setProduct] = useState(null);
@@ -132,7 +132,7 @@ export default function ProductViewPage() {
 
   return (
     <div className="container mx-auto p-6">
-      <AlertDialog
+      <Dialog
         open={showDeleteDialog}
         title="Konfirmasi Hapus Produk"
         description={`Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.`}

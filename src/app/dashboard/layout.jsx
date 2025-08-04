@@ -203,7 +203,7 @@ export default function DashboardLayout({ children }) {
   const menuItems = getMenuItems();
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 overflow-hidden max-w-full">
       {/* Sidebar */}
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
@@ -272,7 +272,7 @@ export default function DashboardLayout({ children }) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col lg:ml-0">
+      <div className="flex-1 flex flex-col lg:ml-0 min-w-0">
         {/* Top Bar */}
         <header className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-4 flex-shrink-0">
           <Button
@@ -295,7 +295,9 @@ export default function DashboardLayout({ children }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-x-hidden overflow-y-auto p-6 min-w-0">
+          {children}
+        </main>
       </div>
 
       {/* Overlay for mobile */}

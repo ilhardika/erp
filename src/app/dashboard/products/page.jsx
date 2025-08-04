@@ -3,8 +3,6 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -12,17 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Package,
-  AlertTriangle,
-  Eye,
-  Download,
-  Upload,
-} from "lucide-react";
+import { Plus, Package } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +18,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import { DataTable } from "@/components/ui/data-table";
+import { createProductColumns } from "@/components/columns/product-columns";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
@@ -44,6 +34,18 @@ export default function ProductsPage() {
     total: 0,
     totalPages: 0,
   });
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteId, setDeleteId] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
+
+  const handleDeleteClick = (id) => {
+    setDeleteId(id);
+    setDeleteError("");
+    setShowDeleteDialog(true);
+  };
+
+  // Columns for data table
+  const columns = createProductColumns(handleDeleteClick);
 
   useEffect(() => {
     fetchProducts();
@@ -73,15 +75,6 @@ export default function ProductsPage() {
     } finally {
       setLoading(false);
     }
-  };
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteId, setDeleteId] = useState(null);
-  const [deleteError, setDeleteError] = useState("");
-
-  const handleDeleteClick = (id) => {
-    setDeleteId(id);
-    setDeleteError("");
-    setShowDeleteDialog(true);
   };
 
   const confirmDelete = async () => {
@@ -132,8 +125,35 @@ export default function ProductsPage() {
     };
   };
 
+  // Filter components
+  const filters = (
+    <>
+      <select
+        value={selectedCategory}
+        onChange={(e) => setSelectedCategory(e.target.value)}
+        className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+      >
+        <option value="">Semua Kategori</option>
+        {categories.map((category) => (
+          <option key={category} value={category}>
+            {category}
+          </option>
+        ))}
+      </select>
+      <select
+        value={selectedStatus}
+        onChange={(e) => setSelectedStatus(e.target.value)}
+        className="px-3 py-2 border border-gray-300 rounded-md text-sm"
+      >
+        <option value="">Semua Status</option>
+        <option value="active">Aktif</option>
+        <option value="inactive">Nonaktif</option>
+      </select>
+    </>
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-full overflow-x-hidden">
       {/* Dialog konfirmasi hapus produk */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
@@ -166,48 +186,22 @@ export default function ProductsPage() {
       {/* Konten utama dashboard produk */}
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Produk</CardTitle>
-          <CardDescription>
-            Menampilkan {pagination.total} produk
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Daftar Produk</CardTitle>
+              <CardDescription>
+                Menampilkan {pagination.total} produk
+              </CardDescription>
+            </div>
+            <Link href="/dashboard/products/create">
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Tambah Produk
+              </Button>
+            </Link>
+          </div>
         </CardHeader>
         <CardContent>
-          {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Cari produk, kode, atau deskripsi..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              <select
-                value={selectedCategory}
-                onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="">Semua Kategori</option>
-                {categories.map((category) => (
-                  <option key={category} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-              >
-                <option value="">Semua Status</option>
-                <option value="active">Aktif</option>
-                <option value="inactive">Nonaktif</option>
-              </select>
-            </div>
-          </div>
-
           {loading ? (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -225,157 +219,48 @@ export default function ProductsPage() {
               </Link>
             </div>
           ) : (
-            <div className="w-full overflow-x-auto border rounded-lg">
-              <table className="min-w-[800px] bg-white">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left p-4 min-w-[200px] font-medium text-gray-900">
-                      Produk
-                    </th>
-                    <th className="text-left p-4 min-w-[100px] font-medium text-gray-900">
-                      Kode
-                    </th>
-                    <th className="text-left p-4 min-w-[100px] font-medium text-gray-900">
-                      Kategori
-                    </th>
-                    <th className="text-left p-4 min-w-[120px] font-medium text-gray-900">
-                      Harga
-                    </th>
-                    <th className="text-left p-4 min-w-[80px] font-medium text-gray-900">
-                      Stok
-                    </th>
-                    <th className="text-left p-4 min-w-[80px] font-medium text-gray-900">
-                      Status
-                    </th>
-                    <th className="text-left p-4 min-w-[120px] font-medium text-gray-900">
-                      Aksi
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => {
-                    const stockStatus = getStockStatus(
-                      product.stock,
-                      product.min_stock || 0
-                    );
-                    return (
-                      <tr
-                        key={product.id}
-                        className="border-b hover:bg-gray-50"
-                      >
-                        <td className="p-4">
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            {product.description && (
-                              <p className="text-sm text-gray-500 truncate max-w-[180px]">
-                                {product.description}
-                              </p>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <code className="bg-gray-100 px-2 py-1 rounded text-sm">
-                            {product.code}
-                          </code>
-                        </td>
-                        <td className="p-4">
-                          <Badge variant="secondary">{product.category}</Badge>
-                        </td>
-                        <td className="p-4">
-                          <p className="font-medium">
-                            {formatPrice(product.price)}
-                          </p>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            <span
-                              className={`font-medium ${stockStatus.color}`}
-                            >
-                              {product.stock}
-                            </span>
-                            <span className="text-gray-500 text-sm">
-                              {product.unit}
-                            </span>
-                          </div>
-                          {stockStatus.warning && (
-                            <div className="flex items-center gap-1 mt-1">
-                              <AlertTriangle className="h-3 w-3 text-yellow-500" />
-                              <span className="text-xs text-yellow-600">
-                                {stockStatus.label}
-                              </span>
-                            </div>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <Badge
-                            variant={
-                              product.status === "active" ? "success" : "danger"
-                            }
-                          >
-                            {product.status === "active" ? "Aktif" : "Nonaktif"}
-                          </Badge>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            <Link href={`/dashboard/products/${product.id}`}>
-                              <Button variant="outline" size="sm">
-                                <Eye className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Link
-                              href={`/dashboard/products/${product.id}/edit`}
-                            >
-                              <Button variant="outline" size="sm">
-                                <Edit className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleDeleteClick(product.id)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+            <DataTable
+              columns={columns}
+              data={products}
+              searchPlaceholder="Cari produk, kode, atau deskripsi..."
+              filters={filters}
+              pagination={pagination}
+              setPagination={setPagination}
+              onSearchChange={setSearchTerm}
+            />
           )}
         </CardContent>
 
         {/* Pagination */}
         {pagination && pagination.totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t">
-            <div className="text-sm text-gray-500">
-              Halaman {pagination.page} dari {pagination.totalPages} (
-              {pagination.total} total)
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
-                }
-                disabled={pagination.page <= 1}
-              >
-                Sebelumnya
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
-                }
-                disabled={pagination.page >= pagination.totalPages}
-              >
-                Selanjutnya
-              </Button>
+          <div className="px-6 py-4 border-t">
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-gray-500">
+                Halaman {pagination.page} dari {pagination.totalPages} (
+                {pagination.total} total)
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
+                  }
+                  disabled={pagination.page <= 1}
+                >
+                  Sebelumnya
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
+                  }
+                  disabled={pagination.page >= pagination.totalPages}
+                >
+                  Selanjutnya
+                </Button>
+              </div>
             </div>
           </div>
         )}
