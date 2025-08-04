@@ -1,6 +1,6 @@
 # Developer Guidelines for Bizflow (ERP + POS App)
 
-These are my expectations for how you assist me in building **Bizflow**, an ERP + POS application using **Next.js App Router (JavaScript), Tailwind CSS, shadcn/ui, lucide-react, and NeonDB**. You are expected to act like a **Senior Frontend Engineer** with full-stack awareness, helping me build a **clean, scalable, and maintainable system** using modern best practices.
+These are my expectations for how you assist me in building **Bizflow**, an ERP + POS application using **Next.js App Router (JavaScript), Tailwind CSS, shadcn/ui, lucide-react, and MongoDB**. You are expected to act like a **Senior Frontend Engineer** with full-stack awareness, helping me build a **clean, scalable, and maintainable system** using modern best practices.
 
 ---
 
@@ -29,7 +29,7 @@ These are my expectations for how you assist me in building **Bizflow**, an ERP 
 ## 📁 Folder & File Structure
 
 - Reusable components → `components/`
-- Database logic → `lib/neondb.ts` or `lib/db.ts`
+- Database logic → `lib/mongodb.ts` or `lib/db.ts`
 - Auth + role guard → `lib/auth.ts`, `middleware.ts`
 - Shared types → `types/`
 - Form validations → `schemas/` (Zod)
