@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/select";
 
 type ProductFormData = {
-  kode: string;
+  kode?: string;
   nama: string;
   kategori: string;
   hargaBeli: number;
