@@ -8,9 +8,14 @@ const uri = process.env.MONGODB_URI;
 const options = {
   retryWrites: true,
   w: "majority",
-  serverSelectionTimeoutMS: 5000,
-  connectTimeoutMS: 10000,
+  serverSelectionTimeoutMS: 30000,
+  connectTimeoutMS: 30000,
+  socketTimeoutMS: 30000,
   maxPoolSize: 10,
+  minPoolSize: 5,
+  maxIdleTimeMS: 30000,
+  waitQueueTimeoutMS: 30000,
+  family: 4, // Use IPv4 only to avoid IPv6 DNS issues
 };
 
 let client;

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -17,6 +16,10 @@ import {
   LogOut,
   Menu,
   X,
+  ShoppingBag,
+  Truck,
+  Warehouse,
+  Building2,
 } from "lucide-react";
 
 export default function DashboardLayout({ children }) {
@@ -60,79 +63,120 @@ export default function DashboardLayout({ children }) {
         icon: LayoutDashboard,
         label: "Dashboard",
         href: "/dashboard",
-        roles: ["admin", "cashier", "warehouse", "sales", "hr"],
+        roles: ["admin", "manager", "staff"],
       },
       {
         icon: ShoppingCart,
         label: "POS",
         href: "/dashboard/pos",
-        roles: ["admin", "cashier"],
+        roles: ["admin", "manager", "staff"],
+        subItems: [
+          { label: "POS Terminal", href: "/dashboard/pos" },
+          { label: "Transaction History", href: "/dashboard/pos/history" },
+          { label: "Shift Management", href: "/dashboard/pos/shift" },
+        ],
       },
       {
-        icon: Package,
-        label: "Sales Orders",
+        icon: ShoppingBag,
+        label: "Sales",
         href: "/dashboard/sales",
-        roles: ["admin", "sales"],
+        roles: ["admin", "manager", "staff"],
+        subItems: [
+          { label: "Sales Orders", href: "/dashboard/sales/orders" },
+          { label: "Create Order", href: "/dashboard/sales/create" },
+        ],
       },
       {
-        icon: Package,
+        icon: Truck,
         label: "Purchasing",
         href: "/dashboard/purchases",
-        roles: ["admin", "warehouse"],
+        roles: ["admin", "manager"],
+        subItems: [
+          { label: "Purchase Invoices", href: "/dashboard/purchases/invoices" },
+          { label: "Goods Receiving", href: "/dashboard/purchases/receive" },
+        ],
       },
       {
         icon: Package,
         label: "Products",
         href: "/dashboard/products",
-        roles: ["admin", "warehouse"],
+        roles: ["admin", "manager", "staff"],
       },
       {
-        icon: Package,
+        icon: Warehouse,
         label: "Inventory",
         href: "/dashboard/inventory",
-        roles: ["admin", "warehouse"],
+        roles: ["admin", "manager", "staff"],
+        subItems: [
+          { label: "Stock Opname", href: "/dashboard/inventory/stock-opname" },
+          { label: "Stock Mutation", href: "/dashboard/inventory/mutation" },
+        ],
       },
       {
         icon: Users,
         label: "Customers",
         href: "/dashboard/customers",
-        roles: ["admin", "sales"],
+        roles: ["admin", "manager", "staff"],
       },
       {
-        icon: Users,
+        icon: Building2,
         label: "Suppliers",
         href: "/dashboard/suppliers",
-        roles: ["admin", "warehouse"],
+        roles: ["admin", "manager"],
       },
       {
         icon: Gift,
         label: "Promotions",
         href: "/dashboard/promotions",
-        roles: ["admin", "sales"],
+        roles: ["admin", "manager"],
       },
       {
         icon: UserPlus,
-        label: "HR",
+        label: "Employees",
         href: "/dashboard/employees",
-        roles: ["admin", "hr"],
+        roles: ["admin", "manager"],
+        subItems: [
+          { label: "Employee Directory", href: "/dashboard/employees" },
+          { label: "Attendance", href: "/dashboard/attendance" },
+          { label: "Payroll", href: "/dashboard/payroll" },
+        ],
       },
       {
         icon: DollarSign,
         label: "Finance",
         href: "/dashboard/finance",
-        roles: ["admin"],
+        roles: ["admin", "manager"],
+        subItems: [
+          { label: "Transactions", href: "/dashboard/finance/transactions" },
+          { label: "Journal Entries", href: "/dashboard/finance/journal" },
+          { label: "Balance Sheet", href: "/dashboard/finance/balance-sheet" },
+          { label: "Profit & Loss", href: "/dashboard/finance/profit-loss" },
+        ],
       },
       {
         icon: BarChart3,
         label: "Reports",
         href: "/dashboard/reports",
-        roles: ["admin"],
+        roles: ["admin", "manager"],
+        subItems: [
+          { label: "Sales Report", href: "/dashboard/reports/sales" },
+          { label: "Product Report", href: "/dashboard/reports/products" },
+          { label: "Stock Report", href: "/dashboard/reports/stock" },
+          { label: "Salesman Report", href: "/dashboard/reports/salesman" },
+          { label: "Finance Report", href: "/dashboard/reports/finance" },
+        ],
       },
       {
         icon: Settings,
         label: "Settings",
         href: "/dashboard/settings",
         roles: ["admin"],
+        subItems: [
+          { label: "Users", href: "/dashboard/settings/users" },
+          { label: "Company", href: "/dashboard/settings/company" },
+          { label: "Permissions", href: "/dashboard/settings/permissions" },
+          { label: "Backup", href: "/dashboard/settings/backup" },
+        ],
       },
     ];
 
@@ -164,9 +208,9 @@ export default function DashboardLayout({ children }) {
       <div
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}
+        } transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 flex flex-col`}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b">
+        <div className="flex items-center justify-between h-16 px-4 border-b flex-shrink-0">
           <h1 className="text-xl font-bold text-blue-600">Bizflow ERP</h1>
           <Button
             variant="ghost"
@@ -178,32 +222,47 @@ export default function DashboardLayout({ children }) {
           </Button>
         </div>
 
-        <nav className="mt-4 px-4">
-          <div className="space-y-2">
+        <nav className="mt-4 px-4 flex-1 overflow-y-auto">
+          <div className="space-y-1">
             {menuItems.map((item) => {
               const Icon = item.icon;
               return (
                 <Button
                   key={item.href}
                   variant="ghost"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-left hover:bg-blue-50 hover:text-blue-700"
                   onClick={() => {
                     router.push(item.href);
                     setSidebarOpen(false);
                   }}
                 >
-                  <Icon className="mr-3 h-4 w-4" />
-                  {item.label}
+                  <Icon className="mr-3 h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{item.label}</span>
                 </Button>
               );
             })}
           </div>
         </nav>
 
-        <div className="absolute bottom-4 left-4 right-4">
+        {/* User Info and Logout - Fixed at bottom */}
+        <div className="border-t p-4 space-y-3">
+          <div className="flex items-center space-x-3 px-2">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-sm font-medium text-blue-700">
+                {user.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900 truncate">
+                {user.name}
+              </p>
+              <p className="text-xs text-gray-500 uppercase">{user.role}</p>
+            </div>
+          </div>
+
           <Button
             variant="outline"
-            className="w-full justify-start"
+            className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
             onClick={handleLogout}
           >
             <LogOut className="mr-3 h-4 w-4" />
@@ -215,7 +274,7 @@ export default function DashboardLayout({ children }) {
       {/* Main Content */}
       <div className="flex-1 flex flex-col lg:ml-0">
         {/* Top Bar */}
-        <header className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-4">
+        <header className="bg-white shadow-sm border-b h-16 flex items-center justify-between px-4 flex-shrink-0">
           <Button
             variant="ghost"
             size="sm"
@@ -226,8 +285,10 @@ export default function DashboardLayout({ children }) {
           </Button>
 
           <div className="flex items-center space-x-4">
-            <span className="text-sm text-gray-600">Welcome, {user.name}</span>
-            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+            <span className="text-sm text-gray-600 hidden sm:inline">
+              Welcome back, {user.name}
+            </span>
+            <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-medium">
               {user.role.toUpperCase()}
             </span>
           </div>
