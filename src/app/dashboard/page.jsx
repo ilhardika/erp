@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   DollarSign,
@@ -9,8 +9,6 @@ import {
   Users,
   TrendingUp,
   AlertTriangle,
-  Calendar,
-  Clock,
   Building2,
   UserCheck,
   Activity,
@@ -87,13 +85,18 @@ export default function DashboardPage() {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "Tidak tersedia";
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Format tanggal tidak valid";
+
     return new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
       month: "short",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(new Date(dateString));
+    }).format(date);
   };
 
   if (loading) {
@@ -339,7 +342,7 @@ export default function DashboardPage() {
                         {activity.description}
                       </p>
                       <p className="text-xs text-gray-500">
-                        {formatDate(activity.createdAt)}
+                        {formatDate(activity.created_at || activity.createdAt)}
                       </p>
                     </div>
                   </div>

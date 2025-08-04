@@ -41,7 +41,7 @@ export default function EditProductPage() {
     },
   });
 
-  const categories = [
+  const defaultCategories = [
     "Elektronik",
     "Pakaian",
     "Makanan & Minuman",
@@ -53,6 +53,10 @@ export default function EditProductPage() {
     "Otomotif",
     "Perlengkapan Kantor",
   ];
+  const categories =
+    formData.category && !defaultCategories.includes(formData.category)
+      ? [formData.category, ...defaultCategories]
+      : defaultCategories;
 
   const units = [
     "pcs",
@@ -87,7 +91,7 @@ export default function EditProductPage() {
           price: product.price?.toString() || "",
           cost: product.cost?.toString() || "",
           stock: product.stock?.toString() || "",
-          minStock: product.minStock?.toString() || "",
+          minStock: (product.min_stock ?? product.minStock)?.toString() || "",
           unit: product.unit || "pcs",
           barcode: product.barcode || "",
           supplier: product.supplier || "",
@@ -174,7 +178,7 @@ export default function EditProductPage() {
       const data = await response.json();
 
       if (data.success) {
-        router.push(`/dashboard/products/${params.id}`);
+        router.push(`/dashboard/products`);
       } else {
         alert(data.error || "Gagal mengupdate produk");
       }
@@ -202,13 +206,13 @@ export default function EditProductPage() {
   return (
     <div className="container mx-auto p-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 items-start xs:items-center mb-6">
         <Link href={`/dashboard/products/${params.id}`}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
-        <div>
+        <div className="mt-2 xs:mt-0">
           <h1 className="text-2xl md:text-3xl font-bold">Edit Produk</h1>
           <p className="text-gray-600">
             Update informasi produk dalam inventori Anda

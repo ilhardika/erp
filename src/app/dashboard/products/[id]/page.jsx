@@ -4,27 +4,19 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   ArrowLeft,
-  Edit,
-  Trash2,
   Package,
   BarChart3,
   DollarSign,
   Warehouse,
   Calendar,
-  User,
   Building,
   Info,
 } from "lucide-react";
+import { AlertDialog } from "@/components/ui/alert-dialog";
 
 export default function ProductViewPage() {
   const [product, setProduct] = useState(null);
@@ -56,22 +48,28 @@ export default function ProductViewPage() {
     }
   };
 
-  const handleDelete = async () => {
-    if (!confirm("Apakah Anda yakin ingin menghapus produk ini?")) return;
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
 
+  const handleDelete = async () => {
+    setDeleteError("");
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = async () => {
     try {
       const response = await fetch(`/api/products/${params.id}`, {
         method: "DELETE",
       });
-
       if (response.ok) {
+        setShowDeleteDialog(false);
         router.push("/dashboard/products");
       } else {
-        alert("Gagal menghapus produk");
+        setDeleteError("Gagal menghapus produk");
       }
     } catch (error) {
       console.error("Error deleting product:", error);
-      alert("Gagal menghapus produk");
+      setDeleteError("Gagal menghapus produk");
     }
   };
 
@@ -83,13 +81,18 @@ export default function ProductViewPage() {
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return "Tidak tersedia";
+
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return "Format tanggal tidak valid";
+
     return new Intl.DateTimeFormat("id-ID", {
       day: "numeric",
       month: "long",
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
-    }).format(new Date(dateString));
+    }).format(date);
   };
 
   const getStockStatus = (stock, minStock) => {
@@ -129,34 +132,32 @@ export default function ProductViewPage() {
 
   return (
     <div className="container mx-auto p-6">
+      <AlertDialog
+        open={showDeleteDialog}
+        title="Konfirmasi Hapus Produk"
+        description={`Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan.`}
+        onConfirm={confirmDelete}
+        onCancel={() => setShowDeleteDialog(false)}
+        confirmText="Hapus"
+        cancelText="Batal"
+      />
+      {deleteError && (
+        <div className="mb-4 p-3 rounded bg-red-100 text-red-700 text-sm">
+          {deleteError}
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div className="flex items-center gap-4">
+        <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 items-start xs:items-center">
           <Link href="/dashboard/products">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>
           </Link>
-          <div>
+          <div className="mt-2 xs:mt-0">
             <h1 className="text-2xl md:text-3xl font-bold">{product.name}</h1>
             <p className="text-gray-600">Detail produk dan informasi stok</p>
           </div>
-        </div>
-        <div className="flex gap-2">
-          <Link href={`/dashboard/products/${product._id}/edit`}>
-            <Button className="flex items-center gap-2">
-              <Edit className="h-4 w-4" />
-              Edit
-            </Button>
-          </Link>
-          <Button
-            variant="destructive"
-            onClick={handleDelete}
-            className="flex items-center gap-2"
-          >
-            <Trash2 className="h-4 w-4" />
-            Hapus
-          </Button>
         </div>
       </div>
 
@@ -406,18 +407,22 @@ export default function ProductViewPage() {
             <CardContent className="space-y-3 text-sm">
               <div>
                 <label className="font-medium text-gray-600">Dibuat</label>
-                <p className="text-gray-800">{formatDate(product.createdAt)}</p>
+                <p className="text-gray-800">
+                  {formatDate(product.created_at)}
+                </p>
               </div>
               <div>
                 <label className="font-medium text-gray-600">
                   Terakhir Diupdate
                 </label>
-                <p className="text-gray-800">{formatDate(product.updatedAt)}</p>
+                <p className="text-gray-800">
+                  {formatDate(product.updated_at)}
+                </p>
               </div>
               <div>
                 <label className="font-medium text-gray-600">ID Produk</label>
                 <code className="block bg-gray-100 px-2 py-1 rounded text-xs font-mono mt-1">
-                  {product._id}
+                  {product.id}
                 </code>
               </div>
             </CardContent>
