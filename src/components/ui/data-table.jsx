@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -9,7 +9,6 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-
 import {
   Table,
   TableBody,
@@ -20,17 +19,21 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight } from "lucide-react";
 
 export function DataTable({
-  columns,
-  data,
-  searchKey = "",
-  searchPlaceholder = "Search...",
-  filters,
-  pagination,
-  setPagination,
-  onSearchChange,
+  data = [],
+  columns = [],
+  searchPlaceholder = "Cari data...",
+  emptyMessage = "Tidak ada data yang ditemukan",
+  pageSize = 10,
+  showSearch = true,
+  showPagination = true,
+  filters = null, // optional filter components
+  className = "",
+  enableSorting = true,
+  enableFiltering = true,
+  onRowClick = null, // optional row click handler
 }) {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -39,140 +42,173 @@ export function DataTable({
   const table = useReactTable({
     data,
     columns,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    initialState: {
+      pagination: {
+        pageSize: pageSize,
+      },
+    },
     state: {
       sorting,
       columnFilters,
       globalFilter,
     },
-    manualPagination: true,
-    manualFiltering: true,
-    pageCount: pagination ? pagination.totalPages : -1,
+    enableSorting,
+    enableFiltering,
   });
 
-  // Handle search change if provided
-  useEffect(() => {
-    if (onSearchChange) {
-      const timeoutId = setTimeout(() => {
-        onSearchChange(globalFilter);
-      }, 300);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [globalFilter, onSearchChange]);
+  const totalRows = table.getFilteredRowModel().rows.length;
+  const currentPage = table.getState().pagination.pageIndex + 1;
+  const totalPages = table.getPageCount();
+  const startRow = table.getState().pagination.pageIndex * pageSize + 1;
+  const endRow = Math.min(startRow + pageSize - 1, totalRows);
 
   return (
-    <div className="space-y-4 w-full max-w-full">
+    <div className={`space-y-4 w-full ${className}`}>
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder={searchPlaceholder}
-            value={globalFilter ?? ""}
-            onChange={(event) => setGlobalFilter(String(event.target.value))}
-            className="pl-10"
-          />
+      {(showSearch || filters) && (
+        <div className="flex flex-col sm:flex-row gap-4">
+          {showSearch && (
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+              <Input
+                placeholder={searchPlaceholder}
+                value={globalFilter ?? ""}
+                onChange={(event) =>
+                  setGlobalFilter(String(event.target.value))
+                }
+                className="pl-10"
+              />
+            </div>
+          )}
+          {filters && (
+            <div className="flex flex-col sm:flex-row gap-2">{filters}</div>
+          )}
         </div>
-        {filters && (
-          <div className="flex flex-col sm:flex-row gap-2">{filters}</div>
-        )}
-      </div>
+      )}
 
-      {/* Table */}
-      <div className="w-full max-w-full">
-        <div className="rounded-md border bg-white overflow-hidden">
-          <div className="overflow-x-auto max-w-full">
-            <Table className="min-w-[800px] w-full bg-white">
-              <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => {
-                      return (
-                        <TableHead
-                          key={header.id}
-                          className="bg-gray-50 font-medium text-gray-900 h-12 px-4 text-left align-middle whitespace-nowrap border-r border-gray-200 last:border-r-0"
-                        >
+      {/* Table Container */}
+      <div className="w-full rounded-md border bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table className="min-w-[800px] w-full">
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    const isSortable =
+                      header.column.getCanSort() && enableSorting;
+                    return (
+                      <TableHead
+                        key={header.id}
+                        className={`bg-gray-50 font-medium text-gray-900 h-12 px-4 text-left align-middle whitespace-nowrap border-r border-gray-200 last:border-r-0 ${
+                          isSortable
+                            ? "cursor-pointer select-none hover:bg-gray-100"
+                            : ""
+                        }`}
+                        onClick={
+                          isSortable
+                            ? header.column.getToggleSortingHandler()
+                            : undefined
+                        }
+                      >
+                        <div className="flex items-center gap-1">
                           {header.isPlaceholder
                             ? null
                             : flexRender(
                                 header.column.columnDef.header,
                                 header.getContext()
                               )}
-                        </TableHead>
-                      );
-                    })}
-                  </TableRow>
-                ))}
-              </TableHeader>
-              <TableBody>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && "selected"}
-                      className="hover:bg-gray-50 border-b"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          className="p-4 align-top whitespace-nowrap border-r border-gray-100 last:border-r-0"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
+                          {isSortable && (
+                            <span className="text-xs">
+                              {header.column.getIsSorted() === "asc"
+                                ? "↑"
+                                : header.column.getIsSorted() === "desc"
+                                ? "↓"
+                                : "↕"}
+                            </span>
                           )}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      No results.
-                    </TableCell>
+                        </div>
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={`hover:bg-gray-50 border-b ${
+                      onRowClick ? "cursor-pointer" : ""
+                    }`}
+                    onClick={() => onRowClick && onRowClick(row.original)}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className="p-4 align-top whitespace-nowrap border-r border-gray-100 last:border-r-0"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="text-center">
+                    <div className="py-8 text-gray-500 text-base font-medium">
+                      {emptyMessage}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
       </div>
 
-      {/* Pagination */}
-      {pagination && pagination.totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-sm text-gray-500">
-            Halaman {pagination.page} dari {pagination.totalPages} (
-            {pagination.total} total)
-          </div>
-          <div className="flex gap-2">
+      {/* Pagination - Always visible when showPagination is true */}
+      {showPagination && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4">
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
-              }
-              disabled={pagination.page <= 1}
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="flex items-center gap-1"
             >
-              Sebelumnya
+              <ChevronLeft className="h-4 w-4" />
             </Button>
+
+            <div className="flex items-center gap-1 text-sm">
+              <span>Halaman</span>
+              <span className="font-medium">
+                {totalPages > 0 ? currentPage : 0}
+              </span>
+              <span>/</span>
+              <span className="font-medium">{totalPages}</span>
+            </div>
+
             <Button
               variant="outline"
               size="sm"
-              onClick={() =>
-                setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
-              }
-              disabled={pagination.page >= pagination.totalPages}
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="flex items-center gap-1"
             >
-              Selanjutnya
+              <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
         </div>

@@ -24,16 +24,9 @@ import { createProductColumns } from "@/components/columns/product-columns";
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [categories, setCategories] = useState([]);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    totalPages: 0,
-  });
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleteId, setDeleteId] = useState(null);
   const [deleteError, setDeleteError] = useState("");
@@ -49,26 +42,17 @@ export default function ProductsPage() {
 
   useEffect(() => {
     fetchProducts();
-  }, [searchTerm, selectedCategory, selectedStatus, pagination.page]);
+  }, []);
 
   const fetchProducts = async () => {
     try {
       setLoading(true);
-      const params = new URLSearchParams({
-        page: pagination.page.toString(),
-        limit: pagination.limit.toString(),
-        ...(searchTerm && { search: searchTerm }),
-        ...(selectedCategory && { category: selectedCategory }),
-        ...(selectedStatus && { status: selectedStatus }),
-      });
-
-      const response = await fetch(`/api/products?${params}`);
+      const response = await fetch("/api/products");
       const data = await response.json();
 
       if (data.success) {
-        setProducts(data.data.products);
-        setPagination(data.data.pagination);
-        setCategories(data.data.categories);
+        setProducts(data.data.products || []);
+        setCategories(data.data.categories || []);
       }
     } catch (error) {
       console.error("Error fetching products:", error);
@@ -86,7 +70,7 @@ export default function ProductsPage() {
       if (response.ok) {
         setShowDeleteDialog(false);
         setDeleteId(null);
-        fetchProducts();
+        fetchProducts(); // Reload data after delete
       } else {
         setDeleteError("Gagal menghapus produk");
       }
@@ -96,64 +80,43 @@ export default function ProductsPage() {
     }
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
+  // Filter components for conditional filtering
+  const filters = [
+    <select
+      key="category"
+      value={selectedCategory}
+      onChange={(e) => setSelectedCategory(e.target.value)}
+      className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    >
+      <option value="">Semua Kategori</option>
+      {categories.map((category) => (
+        <option key={category} value={category}>
+          {category}
+        </option>
+      ))}
+    </select>,
+    <select
+      key="status"
+      value={selectedStatus}
+      onChange={(e) => setSelectedStatus(e.target.value)}
+      className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    >
+      <option value="">Semua Status</option>
+      <option value="active">Aktif</option>
+      <option value="inactive">Nonaktif</option>
+    </select>,
+  ];
 
-  const getStockStatus = (stock, minStock) => {
-    if (stock <= 0) {
-      return {
-        label: "Habis",
-        color: "text-red-600",
-        warning: true,
-      };
-    } else if (stock <= minStock) {
-      return {
-        label: "Stok Rendah",
-        color: "text-yellow-600",
-        warning: true,
-      };
-    }
-    return {
-      label: "Normal",
-      color: "text-green-600",
-      warning: false,
-    };
-  };
-
-  // Filter components
-  const filters = (
-    <>
-      <select
-        value={selectedCategory}
-        onChange={(e) => setSelectedCategory(e.target.value)}
-        className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-      >
-        <option value="">Semua Kategori</option>
-        {categories.map((category) => (
-          <option key={category} value={category}>
-            {category}
-          </option>
-        ))}
-      </select>
-      <select
-        value={selectedStatus}
-        onChange={(e) => setSelectedStatus(e.target.value)}
-        className="px-3 py-2 border border-gray-300 rounded-md text-sm"
-      >
-        <option value="">Semua Status</option>
-        <option value="active">Aktif</option>
-        <option value="inactive">Nonaktif</option>
-      </select>
-    </>
-  );
+  // Filter data based on selected filters
+  const filteredProducts = products.filter((product) => {
+    const matchesCategory =
+      !selectedCategory || product.category === selectedCategory;
+    const matchesStatus = !selectedStatus || product.status === selectedStatus;
+    return matchesCategory && matchesStatus;
+  });
 
   return (
-    <div className="space-y-6 max-w-full overflow-x-hidden">
+    <div className="space-y-6">
       {/* Dialog konfirmasi hapus produk */}
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <DialogContent>
@@ -183,87 +146,71 @@ export default function ProductsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Konten utama dashboard produk */}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Produk</h1>
+          <p className="text-gray-500 mt-2">Kelola data produk dan inventori</p>
+        </div>
+        <Link href="/dashboard/products/create">
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Tambah Produk
+          </Button>
+        </Link>
+      </div>
+
+      {/* Main Content */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Daftar Produk</CardTitle>
-              <CardDescription>
-                Menampilkan {pagination.total} produk
-              </CardDescription>
-            </div>
-            <Link href="/dashboard/products/create">
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Tambah Produk
-              </Button>
-            </Link>
-          </div>
+          <CardTitle>Daftar Produk</CardTitle>
+          <CardDescription>
+            Menampilkan {filteredProducts.length} dari {products.length} produk
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8">
+            <div className="text-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-2 text-gray-500">Memuat produk...</p>
-            </div>
-          ) : products.length === 0 ? (
-            <div className="text-center py-8">
-              <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">Tidak ada produk ditemukan</p>
-              <Link href="/dashboard/products/create">
-                <Button className="mt-4">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Tambah Produk Pertama
-                </Button>
-              </Link>
+              <p className="mt-4 text-gray-500">Memuat produk...</p>
             </div>
           ) : (
             <DataTable
+              data={filteredProducts}
               columns={columns}
-              data={products}
               searchPlaceholder="Cari produk, kode, atau deskripsi..."
               filters={filters}
-              pagination={pagination}
-              setPagination={setPagination}
-              onSearchChange={setSearchTerm}
+              emptyMessage={
+                <div className="text-center py-12">
+                  <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {products.length === 0
+                      ? "Belum ada produk"
+                      : "Produk tidak ditemukan"}
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    {products.length === 0
+                      ? "Mulai dengan menambahkan produk pertama Anda"
+                      : "Coba ubah kriteria pencarian atau filter"}
+                  </p>
+                  {products.length === 0 && (
+                    <Link href="/dashboard/products/create">
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Tambah Produk Pertama
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              }
+              pageSize={10}
+              showSearch={true}
+              showPagination={true}
+              enableSorting={true}
+              enableFiltering={true}
             />
           )}
         </CardContent>
-
-        {/* Pagination */}
-        {pagination && pagination.totalPages > 1 && (
-          <div className="px-6 py-4 border-t">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                Halaman {pagination.page} dari {pagination.totalPages} (
-                {pagination.total} total)
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setPagination((prev) => ({ ...prev, page: prev.page - 1 }))
-                  }
-                  disabled={pagination.page <= 1}
-                >
-                  Sebelumnya
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setPagination((prev) => ({ ...prev, page: prev.page + 1 }))
-                  }
-                  disabled={pagination.page >= pagination.totalPages}
-                >
-                  Selanjutnya
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
       </Card>
     </div>
   );
