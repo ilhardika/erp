@@ -69,7 +69,7 @@ export default function ProductsPage() {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+    if (!confirm("Apakah Anda yakin ingin menghapus produk ini?")) return;
 
     try {
       const response = await fetch(`/api/products/${id}`, {
@@ -79,11 +79,11 @@ export default function ProductsPage() {
       if (response.ok) {
         fetchProducts();
       } else {
-        alert("Failed to delete product");
+        alert("Gagal menghapus produk");
       }
     } catch (error) {
       console.error("Error deleting product:", error);
-      alert("Failed to delete product");
+      alert("Gagal menghapus produk");
     }
   };
 
@@ -110,10 +110,10 @@ export default function ProductsPage() {
   };
 
   const getStockStatus = (stock, minStock) => {
-    if (stock <= 0) return { label: "Out of Stock", color: "text-red-600" };
+    if (stock <= 0) return { label: "Stok Habis", color: "text-red-600" };
     if (stock <= minStock)
-      return { label: "Low Stock", color: "text-yellow-600" };
-    return { label: "In Stock", color: "text-green-600" };
+      return { label: "Stok Rendah", color: "text-yellow-600" };
+    return { label: "Stok Tersedia", color: "text-green-600" };
   };
 
   if (loading && products.length === 0) {
@@ -122,7 +122,7 @@ export default function ProductsPage() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-            <p className="text-gray-500">Loading products...</p>
+            <p className="text-gray-500">Memuat produk...</p>
           </div>
         </div>
       </div>
@@ -134,22 +134,22 @@ export default function ProductsPage() {
       {/* Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold">Products</h1>
-          <p className="text-gray-600">Manage your product inventory</p>
+          <h1 className="text-3xl font-bold">Produk</h1>
+          <p className="text-gray-600">Kelola inventori produk Anda</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" className="flex items-center gap-2">
             <Upload className="h-4 w-4" />
-            Import
+            Impor
           </Button>
           <Button variant="outline" className="flex items-center gap-2">
             <Download className="h-4 w-4" />
-            Export
+            Ekspor
           </Button>
           <Link href="/dashboard/products/create">
             <Button className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
-              Add Product
+              Tambah Produk
             </Button>
           </Link>
         </div>
@@ -163,7 +163,7 @@ export default function ProductsPage() {
               <Package className="h-8 w-8 text-blue-600" />
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">
-                  Total Products
+                  Total Produk
                 </p>
                 <p className="text-2xl font-bold">{pagination.total}</p>
               </div>
@@ -175,7 +175,7 @@ export default function ProductsPage() {
             <div className="flex items-center">
               <AlertTriangle className="h-8 w-8 text-yellow-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Low Stock</p>
+                <p className="text-sm font-medium text-gray-600">Stok Rendah</p>
                 <p className="text-2xl font-bold">
                   {
                     products.filter((p) => p.stock <= p.minStock && p.stock > 0)
@@ -191,9 +191,7 @@ export default function ProductsPage() {
             <div className="flex items-center">
               <Trash2 className="h-8 w-8 text-red-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">
-                  Out of Stock
-                </p>
+                <p className="text-sm font-medium text-gray-600">Stok Habis</p>
                 <p className="text-2xl font-bold">
                   {products.filter((p) => p.stock <= 0).length}
                 </p>
@@ -206,7 +204,7 @@ export default function ProductsPage() {
             <div className="flex items-center">
               <Package className="h-8 w-8 text-green-600" />
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Categories</p>
+                <p className="text-sm font-medium text-gray-600">Kategori</p>
                 <p className="text-2xl font-bold">{categories.length}</p>
               </div>
             </div>
@@ -222,7 +220,7 @@ export default function ProductsPage() {
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Search products by name, code, or description..."
+                  placeholder="Cari produk berdasarkan nama, kode, atau deskripsi..."
                   value={searchTerm}
                   onChange={handleSearch}
                   className="pl-10"
@@ -235,7 +233,7 @@ export default function ProductsPage() {
                 onChange={(e) => handleCategoryFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md"
               >
-                <option value="">All Categories</option>
+                <option value="">Semua Kategori</option>
                 {categories.map((category) => (
                   <option key={category} value={category}>
                     {category}
@@ -247,9 +245,9 @@ export default function ProductsPage() {
                 onChange={(e) => handleStatusFilter(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-md"
               >
-                <option value="">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="">Semua Status</option>
+                <option value="active">Aktif</option>
+                <option value="inactive">Tidak Aktif</option>
               </select>
             </div>
           </div>
@@ -259,20 +257,20 @@ export default function ProductsPage() {
       {/* Products Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Product List</CardTitle>
+          <CardTitle>Daftar Produk</CardTitle>
           <CardDescription>
-            {pagination.total} total products found
+            {pagination.total} total produk ditemukan
           </CardDescription>
         </CardHeader>
         <CardContent>
           {products.length === 0 ? (
             <div className="text-center py-8">
               <Package className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-gray-500">No products found</p>
+              <p className="text-gray-500">Tidak ada produk ditemukan</p>
               <Link href="/dashboard/products/create">
                 <Button className="mt-4">
                   <Plus className="h-4 w-4 mr-2" />
-                  Add Your First Product
+                  Tambah Produk Pertama
                 </Button>
               </Link>
             </div>
@@ -281,13 +279,13 @@ export default function ProductsPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-4">Product</th>
-                    <th className="text-left p-4">Code</th>
-                    <th className="text-left p-4">Category</th>
-                    <th className="text-left p-4">Price</th>
-                    <th className="text-left p-4">Stock</th>
+                    <th className="text-left p-4">Produk</th>
+                    <th className="text-left p-4">Kode</th>
+                    <th className="text-left p-4">Kategori</th>
+                    <th className="text-left p-4">Harga</th>
+                    <th className="text-left p-4">Stok</th>
                     <th className="text-left p-4">Status</th>
-                    <th className="text-left p-4">Actions</th>
+                    <th className="text-left p-4">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -351,7 +349,9 @@ export default function ProductsPage() {
                                 : "bg-gray-100 text-gray-800"
                             }`}
                           >
-                            {product.status}
+                            {product.status === "active"
+                              ? "Aktif"
+                              : "Tidak Aktif"}
                           </span>
                         </td>
                         <td className="p-4">
@@ -397,9 +397,10 @@ export default function ProductsPage() {
           {pagination.pages > 1 && (
             <div className="flex items-center justify-between mt-6">
               <p className="text-sm text-gray-700">
-                Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
+                Menampilkan {(pagination.page - 1) * pagination.limit + 1}{" "}
+                sampai{" "}
                 {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
-                of {pagination.total} products
+                dari {pagination.total} produk
               </p>
               <div className="flex gap-2">
                 <Button
@@ -410,7 +411,7 @@ export default function ProductsPage() {
                   }
                   disabled={pagination.page <= 1}
                 >
-                  Previous
+                  Sebelumnya
                 </Button>
                 <Button
                   variant="outline"
@@ -420,7 +421,7 @@ export default function ProductsPage() {
                   }
                   disabled={pagination.page >= pagination.pages}
                 >
-                  Next
+                  Selanjutnya
                 </Button>
               </div>
             </div>

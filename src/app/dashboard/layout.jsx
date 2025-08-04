@@ -71,110 +71,110 @@ export default function DashboardLayout({ children }) {
         href: "/dashboard/pos",
         roles: ["admin", "manager", "staff"],
         subItems: [
-          { label: "POS Terminal", href: "/dashboard/pos" },
-          { label: "Transaction History", href: "/dashboard/pos/history" },
-          { label: "Shift Management", href: "/dashboard/pos/shift" },
+          { label: "Terminal POS", href: "/dashboard/pos" },
+          { label: "Riwayat Transaksi", href: "/dashboard/pos/history" },
+          { label: "Manajemen Shift", href: "/dashboard/pos/shift" },
         ],
       },
       {
         icon: ShoppingBag,
-        label: "Sales",
+        label: "Penjualan",
         href: "/dashboard/sales",
         roles: ["admin", "manager", "staff"],
         subItems: [
-          { label: "Sales Orders", href: "/dashboard/sales/orders" },
-          { label: "Create Order", href: "/dashboard/sales/create" },
+          { label: "Pesanan Penjualan", href: "/dashboard/sales/orders" },
+          { label: "Buat Pesanan", href: "/dashboard/sales/create" },
         ],
       },
       {
         icon: Truck,
-        label: "Purchasing",
+        label: "Pembelian",
         href: "/dashboard/purchases",
         roles: ["admin", "manager"],
         subItems: [
-          { label: "Purchase Invoices", href: "/dashboard/purchases/invoices" },
-          { label: "Goods Receiving", href: "/dashboard/purchases/receive" },
+          { label: "Invoice Pembelian", href: "/dashboard/purchases/invoices" },
+          { label: "Penerimaan Barang", href: "/dashboard/purchases/receive" },
         ],
       },
       {
         icon: Package,
-        label: "Products",
+        label: "Produk",
         href: "/dashboard/products",
         roles: ["admin", "manager", "staff"],
       },
       {
         icon: Warehouse,
-        label: "Inventory",
+        label: "Inventori",
         href: "/dashboard/inventory",
         roles: ["admin", "manager", "staff"],
         subItems: [
           { label: "Stock Opname", href: "/dashboard/inventory/stock-opname" },
-          { label: "Stock Mutation", href: "/dashboard/inventory/mutation" },
+          { label: "Mutasi Stock", href: "/dashboard/inventory/mutation" },
         ],
       },
       {
         icon: Users,
-        label: "Customers",
+        label: "Pelanggan",
         href: "/dashboard/customers",
         roles: ["admin", "manager", "staff"],
       },
       {
         icon: Building2,
-        label: "Suppliers",
+        label: "Supplier",
         href: "/dashboard/suppliers",
         roles: ["admin", "manager"],
       },
       {
         icon: Gift,
-        label: "Promotions",
+        label: "Promosi",
         href: "/dashboard/promotions",
         roles: ["admin", "manager"],
       },
       {
         icon: UserPlus,
-        label: "Employees",
+        label: "Karyawan",
         href: "/dashboard/employees",
         roles: ["admin", "manager"],
         subItems: [
-          { label: "Employee Directory", href: "/dashboard/employees" },
-          { label: "Attendance", href: "/dashboard/attendance" },
-          { label: "Payroll", href: "/dashboard/payroll" },
+          { label: "Direktori Karyawan", href: "/dashboard/employees" },
+          { label: "Absensi", href: "/dashboard/attendance" },
+          { label: "Penggajian", href: "/dashboard/payroll" },
         ],
       },
       {
         icon: DollarSign,
-        label: "Finance",
+        label: "Keuangan",
         href: "/dashboard/finance",
         roles: ["admin", "manager"],
         subItems: [
-          { label: "Transactions", href: "/dashboard/finance/transactions" },
-          { label: "Journal Entries", href: "/dashboard/finance/journal" },
-          { label: "Balance Sheet", href: "/dashboard/finance/balance-sheet" },
-          { label: "Profit & Loss", href: "/dashboard/finance/profit-loss" },
+          { label: "Transaksi", href: "/dashboard/finance/transactions" },
+          { label: "Entri Jurnal", href: "/dashboard/finance/journal" },
+          { label: "Neraca", href: "/dashboard/finance/balance-sheet" },
+          { label: "Laba Rugi", href: "/dashboard/finance/profit-loss" },
         ],
       },
       {
         icon: BarChart3,
-        label: "Reports",
+        label: "Laporan",
         href: "/dashboard/reports",
         roles: ["admin", "manager"],
         subItems: [
-          { label: "Sales Report", href: "/dashboard/reports/sales" },
-          { label: "Product Report", href: "/dashboard/reports/products" },
-          { label: "Stock Report", href: "/dashboard/reports/stock" },
-          { label: "Salesman Report", href: "/dashboard/reports/salesman" },
-          { label: "Finance Report", href: "/dashboard/reports/finance" },
+          { label: "Laporan Penjualan", href: "/dashboard/reports/sales" },
+          { label: "Laporan Produk", href: "/dashboard/reports/products" },
+          { label: "Laporan Stock", href: "/dashboard/reports/stock" },
+          { label: "Laporan Sales", href: "/dashboard/reports/salesman" },
+          { label: "Laporan Keuangan", href: "/dashboard/reports/finance" },
         ],
       },
       {
         icon: Settings,
-        label: "Settings",
+        label: "Pengaturan",
         href: "/dashboard/settings",
         roles: ["admin"],
         subItems: [
-          { label: "Users", href: "/dashboard/settings/users" },
-          { label: "Company", href: "/dashboard/settings/company" },
-          { label: "Permissions", href: "/dashboard/settings/permissions" },
+          { label: "Pengguna", href: "/dashboard/settings/users" },
+          { label: "Perusahaan", href: "/dashboard/settings/company" },
+          { label: "Izin Akses", href: "/dashboard/settings/permissions" },
           { label: "Backup", href: "/dashboard/settings/backup" },
         ],
       },
@@ -190,7 +190,7 @@ export default function DashboardLayout({ children }) {
       <div className="flex h-screen items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-sm text-gray-600">Loading...</p>
+          <p className="mt-2 text-sm text-gray-600">Memuat...</p>
         </div>
       </div>
     );
@@ -266,7 +266,7 @@ export default function DashboardLayout({ children }) {
             onClick={handleLogout}
           >
             <LogOut className="mr-3 h-4 w-4" />
-            Logout
+            Keluar
           </Button>
         </div>
       </div>

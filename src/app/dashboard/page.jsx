@@ -106,7 +106,7 @@ export default function DashboardPage() {
 
   const overviewCards = [
     {
-      title: "Total Products",
+      title: "Total Produk",
       value: stats.overview.totalProducts,
       icon: Package,
       color: "text-blue-600",
@@ -114,7 +114,7 @@ export default function DashboardPage() {
       href: "/dashboard/products",
     },
     {
-      title: "Total Customers",
+      title: "Total Pelanggan",
       value: stats.overview.totalCustomers,
       icon: Users,
       color: "text-green-600",
@@ -122,7 +122,7 @@ export default function DashboardPage() {
       href: "/dashboard/customers",
     },
     {
-      title: "Total Suppliers",
+      title: "Total Supplier",
       value: stats.overview.totalSuppliers,
       icon: Building2,
       color: "text-purple-600",
@@ -130,7 +130,7 @@ export default function DashboardPage() {
       href: "/dashboard/suppliers",
     },
     {
-      title: "Active Users",
+      title: "Pengguna Aktif",
       value: stats.overview.totalUsers,
       icon: UserCheck,
       color: "text-indigo-600",
@@ -141,9 +141,9 @@ export default function DashboardPage() {
 
   const salesCards = [
     {
-      title: "Today's Sales",
+      title: "Penjualan Hari Ini",
       value: formatCurrency(stats.sales.todaySales),
-      subtitle: `${stats.sales.todayTransactions} transactions`,
+      subtitle: `${stats.sales.todayTransactions} transaksi`,
       icon: DollarSign,
       color: "text-green-600",
       bgColor: "bg-green-100",
@@ -151,9 +151,9 @@ export default function DashboardPage() {
       href: "/dashboard/pos",
     },
     {
-      title: "Monthly Sales",
+      title: "Penjualan Bulan Ini",
       value: formatCurrency(stats.sales.monthlySales),
-      subtitle: `${stats.sales.monthlyTransactions} transactions`,
+      subtitle: `${stats.sales.monthlyTransactions} transaksi`,
       icon: TrendingUp,
       color: "text-blue-600",
       bgColor: "bg-blue-100",
@@ -178,10 +178,10 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
-            Dashboard Overview
+            Ringkasan Dashboard
           </h1>
           <p className="text-gray-600 mt-1">
-            Welcome back, {user?.name}! Here's your business summary.
+            Selamat datang kembali, {user?.name}! Berikut ringkasan bisnis Anda.
           </p>
         </div>
         <div className="flex items-center space-x-2 mt-4 sm:mt-0">
@@ -190,7 +190,7 @@ export default function DashboardPage() {
             className="bg-blue-600 hover:bg-blue-700"
           >
             <ShoppingCart className="w-4 h-4 mr-2" />
-            Open POS
+            Buka POS
           </Button>
         </div>
       </div>
@@ -198,7 +198,7 @@ export default function DashboardPage() {
       {/* Overview Cards */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Business Overview
+          Ikhtisar Bisnis
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {overviewCards.map((card, index) => {
@@ -233,7 +233,7 @@ export default function DashboardPage() {
       {/* Sales & Alerts Cards */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Sales Performance & Alerts
+          Performa Penjualan & Peringatan
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {salesCards.map((card, index) => {
@@ -284,7 +284,7 @@ export default function DashboardPage() {
       {/* Quick Actions */}
       <div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          Quick Actions
+          Tindakan Cepat
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Button
@@ -293,7 +293,7 @@ export default function DashboardPage() {
             onClick={() => router.push("/dashboard/products/create")}
           >
             <Package className="w-5 h-5" />
-            Add Product
+            Tambah Produk
           </Button>
           <Button
             variant="outline"
@@ -301,7 +301,7 @@ export default function DashboardPage() {
             onClick={() => router.push("/dashboard/customers/create")}
           >
             <Users className="w-5 h-5" />
-            Add Customer
+            Tambah Pelanggan
           </Button>
           <Button
             variant="outline"
@@ -309,7 +309,7 @@ export default function DashboardPage() {
             onClick={() => router.push("/dashboard/pos")}
           >
             <ShoppingCart className="w-5 h-5" />
-            POS Terminal
+            Terminal POS
           </Button>
           <Button
             variant="outline"
@@ -317,7 +317,7 @@ export default function DashboardPage() {
             onClick={() => router.push("/dashboard/reports")}
           >
             <BarChart3 className="w-5 h-5" />
-            View Reports
+            Lihat Laporan
           </Button>
         </div>
       </div>

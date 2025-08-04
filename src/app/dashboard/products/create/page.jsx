@@ -40,16 +40,16 @@ export default function CreateProductPage() {
   });
 
   const categories = [
-    "Electronics",
-    "Clothing",
-    "Food & Beverage",
-    "Books",
-    "Home & Garden",
-    "Sports",
-    "Toys",
-    "Health & Beauty",
-    "Automotive",
-    "Office Supplies",
+    "Elektronik",
+    "Pakaian",
+    "Makanan & Minuman",
+    "Buku",
+    "Rumah & Taman",
+    "Olahraga",
+    "Mainan",
+    "Kesehatan & Kecantikan",
+    "Otomotif",
+    "Perlengkapan Kantor",
   ];
 
   const units = [
@@ -104,7 +104,7 @@ export default function CreateProductPage() {
         !formData.price ||
         !formData.category
       ) {
-        alert("Please fill in all required fields");
+        alert("Mohon isi semua field yang wajib diisi");
         setLoading(false);
         return;
       }
@@ -137,11 +137,11 @@ export default function CreateProductPage() {
       if (data.success) {
         router.push("/dashboard/products");
       } else {
-        alert(data.error || "Failed to create product");
+        alert(data.error || "Gagal membuat produk");
       }
     } catch (error) {
       console.error("Error creating product:", error);
-      alert("Failed to create product");
+      alert("Gagal membuat produk");
     } finally {
       setLoading(false);
     }
@@ -157,10 +157,8 @@ export default function CreateProductPage() {
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold">Add New Product</h1>
-          <p className="text-gray-600">
-            Create a new product in your inventory
-          </p>
+          <h1 className="text-3xl font-bold">Tambah Produk Baru</h1>
+          <p className="text-gray-600">Buat produk baru dalam inventori Anda</p>
         </div>
       </div>
 
@@ -170,33 +168,33 @@ export default function CreateProductPage() {
           <div className="lg:col-span-2">
             <Card>
               <CardHeader>
-                <CardTitle>Product Information</CardTitle>
+                <CardTitle>Informasi Produk</CardTitle>
                 <CardDescription>
-                  Basic details about your product
+                  Detail dasar tentang produk Anda
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">Product Name *</Label>
+                    <Label htmlFor="name">Nama Produk *</Label>
                     <Input
                       id="name"
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
-                      placeholder="Enter product name"
+                      placeholder="Masukkan nama produk"
                       required
                     />
                   </div>
                   <div>
-                    <Label htmlFor="code">Product Code *</Label>
+                    <Label htmlFor="code">Kode Produk *</Label>
                     <div className="flex gap-2">
                       <Input
                         id="code"
                         name="code"
                         value={formData.code}
                         onChange={handleInputChange}
-                        placeholder="Enter product code"
+                        placeholder="Masukkan kode produk"
                         required
                       />
                       <Button

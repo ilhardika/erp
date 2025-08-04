@@ -48,7 +48,7 @@ export function LoginForm({ className, ...props }) {
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader className="flex justify-center">
-          <CardTitle className="text-center">Bizflow Login</CardTitle>
+          <CardTitle className="text-center">Masuk ke Bizflow</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
