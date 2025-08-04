@@ -13,6 +13,7 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
+          console.error("Missing email or password", credentials);
           return null;
         }
 
@@ -25,6 +26,7 @@ export const authOptions: NextAuthOptions = {
           });
 
           if (!user) {
+            console.error("User not found for email:", credentials.email);
             return null;
           }
 
@@ -34,9 +36,11 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (!isPasswordValid) {
+            console.error("Invalid password for email:", credentials.email);
             return null;
           }
 
+          console.log("Login success for email:", credentials.email);
           return {
             id: user._id.toString(),
             email: user.email,
