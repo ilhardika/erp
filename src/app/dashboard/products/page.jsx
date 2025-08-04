@@ -276,120 +276,168 @@ export default function ProductsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-4">Produk</th>
-                    <th className="text-left p-4">Kode</th>
-                    <th className="text-left p-4">Kategori</th>
-                    <th className="text-left p-4">Harga</th>
-                    <th className="text-left p-4">Stok</th>
-                    <th className="text-left p-4">Status</th>
-                    <th className="text-left p-4">Aksi</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.map((product) => {
-                    const stockStatus = getStockStatus(
-                      product.stock,
-                      product.minStock
-                    );
-                    return (
-                      <tr
-                        key={product._id}
-                        className="border-b hover:bg-gray-50"
-                      >
-                        <td className="p-4">
-                          <div>
-                            <p className="font-medium">{product.name}</p>
-                            {product.description && (
-                              <p className="text-sm text-gray-500 truncate max-w-xs">
-                                {product.description}
+              <div className="min-w-full">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left p-2 md:p-4 min-w-[200px]">
+                        Produk
+                      </th>
+                      <th className="text-left p-2 md:p-4 min-w-[120px]">
+                        Kode
+                      </th>
+                      <th className="text-left p-2 md:p-4 min-w-[100px] hidden sm:table-cell">
+                        Kategori
+                      </th>
+                      <th className="text-left p-2 md:p-4 min-w-[120px]">
+                        Harga
+                      </th>
+                      <th className="text-left p-2 md:p-4 min-w-[100px]">
+                        Stok
+                      </th>
+                      <th className="text-left p-2 md:p-4 min-w-[80px] hidden md:table-cell">
+                        Status
+                      </th>
+                      <th className="text-left p-2 md:p-4 min-w-[120px]">
+                        Aksi
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {products.map((product) => {
+                      const stockStatus = getStockStatus(
+                        product.stock,
+                        product.minStock
+                      );
+                      return (
+                        <tr
+                          key={product._id}
+                          className="border-b hover:bg-gray-50"
+                        >
+                          <td className="p-2 md:p-4">
+                            <div>
+                              <p className="font-medium text-sm md:text-base">
+                                {product.name}
                               </p>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <code className="bg-gray-100 px-2 py-1 rounded">
-                            {product.code}
-                          </code>
-                        </td>
-                        <td className="p-4">
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            {product.category}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <div>
-                            <p className="font-medium">
-                              {formatPrice(product.price)}
-                            </p>
-                            {product.cost > 0 && (
-                              <p className="text-sm text-gray-500">
-                                Cost: {formatPrice(product.cost)}
+                              {product.description && (
+                                <p className="text-xs md:text-sm text-gray-500 truncate max-w-[150px] md:max-w-xs">
+                                  {product.description}
+                                </p>
+                              )}
+                              {/* Mobile-only category */}
+                              <div className="sm:hidden mt-1">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  {product.category}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-2 md:p-4">
+                            <code className="bg-gray-100 px-1.5 md:px-2 py-1 rounded text-xs md:text-sm">
+                              {product.code}
+                            </code>
+                          </td>
+                          <td className="p-2 md:p-4 hidden sm:table-cell">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              {product.category}
+                            </span>
+                          </td>
+                          <td className="p-2 md:p-4">
+                            <div>
+                              <p className="font-medium text-sm md:text-base">
+                                {formatPrice(product.price)}
                               </p>
-                            )}
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <div>
-                            <p className={`font-medium ${stockStatus.color}`}>
-                              {product.stock} {product.unit}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              Min: {product.minStock}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <span
-                            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                              product.status === "active"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {product.status === "active"
-                              ? "Aktif"
-                              : "Tidak Aktif"}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                window.open(
-                                  `/dashboard/products/${product._id}`,
-                                  "_blank"
-                                )
-                              }
+                              {product.cost > 0 && (
+                                <p className="text-xs md:text-sm text-gray-500">
+                                  Modal: {formatPrice(product.cost)}
+                                </p>
+                              )}
+                            </div>
+                          </td>
+                          <td className="p-2 md:p-4">
+                            <div>
+                              <p
+                                className={`font-medium text-sm md:text-base ${stockStatus.color}`}
+                              >
+                                {product.stock} {product.unit}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                Min: {product.minStock}
+                              </p>
+                              {/* Mobile-only status */}
+                              <div className="md:hidden mt-1">
+                                <span
+                                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    product.status === "active"
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-gray-100 text-gray-800"
+                                  }`}
+                                >
+                                  {product.status === "active"
+                                    ? "Aktif"
+                                    : "Tidak Aktif"}
+                                </span>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-2 md:p-4 hidden md:table-cell">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                product.status === "active"
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-gray-100 text-gray-800"
+                              }`}
                             >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Link
-                              href={`/dashboard/products/${product._id}/edit`}
-                            >
-                              <Button variant="ghost" size="sm">
-                                <Edit className="h-4 w-4" />
+                              {product.status === "active"
+                                ? "Aktif"
+                                : "Tidak Aktif"}
+                            </span>
+                          </td>
+                          <td className="p-2 md:p-4">
+                            <div className="flex items-center gap-1 md:gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                title="Lihat Detail"
+                                onClick={() =>
+                                  window.open(
+                                    `/dashboard/products/${product._id}`,
+                                    "_blank"
+                                  )
+                                }
+                              >
+                                <Eye className="h-3 w-3 md:h-4 md:w-4" />
                               </Button>
-                            </Link>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(product._id)}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                              <Link
+                                href={`/dashboard/products/${product._id}/edit`}
+                              >
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0"
+                                  title="Edit"
+                                >
+                                  <Edit className="h-3 w-3 md:h-4 md:w-4" />
+                                </Button>
+                              </Link>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                title="Hapus"
+                                onClick={() => handleDelete(product._id)}
+                              >
+                                <Trash2 className="h-3 w-3 md:h-4 md:w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 

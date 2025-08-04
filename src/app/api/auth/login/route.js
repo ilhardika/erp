@@ -1,8 +1,7 @@
-import clientPromise from "@/lib/mongodb";
+import { sql } from "@/lib/neon";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
 
 export async function POST(request) {
   try {
@@ -15,21 +14,23 @@ export async function POST(request) {
       );
     }
 
-    const client = await clientPromise;
-    const db = client.db("erp");
+    // Find user by email in Neon PostgreSQL
+    const users = await sql`
+      SELECT id, email, password, name, role, status 
+      FROM users 
+      WHERE email = ${email.toLowerCase()} 
+      AND status = 'active'
+      LIMIT 1
+    `;
 
-    // Find user by email
-    const user = await db.collection("users").findOne({
-      email: email.toLowerCase(),
-      active: true,
-    });
-
-    if (!user) {
+    if (users.length === 0) {
       return NextResponse.json(
         { error: "Email atau password salah" },
         { status: 401 }
       );
     }
+
+    const user = users[0];
 
     // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
@@ -44,7 +45,7 @@ export async function POST(request) {
     // Generate JWT token
     const token = jwt.sign(
       {
-        userId: user._id,
+        userId: user.id,
         email: user.email,
         role: user.role,
         name: user.name,

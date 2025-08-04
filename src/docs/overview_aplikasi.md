@@ -1,4 +1,4 @@
-**ERP + POS System Blueprint (Next.js, Tailwind CSS, shadcn/ui, MongoDB)**
+**ERP + POS System Blueprint (Next.js, Tailwind CSS, shadcn/ui, Neon PostgreSQL)**
 
 ---
 
@@ -6,7 +6,7 @@
 
 - **Frontend**: Next.js (App Router, JavaScript), Tailwind CSS, shadcn/ui, Lucide Icons, DataTables, Mobile-first responsive design
 - **Backend**: Next.js API Routes (modular REST)
-- **Database**: MongoDB
+- **Database**: Neon PostgreSQL (Serverless)
 - **Auth**: Custom authentication using database credentials
 - **UI**: Unified dashboard layout for all roles
 
@@ -163,7 +163,7 @@ These integrations are not implemented via API but handled manually:
 
 ### Database
 
-- MongoDB, collection-based schema:
+- Neon PostgreSQL, table-based schema:
   - `users`, `roles`, `products`, `orders`, `transactions`, `attendance`, `vehicles`, etc.
 
 ---

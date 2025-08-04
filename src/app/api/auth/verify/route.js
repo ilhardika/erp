@@ -1,52 +1,71 @@
-import clientPromise from "@/lib/mongodb";
+import { sql } from "@/lib/neon";
 import jwt from "jsonwebtoken";
 import { NextResponse } from "next/server";
-import { ObjectId } from "mongodb";
 
 export async function GET(request) {
   try {
-    const token = request.cookies.get("auth-token")?.value;
-    console.log("Verify API: Token exists:", !!token);
+    const authHeader = request.headers.get("authorization");
+    const cookieToken = request.cookies.get("auth-token")?.value;
+
+    const token = authHeader?.replace("Bearer ", "") || cookieToken;
 
     if (!token) {
-      console.log("Verify API: No token found");
       return NextResponse.json(
         { error: "Token tidak ditemukan" },
         { status: 401 }
       );
     }
 
-    // Verify token
+    // Verify JWT token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Verify API: Token decoded successfully for:", decoded.email);
 
-    const client = await clientPromise;
-    const db = client.db("erp");
+    // Get user data from Neon PostgreSQL
+    const users = await sql`
+      SELECT id, email, name, role, status, created_at, updated_at 
+      FROM users 
+      WHERE id = ${decoded.userId} 
+      AND status = 'active'
+      LIMIT 1
+    `;
 
-    // Get fresh user data
-    const user = await db.collection("users").findOne(
-      {
-        _id: new ObjectId(decoded.userId),
-        active: true,
-      },
-      {
-        projection: { password: 0 }, // Exclude password
-      }
-    );
-
-    if (!user) {
+    if (users.length === 0) {
       return NextResponse.json(
-        { error: "User tidak ditemukan" },
+        { error: "User tidak ditemukan atau tidak aktif" },
         { status: 401 }
       );
     }
 
+    const user = users[0];
+
     return NextResponse.json({
-      user,
-      isAuthenticated: true,
+      valid: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+        status: user.status,
+        created_at: user.created_at,
+        updated_at: user.updated_at,
+      },
     });
   } catch (error) {
-    console.error("Auth verification error:", error);
-    return NextResponse.json({ error: "Token tidak valid" }, { status: 401 });
+    console.error("Token verification error:", error);
+
+    if (error.name === "JsonWebTokenError") {
+      return NextResponse.json({ error: "Token tidak valid" }, { status: 401 });
+    }
+
+    if (error.name === "TokenExpiredError") {
+      return NextResponse.json(
+        { error: "Token sudah kadaluarsa" },
+        { status: 401 }
+      );
+    }
+
+    return NextResponse.json(
+      { error: "Terjadi kesalahan server" },
+      { status: 500 }
+    );
   }
 }
