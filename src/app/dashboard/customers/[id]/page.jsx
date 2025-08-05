@@ -2,12 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  ArrowLeft,
   Users,
   MapPin,
   Phone,
@@ -18,74 +15,75 @@ import {
   CreditCard,
   FileText,
 } from "lucide-react";
+import DashboardDetailLayout from "@/components/layouts/dashboard-detail-layout";
+import { useDeleteDialog } from "@/hooks/use-delete-dialog";
 
-export default function CustomerViewPage() {
+export default function CustomerDetailPage() {
+  const router = useRouter();
+  const params = useParams();
   const [customer, setCustomer] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const router = useRouter();
-  const params = useParams();
+
+  const {
+    showDeleteDialog,
+    setShowDeleteDialog,
+    deleteError,
+    setDeleteError,
+    isDeleting,
+    setIsDeleting,
+  } = useDeleteDialog();
 
   useEffect(() => {
-    fetchCustomer();
-  }, []);
+    if (params.id) {
+      fetchCustomer();
+    }
+  }, [params.id]);
 
   const fetchCustomer = async () => {
     try {
       setLoading(true);
       const response = await fetch(`/api/customers/${params.id}`);
-      const data = await response.json();
 
-      if (data.success) {
-        setCustomer(data.data);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.data) {
+          setCustomer(data.data);
+        } else {
+          setError(data.error || "Customer tidak ditemukan");
+        }
       } else {
-        setError(data.error || "Customer tidak ditemukan");
+        setError("Customer tidak ditemukan");
       }
     } catch (error) {
       console.error("Error fetching customer:", error);
-      setError("Terjadi kesalahan saat memuat customer");
+      setError("Gagal memuat data customer");
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <Users className="h-12 w-12 mx-auto text-gray-400 mb-4 animate-pulse" />
-            <p className="text-gray-500">Memuat customer...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+      setDeleteError("");
 
-  if (error || !customer) {
-    return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <Card className="w-full max-w-md">
-            <CardContent className="pt-6">
-              <div className="text-center">
-                <Users className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
-                  Customer Tidak Ditemukan
-                </h3>
-                <p className="text-gray-500 mb-4">
-                  {error || "Customer yang Anda cari tidak dapat ditemukan."}
-                </p>
-                <Link href="/dashboard/customers">
-                  <Button>Kembali ke Daftar Customer</Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
+      const response = await fetch(`/api/customers/${params.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        router.push("/dashboard/customers");
+      } else {
+        const errorData = await response.json();
+        setDeleteError(errorData.error || "Gagal menghapus customer");
+      }
+    } catch (error) {
+      setDeleteError("Gagal menghapus customer");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const getCustomerTypeLabel = (type) => {
     const labels = {
@@ -105,29 +103,47 @@ export default function CustomerViewPage() {
     return variants[type] || "secondary";
   };
 
-  return (
-    <div className="container mx-auto p-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 items-start xs:items-center">
-          <Link href="/dashboard/customers">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="mt-2 xs:mt-0">
-            <h1 className="text-2xl md:text-3xl font-bold">{customer.name}</h1>
-            <p className="text-gray-600">
-              Detail customer dan informasi kontak
-            </p>
-          </div>
-        </div>
-      </div>
+  if (loading) {
+    return (
+      <DashboardDetailLayout
+        title="Detail Customer"
+        loading={true}
+        backLink="/dashboard/customers"
+      />
+    );
+  }
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Informasi Utama */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Detail Customer */}
+  if (error || !customer) {
+    return (
+      <DashboardDetailLayout
+        title="Detail Customer"
+        error={error || "Customer tidak ditemukan"}
+        errorMessage={error || "Customer tidak ditemukan"}
+        backLink="/dashboard/customers"
+      />
+    );
+  }
+
+  return (
+    <DashboardDetailLayout
+      title="Detail Customer"
+      subtitle={customer?.name || "Loading..."}
+      backLink="/dashboard/customers"
+      editLink={`/dashboard/customers/${customer?.id}/edit`}
+      onDelete={() => setShowDeleteDialog(true)}
+      showDeleteDialog={showDeleteDialog}
+      onCloseDeleteDialog={() => {
+        setShowDeleteDialog(false);
+        setDeleteError("");
+      }}
+      onConfirmDelete={handleDelete}
+      deleteError={deleteError}
+      deleteDescription={`Apakah Anda yakin ingin menghapus customer "${customer?.name}"? Tindakan ini tidak dapat dibatalkan.`}
+    >
+      <div className="space-y-6">
+        {/* Detail Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Basic Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -136,34 +152,40 @@ export default function CustomerViewPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">
                     Nama Customer
                   </label>
-                  <p className="text-gray-900 font-medium">{customer.name}</p>
+                  <p className="text-gray-900 font-medium">
+                    {customer?.name || "-"}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">
                     Kode Customer
                   </label>
-                  <p className="text-gray-900 font-mono">{customer.code}</p>
+                  <p className="text-gray-900 font-mono">
+                    {customer?.code || "-"}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">
                     Email
                   </label>
-                  <p className="text-gray-900">
-                    {customer.email || <span className="text-gray-400">-</span>}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-gray-500" />
+                    <p className="text-gray-900">{customer?.email || "-"}</p>
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">
-                    Telepon
+                    No. Telepon
                   </label>
-                  <p className="text-gray-900">
-                    {customer.phone || <span className="text-gray-400">-</span>}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <Phone className="h-4 w-4 text-gray-500" />
+                    <p className="text-gray-900">{customer?.phone || "-"}</p>
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">
@@ -171,9 +193,9 @@ export default function CustomerViewPage() {
                   </label>
                   <div className="mt-1">
                     <Badge
-                      variant={getCustomerTypeVariant(customer.customer_type)}
+                      variant={getCustomerTypeVariant(customer?.customer_type)}
                     >
-                      {getCustomerTypeLabel(customer.customer_type)}
+                      {getCustomerTypeLabel(customer?.customer_type)}
                     </Badge>
                   </div>
                 </div>
@@ -184,10 +206,10 @@ export default function CustomerViewPage() {
                   <div className="mt-1">
                     <Badge
                       variant={
-                        customer.status === "active" ? "success" : "danger"
+                        customer?.status === "active" ? "default" : "secondary"
                       }
                     >
-                      {customer.status === "active" ? "Aktif" : "Nonaktif"}
+                      {customer?.status === "active" ? "Aktif" : "Tidak Aktif"}
                     </Badge>
                   </div>
                 </div>
@@ -195,49 +217,40 @@ export default function CustomerViewPage() {
             </CardContent>
           </Card>
 
-          {/* Alamat */}
+          {/* Contact Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
-                Alamat
+                Informasi Alamat
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="md:col-span-2">
-                  <label className="text-sm font-medium text-gray-500">
-                    Alamat Lengkap
-                  </label>
-                  <p className="text-gray-900">
-                    {customer.address || (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Kota
-                  </label>
-                  <p className="text-gray-900">
-                    {customer.city || <span className="text-gray-400">-</span>}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Kode Pos
-                  </label>
-                  <p className="text-gray-900">
-                    {customer.postal_code || (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </p>
-                </div>
+            <CardContent className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Alamat Lengkap
+                </label>
+                <p className="text-gray-900">{customer?.address || "-"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Kota
+                </label>
+                <p className="text-gray-900">{customer?.city || "-"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Kode Pos
+                </label>
+                <p className="text-gray-900">{customer?.postal_code || "-"}</p>
               </div>
             </CardContent>
           </Card>
+        </div>
 
-          {/* Informasi Bisnis */}
+        {/* Additional Information */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Business Information */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -245,110 +258,87 @@ export default function CustomerViewPage() {
                 Informasi Bisnis
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    NPWP / Tax ID
-                  </label>
-                  <p className="text-gray-900">
-                    {customer.tax_id || (
-                      <span className="text-gray-400">-</span>
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Batas Kredit
-                  </label>
-                  <p className="text-gray-900">
-                    {customer.credit_limit
-                      ? new Intl.NumberFormat("id-ID", {
-                          style: "currency",
-                          currency: "IDR",
-                          minimumFractionDigits: 0,
-                        }).format(customer.credit_limit)
-                      : "-"}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-gray-500">
-                    Termin Pembayaran
-                  </label>
-                  <p className="text-gray-900">
-                    {customer.payment_terms
-                      ? `${customer.payment_terms} hari`
-                      : "-"}
-                  </p>
-                </div>
+            <CardContent className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  NPWP / Tax ID
+                </label>
+                <p className="text-gray-900">{customer?.tax_id || "-"}</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Batas Kredit
+                </label>
+                <p className="text-gray-900">
+                  {customer?.credit_limit
+                    ? new Intl.NumberFormat("id-ID", {
+                        style: "currency",
+                        currency: "IDR",
+                        minimumFractionDigits: 0,
+                      }).format(customer.credit_limit)
+                    : "-"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Termin Pembayaran
+                </label>
+                <p className="text-gray-900">
+                  {customer?.payment_terms
+                    ? `${customer.payment_terms} hari`
+                    : "-"}
+                </p>
               </div>
             </CardContent>
           </Card>
-        </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Ringkasan */}
+          {/* Metadata */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Ringkasan
+                <Calendar className="h-5 w-5" />
+                Informasi Sistem
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-3">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Dibuat</span>
-                  <span className="text-sm font-medium">
-                    {new Date(customer.created_at).toLocaleDateString("id-ID", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-500">Terakhir Update</span>
-                  <span className="text-sm font-medium">
-                    {new Date(customer.updated_at).toLocaleDateString("id-ID", {
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
+            <CardContent className="space-y-3">
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Tanggal Dibuat
+                </label>
+                <p className="text-gray-900">
+                  {customer?.created_at
+                    ? new Date(customer.created_at).toLocaleDateString(
+                        "id-ID",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )
+                    : "-"}
+                </p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-500">
+                  Terakhir Diperbarui
+                </label>
+                <p className="text-gray-900">
+                  {customer?.updated_at
+                    ? new Date(customer.updated_at).toLocaleDateString(
+                        "id-ID",
+                        {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        }
+                      )
+                    : "-"}
+                </p>
               </div>
             </CardContent>
           </Card>
-
-          {/* Kontak */}
-          {(customer.email || customer.phone) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Phone className="h-5 w-5" />
-                  Kontak
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {customer.email && (
-                  <div className="flex items-center gap-3">
-                    <Mail className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm">{customer.email}</span>
-                  </div>
-                )}
-                {customer.phone && (
-                  <div className="flex items-center gap-3">
-                    <Phone className="h-4 w-4 text-gray-400" />
-                    <span className="text-sm">{customer.phone}</span>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </div>
       </div>
-    </div>
+    </DashboardDetailLayout>
   );
 }

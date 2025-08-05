@@ -470,7 +470,7 @@ export default function EditProductPage() {
                     </>
                   )}
                 </Button>
-                <Link href={`/dashboard/products/${params.id}`}>
+                <Link href="/dashboard/products">
                   <Button variant="outline" className="w-full">
                     Batal
                   </Button>

@@ -126,7 +126,7 @@ export default function EditCustomerPage() {
         payment_terms: parseInt(formData.payment_terms) || 0,
       };
 
-      const response = await fetch(`/api/customers/${params.id}`, {
+      const response = await fetch(`/api/customers/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -137,13 +137,7 @@ export default function EditCustomerPage() {
       const data = await response.json();
 
       if (data.success) {
-        setDialogType("success");
-        setDialogMessage("Customer berhasil diperbarui!");
-        setDialogOpen(true);
-        setTimeout(() => {
-          setDialogOpen(false);
-          router.push(`/dashboard/customers/${params.id}`);
-        }, 1500);
+        router.push("/dashboard/customers");
       } else {
         setDialogType("error");
         setDialogMessage(data.error || "Gagal memperbarui customer");
@@ -408,7 +402,7 @@ export default function EditCustomerPage() {
                       </>
                     )}
                   </Button>
-                  <Link href={`/dashboard/customers/${params.id}`}>
+                  <Link href="/dashboard/customers">
                     <Button type="button" variant="outline" className="w-full">
                       Batal
                     </Button>

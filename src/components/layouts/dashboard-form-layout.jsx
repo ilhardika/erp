@@ -16,6 +16,10 @@ export default function DashboardFormLayout({
   onSubmit,
   loading = false,
 
+  // Success handling
+  onSuccess,
+  successRedirect,
+
   // Custom components
   customHeader,
   customActions,
