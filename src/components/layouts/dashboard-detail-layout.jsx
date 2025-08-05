@@ -75,7 +75,6 @@ export default function DashboardDetailLayout({
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-bold">{title}</h1>
-            {subtitle && <p className="text-gray-600 mt-1">{subtitle}</p>}
           </div>
           {(showEdit || showDelete || customActions) && (
             <div className={actionsClassName}>
