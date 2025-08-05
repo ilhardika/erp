@@ -20,10 +20,9 @@ export const metadata = {
   icons: {
     icon: [
       { url: "/icon.svg", type: "image/svg+xml" },
-      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+      { url: "/favicon.ico", sizes: "32x32", type: "image/x-icon" },
     ],
-    apple: [{ url: "/icon-192x192.png", sizes: "192x192" }],
+    apple: [{ url: "/icon.svg", sizes: "192x192" }],
   },
   appleWebApp: {
     capable: true,
@@ -44,7 +43,7 @@ export const metadata = {
     card: "summary",
     title: "ERP Management System",
     description:
-      "A comprehensive ERP management system for business operations",
+      "A comprehensive ERP management System for business operations",
   },
 };
 
@@ -70,8 +69,9 @@ export default function RootLayout({ children }) {
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
 
-        <link rel="apple-touch-icon" href="/icon-192x192.png" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
         <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+        <link rel="icon" type="image/x-icon" href="/favicon.ico" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="mask-icon" href="/icon.svg" color="#000000" />
         <link rel="shortcut icon" href="/favicon.ico" />
