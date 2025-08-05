@@ -27,7 +27,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Save, UserPlus } from "lucide-react";
+import { Save, UserPlus } from "lucide-react";
+import DashboardFormLayout from "@/components/layouts/dashboard-form-layout";
 
 export default function CreateCustomerPage() {
   const router = useRouter();
@@ -139,24 +140,14 @@ export default function CreateCustomerPage() {
           </div>
         </DialogContent>
       </Dialog>
-      <div className="container mx-auto p-6">
-        {/* Header */}
-        <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 items-start xs:items-center mb-6">
-          <Link href="/dashboard/customers">
-            <Button variant="ghost" size="sm">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div className="mt-2 xs:mt-0">
-            <h1 className="text-2xl md:text-3xl font-bold">Tambah Customer</h1>
-            <p className="text-gray-600">
-              Tambahkan customer baru ke dalam sistem
-            </p>
-          </div>
-        </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+      <DashboardFormLayout
+        title="Tambah Customer Baru"
+        description="Tambahkan customer baru ke dalam sistem"
+        backLink="/dashboard/customers"
+        onSubmit={handleSubmit}
+      >
+        <div className="space-y-6">
           {/* Basic Information */}
           <Card>
             <CardHeader>
@@ -366,8 +357,8 @@ export default function CreateCustomerPage() {
               </div>
             </CardContent>
           </Card>
-        </form>
-      </div>
+        </div>
+      </DashboardFormLayout>
     </>
   );
 }
