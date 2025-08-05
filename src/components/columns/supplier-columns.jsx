@@ -12,7 +12,7 @@ import {
 import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
 import Link from "next/link";
 
-export const createSupplierColumns = (onDelete) => [
+export const createSupplierColumns = (handleDeleteClick) => [
   {
     accessorKey: "code",
     header: "Kode",
@@ -144,7 +144,7 @@ export const createSupplierColumns = (onDelete) => [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => onDelete(supplier.id)}
+              onClick={() => handleDeleteClick(supplier.id)}
               className="text-red-600"
             >
               <Trash2 className="mr-2 h-4 w-4" />

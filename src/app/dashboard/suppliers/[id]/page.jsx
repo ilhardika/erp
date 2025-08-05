@@ -2,34 +2,18 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  ArrowLeft,
-  Edit,
-  Building2,
-  MapPin,
-  CreditCard,
-  Info,
-  Phone,
-  Mail,
-  FileText,
-} from "lucide-react";
+import { Edit, Mail, Phone, FileText, CreditCard } from "lucide-react";
+import DashboardDetailLayout from "@/components/layouts/dashboard-detail-layout";
 
-export default function SupplierViewPage() {
-  const [supplier, setSupplier] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+export default function SupplierDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const [supplier, setSupplier] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     fetchSupplier();
