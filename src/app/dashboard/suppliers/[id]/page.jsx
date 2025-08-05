@@ -2,11 +2,21 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Mail, Phone, FileText, CreditCard } from "lucide-react";
-import DashboardDetailLayout from "@/components/layouts/dashboard-detail-layout";
+import {
+  Edit,
+  Mail,
+  Phone,
+  FileText,
+  CreditCard,
+  Building2,
+  ArrowLeft,
+  Info,
+  MapPin,
+} from "lucide-react";
 
 export default function SupplierDetailPage() {
   const router = useRouter();
@@ -33,11 +43,11 @@ export default function SupplierDetailPage() {
       console.error("Error fetching supplier:", error);
       setError("Terjadi kesalahan saat memuat supplier");
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="container mx-auto p-6">
         <div className="flex items-center justify-center min-h-[400px]">
