@@ -30,9 +30,9 @@ export default function DashboardFormLayout({
     if (customHeader) return customHeader;
 
     return (
-      <div className={headerClassName}>
+      <div className="mb-6">
         {backLink && (
-          <Link href={backLink}>
+          <Link href={backLink} className="inline-block mb-3">
             <Button variant="ghost" size="sm">
               <ArrowLeft className="h-4 w-4" />
             </Button>

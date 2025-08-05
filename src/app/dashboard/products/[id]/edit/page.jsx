@@ -13,7 +13,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ArrowLeft, Save, Package } from "lucide-react";
+import { Save, Package } from "lucide-react";
+import DashboardFormLayout from "@/components/layouts/dashboard-form-layout";
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -192,301 +193,293 @@ export default function EditProductPage() {
 
   if (initialLoading) {
     return (
-      <div className="container mx-auto p-6">
+      <DashboardFormLayout
+        title="Edit Produk"
+        description="Memuat data produk..."
+        backLink="/dashboard/products"
+      >
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <Package className="h-12 w-12 mx-auto text-gray-400 mb-4 animate-pulse" />
             <p className="text-gray-500">Memuat produk...</p>
           </div>
         </div>
-      </div>
+      </DashboardFormLayout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6">
-      {/* Header */}
-      <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 items-start xs:items-center mb-6">
-        <Link href={`/dashboard/products/`}>
-          <Button variant="ghost" size="sm">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
-        <div className="mt-2 xs:mt-0">
-          <h1 className="text-2xl md:text-3xl font-bold">Edit Produk</h1>
-          <p className="text-gray-600">
-            Update informasi produk dalam inventori Anda
-          </p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Information */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Informasi Produk</CardTitle>
-                <CardDescription>
-                  Detail dasar tentang produk Anda
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="name">Nama Produk *</Label>
-                    <Input
-                      id="name"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      placeholder="Masukkan nama produk"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="code">Kode Produk *</Label>
-                    <Input
-                      id="code"
-                      name="code"
-                      value={formData.code}
-                      onChange={handleInputChange}
-                      placeholder="Masukkan kode produk"
-                      required
-                    />
-                  </div>
-                </div>
-
+    <DashboardFormLayout
+      title="Edit Produk"
+      description="Update informasi produk dalam inventori Anda"
+      backLink="/dashboard/products"
+      onSubmit={handleSubmit}
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Information */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Informasi Produk</CardTitle>
+              <CardDescription>
+                Detail dasar tentang produk Anda
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="description">Deskripsi</Label>
-                  <textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="Deskripsi produk"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="category">Kategori *</Label>
-                    <select
-                      id="category"
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                      required
-                    >
-                      <option value="">Pilih kategori</option>
-                      {categories.map((category) => (
-                        <option key={category} value={category}>
-                          {category}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <Label htmlFor="supplier">Supplier</Label>
-                    <Input
-                      id="supplier"
-                      name="supplier"
-                      value={formData.supplier}
-                      onChange={handleInputChange}
-                      placeholder="Nama supplier"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <Label htmlFor="barcode">Barcode</Label>
+                  <Label htmlFor="name">Nama Produk *</Label>
                   <Input
-                    id="barcode"
-                    name="barcode"
-                    value={formData.barcode}
+                    id="name"
+                    name="name"
+                    value={formData.name}
                     onChange={handleInputChange}
-                    placeholder="Barcode produk"
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Dimensions & Weight */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Properti Fisik</CardTitle>
-                <CardDescription>Informasi dimensi dan berat</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="weight">Berat (kg)</Label>
-                  <Input
-                    id="weight"
-                    name="weight"
-                    type="number"
-                    step="0.01"
-                    value={formData.weight}
-                    onChange={handleInputChange}
-                    placeholder="0.00"
-                  />
-                </div>
-
-                <div>
-                  <Label>Dimensi (cm)</Label>
-                  <div className="grid grid-cols-3 gap-2">
-                    <Input
-                      name="dimensions.length"
-                      type="number"
-                      step="0.01"
-                      value={formData.dimensions.length}
-                      onChange={handleInputChange}
-                      placeholder="Panjang"
-                    />
-                    <Input
-                      name="dimensions.width"
-                      type="number"
-                      step="0.01"
-                      value={formData.dimensions.width}
-                      onChange={handleInputChange}
-                      placeholder="Lebar"
-                    />
-                    <Input
-                      name="dimensions.height"
-                      type="number"
-                      step="0.01"
-                      value={formData.dimensions.height}
-                      onChange={handleInputChange}
-                      placeholder="Tinggi"
-                    />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Pricing & Inventory */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Harga & Inventori</CardTitle>
-                <CardDescription>Atur harga dan level stok</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="price">Harga Jual (IDR) *</Label>
-                  <Input
-                    id="price"
-                    name="price"
-                    type="number"
-                    step="0.01"
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    placeholder="0.00"
+                    placeholder="Masukkan nama produk"
                     required
                   />
                 </div>
-
                 <div>
-                  <Label htmlFor="cost">Harga Modal (IDR)</Label>
+                  <Label htmlFor="code">Kode Produk *</Label>
                   <Input
-                    id="cost"
-                    name="cost"
-                    type="number"
-                    step="0.01"
-                    value={formData.cost}
+                    id="code"
+                    name="code"
+                    value={formData.code}
                     onChange={handleInputChange}
-                    placeholder="0.00"
+                    placeholder="Masukkan kode produk"
+                    required
                   />
                 </div>
+              </div>
 
-                <div>
-                  <Label htmlFor="stock">Stok Saat Ini</Label>
-                  <Input
-                    id="stock"
-                    name="stock"
-                    type="number"
-                    value={formData.stock}
-                    onChange={handleInputChange}
-                    placeholder="0"
-                  />
-                </div>
+              <div>
+                <Label htmlFor="description">Deskripsi</Label>
+                <textarea
+                  id="description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Deskripsi produk"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
+                  rows={3}
+                />
+              </div>
 
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="minStock">Stok Minimum</Label>
-                  <Input
-                    id="minStock"
-                    name="minStock"
-                    type="number"
-                    value={formData.minStock}
-                    onChange={handleInputChange}
-                    placeholder="0"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="unit">Unit</Label>
+                  <Label htmlFor="category">Kategori *</Label>
                   <select
-                    id="unit"
-                    name="unit"
-                    value={formData.unit}
+                    id="category"
+                    name="category"
+                    value={formData.category}
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                    required
                   >
-                    {units.map((unit) => (
-                      <option key={unit} value={unit}>
-                        {unit}
+                    <option value="">Pilih kategori</option>
+                    {categories.map((category) => (
+                      <option key={category} value={category}>
+                        {category}
                       </option>
                     ))}
                   </select>
                 </div>
-
                 <div>
-                  <Label htmlFor="status">Status</Label>
-                  <select
-                    id="status"
-                    name="status"
-                    value={formData.status}
+                  <Label htmlFor="supplier">Supplier</Label>
+                  <Input
+                    id="supplier"
+                    name="supplier"
+                    value={formData.supplier}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                  >
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Tidak Aktif</option>
-                  </select>
+                    placeholder="Nama supplier"
+                  />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Actions */}
-            <Card className="mt-6">
-              <CardContent className="p-6">
-                <div className="flex flex-col gap-3">
-                  <Button type="submit" disabled={loading} className="w-full">
-                    {loading ? (
-                      <>
-                        <Package className="h-4 w-4 mr-2 animate-spin" />
-                        Menyimpan...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="h-4 w-4 mr-2" />
-                        Simpan Perubahan
-                      </>
-                    )}
-                  </Button>
-                  <Link href={`/dashboard/products/${params.id}`}>
-                    <Button variant="outline" className="w-full">
-                      Batal
-                    </Button>
-                  </Link>
+              <div>
+                <Label htmlFor="barcode">Barcode</Label>
+                <Input
+                  id="barcode"
+                  name="barcode"
+                  value={formData.barcode}
+                  onChange={handleInputChange}
+                  placeholder="Barcode produk"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Dimensions & Weight */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle>Properti Fisik</CardTitle>
+              <CardDescription>Informasi dimensi dan berat</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="weight">Berat (kg)</Label>
+                <Input
+                  id="weight"
+                  name="weight"
+                  type="number"
+                  step="0.01"
+                  value={formData.weight}
+                  onChange={handleInputChange}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <Label>Dimensi (cm)</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <Input
+                    name="dimensions.length"
+                    type="number"
+                    step="0.01"
+                    value={formData.dimensions.length}
+                    onChange={handleInputChange}
+                    placeholder="Panjang"
+                  />
+                  <Input
+                    name="dimensions.width"
+                    type="number"
+                    step="0.01"
+                    value={formData.dimensions.width}
+                    onChange={handleInputChange}
+                    placeholder="Lebar"
+                  />
+                  <Input
+                    name="dimensions.height"
+                    type="number"
+                    step="0.01"
+                    value={formData.dimensions.height}
+                    onChange={handleInputChange}
+                    placeholder="Tinggi"
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-      </form>
-    </div>
+
+        {/* Pricing & Inventory */}
+        <div>
+          <Card>
+            <CardHeader>
+              <CardTitle>Harga & Inventori</CardTitle>
+              <CardDescription>Atur harga dan level stok</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="price">Harga Jual (IDR) *</Label>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={handleInputChange}
+                  placeholder="0.00"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="cost">Harga Modal (IDR)</Label>
+                <Input
+                  id="cost"
+                  name="cost"
+                  type="number"
+                  step="0.01"
+                  value={formData.cost}
+                  onChange={handleInputChange}
+                  placeholder="0.00"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="stock">Stok Saat Ini</Label>
+                <Input
+                  id="stock"
+                  name="stock"
+                  type="number"
+                  value={formData.stock}
+                  onChange={handleInputChange}
+                  placeholder="0"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="minStock">Stok Minimum</Label>
+                <Input
+                  id="minStock"
+                  name="minStock"
+                  type="number"
+                  value={formData.minStock}
+                  onChange={handleInputChange}
+                  placeholder="0"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="unit">Unit</Label>
+                <select
+                  id="unit"
+                  name="unit"
+                  value={formData.unit}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  {units.map((unit) => (
+                    <option key={unit} value={unit}>
+                      {unit}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <select
+                  id="status"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleInputChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Tidak Aktif</option>
+                </select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Actions */}
+          <Card className="mt-6">
+            <CardContent className="p-6">
+              <div className="flex flex-col gap-3">
+                <Button type="submit" disabled={loading} className="w-full">
+                  {loading ? (
+                    <>
+                      <Package className="h-4 w-4 mr-2 animate-spin" />
+                      Menyimpan...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Simpan Perubahan
+                    </>
+                  )}
+                </Button>
+                <Link href={`/dashboard/products/${params.id}`}>
+                  <Button variant="outline" className="w-full">
+                    Batal
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </DashboardFormLayout>
   );
 }
