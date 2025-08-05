@@ -15,9 +15,12 @@ import {
   BarChart3,
   ArrowUpRight,
   ArrowDownRight,
+  Share2,
+  Download,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { usePWA } from "@/hooks/use-pwa";
 
 export default function DashboardPage() {
   const [user, setUser] = useState(null);
@@ -42,6 +45,25 @@ export default function DashboardPage() {
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { isOnline, isInstallable, installApp, shareApp, isStandalone } =
+    usePWA();
+
+  const handleInstallApp = async () => {
+    const installed = await installApp();
+    if (installed) {
+      alert("App installed successfully!");
+    }
+  };
+
+  const handleShareApp = async () => {
+    const shared = await shareApp({
+      title: "ERP Dashboard",
+      text: "Check out our ERP management system dashboard",
+    });
+    if (shared && !navigator.share) {
+      alert("Dashboard link copied to clipboard!");
+    }
+  };
 
   useEffect(() => {
     // Get user info from auth verification
@@ -185,9 +207,22 @@ export default function DashboardPage() {
           </h1>
           <p className="text-gray-600 mt-1">
             Selamat datang kembali, {user?.name}! Berikut ringkasan bisnis Anda.
+            {!isOnline && (
+              <span className="text-red-500 ml-2">(Offline Mode)</span>
+            )}
           </p>
         </div>
         <div className="flex items-center space-x-2 mt-4 sm:mt-0">
+          {isInstallable && (
+            <Button onClick={handleInstallApp} variant="outline" size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Install App
+            </Button>
+          )}
+          <Button onClick={handleShareApp} variant="outline" size="sm">
+            <Share2 className="w-4 h-4 mr-2" />
+            Share
+          </Button>
           <Button
             onClick={() => router.push("/dashboard/pos")}
             className="bg-blue-600 hover:bg-blue-700"
