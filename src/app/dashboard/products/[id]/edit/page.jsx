@@ -207,7 +207,7 @@ export default function EditProductPage() {
     <div className="container mx-auto p-6">
       {/* Header */}
       <div className="flex flex-col xs:flex-row gap-3 xs:gap-4 items-start xs:items-center mb-6">
-        <Link href={`/dashboard/products/${params.id}`}>
+        <Link href={`/dashboard/products/`}>
           <Button variant="ghost" size="sm">
             <ArrowLeft className="h-4 w-4" />
           </Button>

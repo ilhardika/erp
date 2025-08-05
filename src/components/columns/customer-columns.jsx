@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Edit, Trash2, AlertTriangle, MoreHorizontal } from "lucide-react";
+import { Eye, Edit, Trash2, MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,18 +11,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export const createProductColumns = (handleDeleteClick) => [
+export const createCustomerColumns = (handleDeleteClick) => [
   {
     accessorKey: "name",
-    header: "Produk",
+    header: "Customer",
     cell: ({ row }) => {
-      const product = row.original;
+      const customer = row.original;
       return (
         <div className="min-w-[200px]">
-          <p className="font-medium">{product.name}</p>
-          {product.description && (
+          <p className="font-medium">{customer.name}</p>
+          {customer.email && (
             <p className="text-sm text-gray-500 truncate max-w-[180px]">
-              {product.description}
+              {customer.email}
             </p>
           )}
         </div>
@@ -41,78 +41,50 @@ export const createProductColumns = (handleDeleteClick) => [
     ),
   },
   {
-    accessorKey: "category",
-    header: "Kategori",
+    accessorKey: "phone",
+    header: "Telepon",
     cell: ({ getValue }) => (
-      <div className="min-w-[100px]">
-        <Badge variant="secondary" className="whitespace-nowrap">
-          {getValue()}
-        </Badge>
+      <div className="min-w-[120px]">
+        <span className="text-gray-600 whitespace-nowrap">
+          {getValue() || "-"}
+        </span>
       </div>
     ),
   },
   {
-    accessorKey: "price",
-    header: "Harga",
-    cell: ({ getValue }) => {
-      const price = getValue();
-      return (
-        <div className="min-w-[120px]">
-          <p className="font-medium whitespace-nowrap">
-            {new Intl.NumberFormat("id-ID", {
-              style: "currency",
-              currency: "IDR",
-              minimumFractionDigits: 0,
-            }).format(price)}
-          </p>
-        </div>
-      );
-    },
+    accessorKey: "city",
+    header: "Kota",
+    cell: ({ getValue }) => (
+      <div className="min-w-[100px]">
+        <span className="text-gray-600 whitespace-nowrap">
+          {getValue() || "-"}
+        </span>
+      </div>
+    ),
   },
   {
-    accessorKey: "stock",
-    header: "Stok",
-    cell: ({ row }) => {
-      const product = row.original;
-      const getStockStatus = (stock, minStock) => {
-        if (stock <= 0) {
-          return {
-            label: "Habis",
-            color: "text-red-600",
-            warning: true,
-          };
-        } else if (stock <= minStock) {
-          return {
-            label: "Stok Rendah",
-            color: "text-yellow-600",
-            warning: true,
-          };
-        }
-        return {
-          label: "Normal",
-          color: "text-green-600",
-          warning: false,
-        };
+    accessorKey: "customer_type",
+    header: "Tipe",
+    cell: ({ getValue }) => {
+      const type = getValue();
+      const variants = {
+        retail: "outline",
+        wholesale: "outline",
+        corporate: "outline",
       };
-
-      const stockStatus = getStockStatus(product.stock, product.min_stock || 0);
-
+      const labels = {
+        retail: "Retail",
+        wholesale: "Grosir",
+        corporate: "Korporat",
+      };
       return (
         <div className="min-w-[100px]">
-          <div className="flex items-center gap-2 whitespace-nowrap">
-            <span className={`font-medium ${stockStatus.color}`}>
-              {product.stock}
-            </span>
-            <span className="text-gray-500 text-sm">{product.unit}</span>
-          </div>
-          {stockStatus.warning && (
-            <div className="flex items-center gap-1 mt-1">
-              <AlertTriangle className="h-3 w-3 text-yellow-500" />
-              <span className="text-xs text-yellow-600 whitespace-nowrap">
-                {stockStatus.label}
-              </span>
-            </div>
-          )}
+          <Badge
+            variant={variants[type] || "secondary"}
+            className="whitespace-nowrap"
+          >
+            {labels[type] || type}
+          </Badge>
         </div>
       );
     },
@@ -135,7 +107,7 @@ export const createProductColumns = (handleDeleteClick) => [
     id: "actions",
     header: "Aksi",
     cell: ({ row }) => {
-      const product = row.original;
+      const customer = row.original;
       return (
         <div className="min-w-[60px]">
           <DropdownMenu>
@@ -147,7 +119,7 @@ export const createProductColumns = (handleDeleteClick) => [
             <DropdownMenuContent align="end">
               <DropdownMenuItem asChild>
                 <Link
-                  href={`/dashboard/products/${product.id}`}
+                  href={`/dashboard/customers/${customer.id}`}
                   className="flex items-center"
                 >
                   <Eye className="mr-2 h-4 w-4" />
@@ -156,7 +128,7 @@ export const createProductColumns = (handleDeleteClick) => [
               </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <Link
-                  href={`/dashboard/products/${product.id}/edit`}
+                  href={`/dashboard/customers/${customer.id}/edit`}
                   className="flex items-center"
                 >
                   <Edit className="mr-2 h-4 w-4" />
@@ -164,7 +136,7 @@ export const createProductColumns = (handleDeleteClick) => [
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => handleDeleteClick(product.id)}
+                onClick={() => handleDeleteClick(customer.id)}
                 className="text-red-600 focus:text-red-600"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
