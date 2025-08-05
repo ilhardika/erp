@@ -14,7 +14,14 @@ export default function SuppliersPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { deleteDialog, showDeleteDialog, confirmDelete } = useDeleteDialog();
+  const {
+    showDeleteDialog,
+    deleteId,
+    deleteError,
+    handleDeleteClick: openDeleteDialog,
+    closeDeleteDialog,
+    setDeleteError,
+  } = useDeleteDialog();
 
   useEffect(() => {
     fetchSuppliers();
@@ -24,8 +31,9 @@ export default function SuppliersPage() {
     try {
       const response = await fetch("/api/suppliers");
       if (response.ok) {
-        const data = await response.json();
-        setSuppliers(data);
+        const result = await response.json();
+        // Handle the new API response format
+        setSuppliers(result.success ? result.data : []);
       } else {
         console.error("Failed to fetch suppliers");
       }
@@ -37,37 +45,31 @@ export default function SuppliersPage() {
   };
 
   const handleDeleteClick = (id) => {
-    showDeleteDialog(
-      "Delete Supplier",
-      "Are you sure you want to delete this supplier?",
-      async () => {
-        try {
-          const response = await fetch(`/api/suppliers/${id}`, {
-            method: "DELETE",
-          });
+    openDeleteDialog(id);
+  };
 
-          if (response.ok) {
-            setSuppliers((prev) =>
-              prev.filter((supplier) => supplier.id !== id)
-            );
-          } else {
-            console.error("Failed to delete supplier");
-          }
-        } catch (error) {
-          console.error("Error deleting supplier:", error);
-        }
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+
+    try {
+      const response = await fetch(`/api/suppliers/${deleteId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setSuppliers((prev) =>
+          prev.filter((supplier) => supplier.id !== deleteId)
+        );
+        closeDeleteDialog();
+      } else {
+        setDeleteError("Failed to delete supplier");
       }
-    );
+    } catch (error) {
+      setDeleteError("Error deleting supplier");
+    }
   };
 
   const columnsWithDelete = createSupplierColumns(handleDeleteClick);
-
-  const renderHeaderActions = () => (
-    <Button onClick={() => router.push("/dashboard/suppliers/create")}>
-      <Plus className="mr-2 h-4 w-4" />
-      Add Supplier
-    </Button>
-  );
 
   return (
     <>
@@ -75,12 +77,22 @@ export default function SuppliersPage() {
         title="Suppliers"
         description="Manage your suppliers"
         data={suppliers}
+        filteredData={suppliers}
+        loading={isLoading}
         columns={columnsWithDelete}
-        isLoading={isLoading}
-        actions={renderHeaderActions()}
+        emptyTitle="Belum ada supplier"
+        emptyDescription="Mulai dengan menambahkan supplier pertama Anda"
+        emptyActionText="Tambah Supplier"
+        emptyActionLink="/dashboard/suppliers/create"
+        addButtonText="Tambah Supplier"
+        addButtonLink="/dashboard/suppliers/create"
+        showDeleteDialog={showDeleteDialog}
+        onCloseDeleteDialog={closeDeleteDialog}
+        deleteTitle="Konfirmasi Hapus"
+        deleteDescription="Apakah Anda yakin ingin menghapus supplier ini? Tindakan ini tidak dapat dibatalkan."
+        deleteError={deleteError}
+        onConfirmDelete={confirmDelete}
       />
-
-      {deleteDialog}
     </>
   );
 }

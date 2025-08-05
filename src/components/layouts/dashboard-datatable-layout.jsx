@@ -90,7 +90,9 @@ export default function DashboardDataTableLayout({
         <h3 className="text-lg font-medium text-gray-900 mb-2">
           {data.length === 0
             ? emptyTitle
-            : `${emptyTitle.split(" ")[0]} tidak ditemukan`}
+            : `${
+                emptyTitle ? emptyTitle.split(" ")[0] : "Data"
+              } tidak ditemukan`}
         </h3>
         <p className="text-gray-500 mb-4">
           {data.length === 0

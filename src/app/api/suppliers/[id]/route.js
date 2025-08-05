@@ -1,13 +1,13 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/neon";
 import { NextResponse } from "next/server";
-
-const sql = neon(process.env.DATABASE_URL);
 
 export async function GET(request, { params }) {
   try {
     const { id } = await params;
 
-    const suppliers = await sql`SELECT * FROM suppliers WHERE id = ${id}`;
+    const suppliers = await sql.query(`SELECT * FROM suppliers WHERE id = $1`, [
+      id,
+    ]);
 
     if (suppliers.length === 0) {
       return NextResponse.json(
@@ -53,9 +53,10 @@ export async function PUT(request, { params }) {
     } = body;
 
     // Check if supplier exists
-    const existingSupplier = await sql`
-      SELECT id FROM suppliers WHERE id = ${id}
-    `;
+    const existingSupplier = await sql.query(
+      `SELECT id FROM suppliers WHERE id = $1`,
+      [id]
+    );
 
     if (existingSupplier.length === 0) {
       return NextResponse.json(
@@ -66,9 +67,10 @@ export async function PUT(request, { params }) {
 
     // Check if code already exists (excluding current supplier)
     if (code) {
-      const duplicateCode = await sql`
-        SELECT id FROM suppliers WHERE code = ${code} AND id != ${id}
-      `;
+      const duplicateCode = await sql.query(
+        `SELECT id FROM suppliers WHERE code = $1 AND id != $2`,
+        [code, id]
+      );
 
       if (duplicateCode.length > 0) {
         return NextResponse.json(
@@ -78,16 +80,37 @@ export async function PUT(request, { params }) {
       }
     }
 
-    const result = await sql`
+    const result = await sql.query(
+      `
       UPDATE suppliers SET 
-        code = ${code}, name = ${name}, email = ${email}, phone = ${phone}, address = ${address}, 
-        city = ${city}, postal_code = ${postal_code}, tax_id = ${tax_id}, supplier_type = ${supplier_type},
-        payment_terms = ${payment_terms}, credit_limit = ${credit_limit}, bank_account = ${bank_account},
-        bank_name = ${bank_name}, account_holder = ${account_holder}, notes = ${notes}, status = ${status},
+        code = $1, name = $2, email = $3, phone = $4, address = $5, 
+        city = $6, postal_code = $7, tax_id = $8, supplier_type = $9,
+        payment_terms = $10, credit_limit = $11, bank_account = $12,
+        bank_name = $13, account_holder = $14, notes = $15, status = $16,
         updated_at = NOW()
-      WHERE id = ${id} 
+      WHERE id = $17 
       RETURNING *
-    `;
+    `,
+      [
+        code,
+        name,
+        email,
+        phone,
+        address,
+        city,
+        postal_code,
+        tax_id,
+        supplier_type,
+        payment_terms,
+        credit_limit,
+        bank_account,
+        bank_name,
+        account_holder,
+        notes,
+        status,
+        id,
+      ]
+    );
 
     return NextResponse.json({
       success: true,
@@ -107,9 +130,10 @@ export async function DELETE(request, { params }) {
     const { id } = await params;
 
     // Check if supplier exists
-    const existingSupplier = await sql`
-      SELECT id FROM suppliers WHERE id = ${id}
-    `;
+    const existingSupplier = await sql.query(
+      `SELECT id FROM suppliers WHERE id = $1`,
+      [id]
+    );
 
     if (existingSupplier.length === 0) {
       return NextResponse.json(
@@ -118,7 +142,7 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    await sql`DELETE FROM suppliers WHERE id = ${id}`;
+    await sql.query(`DELETE FROM suppliers WHERE id = $1`, [id]);
 
     return NextResponse.json({
       success: true,

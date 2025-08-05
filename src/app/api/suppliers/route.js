@@ -1,68 +1,68 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/neon";
 import { NextResponse } from "next/server";
-
-const sql = neon(process.env.DATABASE_URL);
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get("limit") || "50");
-    const offset = parseInt(searchParams.get("offset") || "0");
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 10;
     const search = searchParams.get("search") || "";
     const status = searchParams.get("status") || "";
     const supplier_type = searchParams.get("supplier_type") || "";
 
-    let suppliers;
+    const offset = (page - 1) * limit;
 
-    // Simple approach without complex WHERE building
-    if (!search && !status && !supplier_type) {
-      // No filters - get all
-      suppliers = await sql`
-        SELECT * FROM suppliers 
-        ORDER BY created_at DESC 
-        LIMIT ${limit} OFFSET ${offset}
-      `;
-    } else {
-      // With filters - build query manually using sql.query for parameterized queries
-      let queryStr = "SELECT * FROM suppliers WHERE 1=1";
-      const queryParams = [];
+    // Build query with optional filters
+    let whereClause = "WHERE 1=1";
+    let queryParams = [];
+    let paramIndex = 1;
 
-      if (search) {
-        queryStr +=
-          " AND (name ILIKE '%' || $" +
-          (queryParams.length + 1) +
-          " || '%' OR code ILIKE '%' || $" +
-          (queryParams.length + 1) +
-          " || '%' OR email ILIKE '%' || $" +
-          (queryParams.length + 1) +
-          " || '%')";
-        queryParams.push(search);
-      }
-
-      if (status) {
-        queryStr += " AND status = $" + (queryParams.length + 1);
-        queryParams.push(status);
-      }
-
-      if (supplier_type) {
-        queryStr += " AND supplier_type = $" + (queryParams.length + 1);
-        queryParams.push(supplier_type);
-      }
-
-      queryStr +=
-        " ORDER BY created_at DESC LIMIT $" +
-        (queryParams.length + 1) +
-        " OFFSET $" +
-        (queryParams.length + 2);
-      queryParams.push(limit, offset);
-
-      // Use sql.query for parameterized queries
-      suppliers = await sql.query(queryStr, queryParams);
+    if (search) {
+      whereClause += ` AND (name ILIKE $${paramIndex} OR code ILIKE $${paramIndex} OR email ILIKE $${paramIndex})`;
+      queryParams.push(`%${search}%`);
+      paramIndex++;
     }
+
+    if (status) {
+      whereClause += ` AND status = $${paramIndex}`;
+      queryParams.push(status);
+      paramIndex++;
+    }
+
+    if (supplier_type) {
+      whereClause += ` AND supplier_type = $${paramIndex}`;
+      queryParams.push(supplier_type);
+      paramIndex++;
+    }
+
+    // Get total count
+    const countQuery = `SELECT COUNT(*) as total FROM suppliers ${whereClause}`;
+    const countResult = await sql.query(countQuery, queryParams);
+    const total = parseInt(countResult[0].total);
+
+    // Get suppliers with pagination
+    const suppliersQuery = `
+      SELECT id, code, name, email, phone, address, city, postal_code, 
+             tax_id, supplier_type, payment_terms, credit_limit, bank_account, 
+             bank_name, status, created_at, updated_at
+      FROM suppliers 
+      ${whereClause}
+      ORDER BY created_at DESC 
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    const suppliers = await sql.query(suppliersQuery, [
+      ...queryParams,
+      limit,
+      offset,
+    ]);
 
     return NextResponse.json({
       success: true,
       data: suppliers,
+      total,
+      page,
+      limit,
     });
   } catch (error) {
     console.error("Error fetching suppliers:", error);
@@ -104,9 +104,10 @@ export async function POST(request) {
     }
 
     // Check if code already exists
-    const existingSupplier = await sql`
-      SELECT id FROM suppliers WHERE code = ${code}
-    `;
+    const existingSupplier = await sql.query(
+      `SELECT id FROM suppliers WHERE code = $1`,
+      [code]
+    );
 
     if (existingSupplier.length > 0) {
       return NextResponse.json(
@@ -115,17 +116,35 @@ export async function POST(request) {
       );
     }
 
-    const result = await sql`
+    const result = await sql.query(
+      `
       INSERT INTO suppliers (
         code, name, email, phone, address, city, postal_code, tax_id,
         supplier_type, payment_terms, credit_limit, bank_account, bank_name,
         account_holder, notes, status, created_at, updated_at
       ) VALUES (
-        ${code}, ${name}, ${email}, ${phone}, ${address}, ${city}, ${postal_code}, ${tax_id},
-        ${supplier_type}, ${payment_terms}, ${credit_limit}, ${bank_account}, ${bank_name},
-        ${account_holder}, ${notes}, ${status}, NOW(), NOW()
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, NOW(), NOW()
       ) RETURNING *
-    `;
+    `,
+      [
+        code,
+        name,
+        email,
+        phone,
+        address,
+        city,
+        postal_code,
+        tax_id,
+        supplier_type,
+        payment_terms,
+        credit_limit,
+        bank_account,
+        bank_name,
+        account_holder,
+        notes,
+        status,
+      ]
+    );
 
     return NextResponse.json({
       success: true,
