@@ -1,25 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Plus, Package } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { DataTable } from "@/components/ui/data-table";
+import { Package } from "lucide-react";
+import DashboardDataTableLayout from "@/components/layouts/dashboard-datatable-layout";
 import { createProductColumns } from "@/components/columns/product-columns";
+import { useDeleteDialog } from "@/hooks/use-delete-dialog";
 
 export default function ProductsPage() {
   const [products, setProducts] = useState([]);
@@ -27,15 +12,16 @@ export default function ProductsPage() {
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [deleteId, setDeleteId] = useState(null);
-  const [deleteError, setDeleteError] = useState("");
 
-  const handleDeleteClick = (id) => {
-    setDeleteId(id);
-    setDeleteError("");
-    setShowDeleteDialog(true);
-  };
+  // Use delete dialog hook
+  const {
+    showDeleteDialog,
+    deleteId,
+    deleteError,
+    handleDeleteClick,
+    closeDeleteDialog,
+    setDeleteError,
+  } = useDeleteDialog();
 
   // Columns for data table
   const columns = createProductColumns(handleDeleteClick);
@@ -68,8 +54,7 @@ export default function ProductsPage() {
         method: "DELETE",
       });
       if (response.ok) {
-        setShowDeleteDialog(false);
-        setDeleteId(null);
+        closeDeleteDialog();
         fetchProducts(); // Reload data after delete
       } else {
         setDeleteError("Gagal menghapus produk");
@@ -116,102 +101,37 @@ export default function ProductsPage() {
   });
 
   return (
-    <div className="space-y-6">
-      {/* Dialog konfirmasi hapus produk */}
-      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Konfirmasi Hapus Produk</DialogTitle>
-          </DialogHeader>
-          <div className="my-4 text-gray-700">
-            Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak
-            dapat dibatalkan.
-          </div>
-          {deleteError && (
-            <div className="mb-4 p-3 rounded bg-red-100 text-red-700 text-sm">
-              {deleteError}
-            </div>
-          )}
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowDeleteDialog(false)}
-            >
-              Batal
-            </Button>
-            <Button variant="destructive" onClick={confirmDelete}>
-              Hapus
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Produk</h1>
-          <p className="text-gray-500 mt-2">Kelola data produk dan inventori</p>
-        </div>
-        <Link href="/dashboard/products/create">
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Tambah Produk
-          </Button>
-        </Link>
-      </div>
-
-      {/* Main Content */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Produk</CardTitle>
-          <CardDescription>
-            Menampilkan {filteredProducts.length} dari {products.length} produk
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-              <p className="mt-4 text-gray-500">Memuat produk...</p>
-            </div>
-          ) : (
-            <DataTable
-              data={filteredProducts}
-              columns={columns}
-              searchPlaceholder="Cari produk, kode, atau deskripsi..."
-              filters={filters}
-              emptyMessage={
-                <div className="text-center py-12">
-                  <Package className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    {products.length === 0
-                      ? "Belum ada produk"
-                      : "Produk tidak ditemukan"}
-                  </h3>
-                  <p className="text-gray-500 mb-4">
-                    {products.length === 0
-                      ? "Mulai dengan menambahkan produk pertama Anda"
-                      : "Coba ubah kriteria pencarian atau filter"}
-                  </p>
-                  {products.length === 0 && (
-                    <Link href="/dashboard/products/create">
-                      <Button>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Tambah Produk Pertama
-                      </Button>
-                    </Link>
-                  )}
-                </div>
-              }
-              pageSize={10}
-              showSearch={true}
-              showPagination={true}
-              enableSorting={true}
-              enableFiltering={true}
-            />
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <DashboardDataTableLayout
+      // Header props
+      title="Produk"
+      description="Kelola data produk dan inventori"
+      addButtonText="Tambah Produk"
+      addButtonLink="/dashboard/products/create"
+      // Data props
+      data={products}
+      filteredData={filteredProducts}
+      loading={loading}
+      columns={columns}
+      // DataTable props
+      searchPlaceholder="Cari produk, kode, atau deskripsi..."
+      filters={filters}
+      emptyStateIcon={Package}
+      emptyTitle="Belum ada produk"
+      emptyDescription="Mulai dengan menambahkan produk pertama Anda"
+      emptyActionText="Tambah Produk Pertama"
+      emptyActionLink="/dashboard/products/create"
+      pageSize={10}
+      // Delete dialog props
+      showDeleteDialog={showDeleteDialog}
+      onCloseDeleteDialog={closeDeleteDialog}
+      deleteTitle="Konfirmasi Hapus Produk"
+      deleteDescription="Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan."
+      deleteError={deleteError}
+      onConfirmDelete={confirmDelete}
+      // Card customization
+      cardTitle="Daftar Produk"
+      cardDescription={`Menampilkan ${filteredProducts.length} dari ${products.length} produk`}
+      loadingMessage="Memuat produk..."
+    />
   );
 }
