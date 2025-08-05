@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { CurrencyInput } from "@/components/ui/currency-input";
 import { Label } from "@/components/ui/label";
 import {
   Card,
@@ -322,28 +323,24 @@ export default function CreateProductPage() {
             <CardContent className="space-y-4">
               <div>
                 <Label htmlFor="price">Selling Price (IDR) *</Label>
-                <Input
+                <CurrencyInput
                   id="price"
                   name="price"
-                  type="number"
-                  step="0.01"
                   value={formData.price}
                   onChange={handleInputChange}
-                  placeholder="0.00"
+                  placeholder="0"
                   required
                 />
               </div>
 
               <div>
                 <Label htmlFor="cost">Cost Price (IDR)</Label>
-                <Input
+                <CurrencyInput
                   id="cost"
                   name="cost"
-                  type="number"
-                  step="0.01"
                   value={formData.cost}
                   onChange={handleInputChange}
-                  placeholder="0.00"
+                  placeholder="0"
                 />
               </div>
 

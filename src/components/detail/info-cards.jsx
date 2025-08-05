@@ -11,7 +11,8 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
-import { formatPrice, formatDateOnly } from "@/lib/format-utils";
+import { formatIDR } from "@/lib/currency";
+import { formatDateOnly } from "@/lib/format-utils";
 
 // Product Basic Information Card
 export function ProductBasicInfo({ product }) {
@@ -108,7 +109,7 @@ export function ProductPricingInfo({ product }) {
               Harga Jual
             </label>
             <p className="text-2xl font-bold text-green-600">
-              {formatPrice(product.price)}
+              {formatIDR(product.price)}
             </p>
           </div>
           {product.cost > 0 && (
@@ -117,10 +118,10 @@ export function ProductPricingInfo({ product }) {
                 Harga Modal
               </label>
               <p className="text-xl font-semibold text-gray-700">
-                {formatPrice(product.cost)}
+                {formatIDR(product.cost)}
               </p>
               <p className="text-sm text-gray-500">
-                Margin: {formatPrice(product.price - product.cost)} (
+                Margin: {formatIDR(product.price - product.cost)} (
                 {(
                   ((product.price - product.cost) / product.cost) *
                   100
@@ -310,7 +311,7 @@ export function CustomerBusinessInfo({ customer }) {
             Batas Kredit
           </label>
           <p className="text-gray-900">
-            {customer?.credit_limit ? formatPrice(customer.credit_limit) : "-"}
+            {customer?.credit_limit ? formatIDR(customer.credit_limit) : "-"}
           </p>
         </div>
         <div>

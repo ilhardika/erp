@@ -1,11 +1,12 @@
 // Format utilities for consistent data display across the app
+import { formatIDR } from "./currency";
 
 export const formatPrice = (price) => {
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(price);
+  return formatIDR(price);
+};
+
+export const formatCurrency = (amount) => {
+  return formatIDR(amount);
 };
 
 export const formatDate = (dateString) => {

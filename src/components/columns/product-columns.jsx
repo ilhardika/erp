@@ -10,6 +10,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { formatIDR } from "@/lib/currency";
 
 export const createProductColumns = (handleDeleteClick) => [
   {
@@ -58,13 +59,7 @@ export const createProductColumns = (handleDeleteClick) => [
       const price = getValue();
       return (
         <div className="min-w-[120px]">
-          <p className="font-medium whitespace-nowrap">
-            {new Intl.NumberFormat("id-ID", {
-              style: "currency",
-              currency: "IDR",
-              minimumFractionDigits: 0,
-            }).format(price)}
-          </p>
+          <p className="font-medium whitespace-nowrap">{formatIDR(price)}</p>
         </div>
       );
     },
