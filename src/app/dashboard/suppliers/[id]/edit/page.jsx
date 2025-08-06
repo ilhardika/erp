@@ -149,7 +149,7 @@ export default function EditSupplierPage() {
         setDialogOpen(true);
         setTimeout(() => {
           setDialogOpen(false);
-          router.push(`/dashboard/suppliers/${params.id}`);
+          router.push("/dashboard/suppliers");
         }, 1500);
       } else {
         setDialogType("error");

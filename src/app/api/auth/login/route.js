@@ -16,10 +16,10 @@ export async function POST(request) {
 
     // Find user by email in Neon PostgreSQL
     const users = await sql`
-      SELECT id, email, password, name, role, status 
+      SELECT id, email, password_hash as password, full_name as name, role, is_active
       FROM users 
       WHERE email = ${email.toLowerCase()} 
-      AND status = 'active'
+      AND is_active = true
       LIMIT 1
     `;
 

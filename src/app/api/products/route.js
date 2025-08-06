@@ -41,13 +41,17 @@ export async function GET(request) {
     const countResult = await sql.query(countQuery, queryParams);
     const total = parseInt(countResult[0].total);
 
-    // Get products with pagination
+    // Get products with pagination and join suppliers
     const productsQuery = `
-      SELECT id, name, code, description, category, price, cost, stock, min_stock, 
-             unit, barcode, supplier, status, weight, dimensions, created_at, updated_at
-      FROM products 
+      SELECT 
+        p.id, p.name, p.code, p.description, p.category, p.price, p.cost, 
+        p.stock, p.min_stock, p.unit, p.barcode, p.supplier, p.supplier_id,
+        p.status, p.weight, p.dimensions, p.created_at, p.updated_at,
+        s.name as supplier_name, s.code as supplier_code
+      FROM products p
+      LEFT JOIN suppliers s ON p.supplier_id = s.id 
       ${whereClause}
-      ORDER BY created_at DESC 
+      ORDER BY p.created_at DESC 
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 
@@ -98,7 +102,8 @@ export async function POST(request) {
       minStock,
       unit,
       barcode,
-      supplier,
+      supplier, // legacy text field
+      supplier_id, // new foreign key field
       status,
       weight,
       dimensions,
@@ -131,17 +136,17 @@ export async function POST(request) {
     const result = await sql`
       INSERT INTO products (
         name, code, description, category, price, cost, stock, min_stock,
-        unit, barcode, supplier, status, weight, dimensions
+        unit, barcode, supplier, supplier_id, status, weight, dimensions
       ) VALUES (
         ${name}, ${code}, ${description || ""}, ${category}, ${price}, ${
       cost || 0
     },
         ${stock || 0}, ${minStock || 0}, ${unit || "pcs"}, ${barcode || ""},
-        ${supplier || ""}, ${status || "active"}, ${
+        ${supplier || ""}, ${supplier_id || null}, ${status || "active"}, ${
       weight || 0
     }, ${JSON.stringify(dimensions || {})}
       )
-      RETURNING id, name, code, category, price, stock, status, created_at
+      RETURNING id, name, code, category, price, stock, status, supplier_id, created_at
     `;
 
     return NextResponse.json({

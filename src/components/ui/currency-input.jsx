@@ -43,7 +43,15 @@ const CurrencyInput = React.forwardRef(
       // Allow empty input
       if (inputValue === "") {
         setDisplayValue("");
-        onChange?.(e);
+        // Create synthetic event with empty string but proper name
+        const syntheticEvent = {
+          ...e,
+          target: {
+            ...e.target,
+            value: "",
+          },
+        };
+        onChange?.(syntheticEvent);
         return;
       }
 

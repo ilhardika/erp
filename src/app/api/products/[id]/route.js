@@ -46,7 +46,8 @@ export async function PUT(request, { params }) {
       minStock,
       unit,
       barcode,
-      supplier,
+      supplier, // legacy text field
+      supplier_id, // new foreign key field
       status,
       weight,
       dimensions,
@@ -101,12 +102,13 @@ export async function PUT(request, { params }) {
         unit = ${unit || "pcs"},
         barcode = ${barcode || ""},
         supplier = ${supplier || ""},
+        supplier_id = ${supplier_id || null},
         status = ${status || "active"},
         weight = ${weight || 0},
         dimensions = ${JSON.stringify(dimensions || {})},
         updated_at = CURRENT_TIMESTAMP
       WHERE id = ${id}
-      RETURNING id, name, code, category, price, stock, status, updated_at
+      RETURNING id, name, code, category, price, stock, status, supplier_id, updated_at
     `;
 
     return NextResponse.json({

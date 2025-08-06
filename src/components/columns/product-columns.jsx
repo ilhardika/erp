@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { formatIDR } from "@/lib/currency";
@@ -51,6 +52,25 @@ export const createProductColumns = (handleDeleteClick) => [
         </Badge>
       </div>
     ),
+  },
+  {
+    accessorKey: "supplier_name",
+    header: "Supplier",
+    cell: ({ row }) => {
+      const product = row.original;
+      return (
+        <div className="min-w-[150px]">
+          {product.supplier_name ? (
+            <div>
+              <p className="font-medium text-sm">{product.supplier_name}</p>
+              <p className="text-xs text-gray-500">{product.supplier_code}</p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400 italic">-</p>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "price",
@@ -158,6 +178,7 @@ export const createProductColumns = (handleDeleteClick) => [
                   Edit
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => handleDeleteClick(product.id)}
                 className="text-red-600 focus:text-red-600"

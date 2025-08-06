@@ -21,10 +21,10 @@ export async function GET(request) {
 
     // Get user data from Neon PostgreSQL
     const users = await sql`
-      SELECT id, email, name, role, status, created_at, updated_at 
+      SELECT id, email, full_name as name, role, is_active, created_at, updated_at 
       FROM users 
       WHERE id = ${decoded.userId} 
-      AND status = 'active'
+      AND is_active = true
       LIMIT 1
     `;
 
@@ -44,7 +44,7 @@ export async function GET(request) {
         email: user.email,
         name: user.name,
         role: user.role,
-        status: user.status,
+        is_active: user.is_active,
         created_at: user.created_at,
         updated_at: user.updated_at,
       },

@@ -13,6 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Save, Package } from "lucide-react";
 import DashboardFormLayout from "@/components/layouts/dashboard-form-layout";
 
@@ -21,6 +28,12 @@ export default function EditProductPage() {
   const params = useParams();
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [suppliers, setSuppliers] = useState([]);
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState(""); // "error" | "success"
+  const [dialogMessage, setDialogMessage] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -32,7 +45,8 @@ export default function EditProductPage() {
     minStock: "",
     unit: "pcs",
     barcode: "",
-    supplier: "",
+    supplier: "", // Keep for backward compatibility
+    supplier_id: "", // New field for foreign key
     status: "active",
     weight: "",
     dimensions: {
@@ -73,47 +87,70 @@ export default function EditProductPage() {
   ];
 
   useEffect(() => {
-    fetchProduct();
-  }, []);
+    const loadData = async () => {
+      try {
+        setInitialLoading(true);
+
+        // Load suppliers and product data in parallel
+        const [suppliersResponse, productResponse] = await Promise.all([
+          fetch("/api/suppliers/list"),
+          fetch(`/api/products/${params.id}`),
+        ]);
+
+        // Load suppliers
+        const suppliersResult = await suppliersResponse.json();
+        if (suppliersResult.success) {
+          setSuppliers(suppliersResult.data);
+        }
+
+        // Load product data
+        const productResult = await productResponse.json();
+        if (productResult.success) {
+          const product = productResult.data;
+          setFormData({
+            name: product.name || "",
+            code: product.code || "",
+            description: product.description || "",
+            category: product.category || "",
+            price: product.price?.toString() || "",
+            cost: product.cost?.toString() || "",
+            stock: product.stock?.toString() || "",
+            minStock: (product.min_stock ?? product.minStock)?.toString() || "",
+            unit: product.unit || "pcs",
+            barcode: product.barcode || "",
+            supplier: product.supplier || "", // Keep for backward compatibility
+            supplier_id: product.supplier_id?.toString() || "", // New field
+            status: product.status || "active",
+            weight: product.weight?.toString() || "",
+            dimensions: {
+              length: product.dimensions?.length?.toString() || "",
+              width: product.dimensions?.width?.toString() || "",
+              height: product.dimensions?.height?.toString() || "",
+            },
+          });
+        } else {
+          setDialogType("error");
+          setDialogMessage("Produk tidak ditemukan");
+          setDialogOpen(true);
+          setTimeout(() => {
+            router.push("/dashboard/products");
+          }, 2000);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+        setDialogType("error");
+        setDialogMessage("Gagal memuat data");
+        setDialogOpen(true);
+      } finally {
+        setInitialLoading(false);
+      }
+    };
+
+    loadData();
+  }, [params.id, router]);
 
   const fetchProduct = async () => {
-    try {
-      setInitialLoading(true);
-      const response = await fetch(`/api/products/${params.id}`);
-      const data = await response.json();
-
-      if (data.success) {
-        const product = data.data;
-        setFormData({
-          name: product.name || "",
-          code: product.code || "",
-          description: product.description || "",
-          category: product.category || "",
-          price: product.price?.toString() || "",
-          cost: product.cost?.toString() || "",
-          stock: product.stock?.toString() || "",
-          minStock: (product.min_stock ?? product.minStock)?.toString() || "",
-          unit: product.unit || "pcs",
-          barcode: product.barcode || "",
-          supplier: product.supplier || "",
-          status: product.status || "active",
-          weight: product.weight?.toString() || "",
-          dimensions: {
-            length: product.dimensions?.length?.toString() || "",
-            width: product.dimensions?.width?.toString() || "",
-            height: product.dimensions?.height?.toString() || "",
-          },
-        });
-      } else {
-        alert("Produk tidak ditemukan");
-        router.push("/dashboard/products");
-      }
-    } catch (error) {
-      console.error("Error fetching product:", error);
-      alert("Terjadi kesalahan saat memuat produk");
-    } finally {
-      setInitialLoading(false);
-    }
+    // This function is replaced by the useEffect above
   };
 
   const handleInputChange = (e) => {
@@ -148,7 +185,9 @@ export default function EditProductPage() {
         !formData.price ||
         !formData.category
       ) {
-        alert("Mohon isi semua field yang wajib diisi");
+        setDialogType("error");
+        setDialogMessage("Mohon isi semua field yang wajib diisi");
+        setDialogOpen(true);
         setLoading(false);
         return;
       }
@@ -179,13 +218,23 @@ export default function EditProductPage() {
       const data = await response.json();
 
       if (data.success) {
-        router.push(`/dashboard/products`);
+        setDialogType("success");
+        setDialogMessage("Produk berhasil diperbarui!");
+        setDialogOpen(true);
+        setTimeout(() => {
+          setDialogOpen(false);
+          router.push("/dashboard/products");
+        }, 1500);
       } else {
-        alert(data.error || "Gagal mengupdate produk");
+        setDialogType("error");
+        setDialogMessage(data.error || "Gagal mengupdate produk");
+        setDialogOpen(true);
       }
     } catch (error) {
       console.error("Error updating product:", error);
-      alert("Gagal mengupdate produk");
+      setDialogType("error");
+      setDialogMessage("Terjadi kesalahan saat mengupdate produk");
+      setDialogOpen(true);
     } finally {
       setLoading(false);
     }
@@ -284,14 +333,21 @@ export default function EditProductPage() {
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="supplier">Supplier</Label>
-                  <Input
-                    id="supplier"
-                    name="supplier"
-                    value={formData.supplier}
+                  <Label htmlFor="supplier_id">Supplier</Label>
+                  <select
+                    id="supplier_id"
+                    name="supplier_id"
+                    value={formData.supplier_id}
                     onChange={handleInputChange}
-                    placeholder="Nama supplier"
-                  />
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Pilih Supplier (Opsional)</option>
+                    {suppliers.map((supplier) => (
+                      <option key={supplier.id} value={supplier.id}>
+                        {supplier.code} - {supplier.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -480,6 +536,18 @@ export default function EditProductPage() {
           </Card>
         </div>
       </div>
+
+      {/* Dialog untuk notifikasi */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {dialogType === "success" ? "Berhasil!" : "Error"}
+            </DialogTitle>
+            <DialogDescription>{dialogMessage}</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </DashboardFormLayout>
   );
 }

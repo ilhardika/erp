@@ -8,6 +8,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
@@ -135,6 +136,7 @@ export const createCustomerColumns = (handleDeleteClick) => [
                   Edit
                 </Link>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => handleDeleteClick(customer.id)}
                 className="text-red-600 focus:text-red-600"

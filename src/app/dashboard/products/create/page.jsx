@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -14,12 +14,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Save, Package } from "lucide-react";
 import DashboardFormLayout from "@/components/layouts/dashboard-form-layout";
 
 export default function CreateProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [suppliers, setSuppliers] = useState([]);
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogType, setDialogType] = useState(""); // "error" | "success"
+  const [dialogMessage, setDialogMessage] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     code: "",
@@ -31,7 +44,8 @@ export default function CreateProductPage() {
     minStock: "",
     unit: "pcs",
     barcode: "",
-    supplier: "",
+    supplier: "", // Keep for backward compatibility
+    supplier_id: "", // New field for foreign key
     status: "active",
     weight: "",
     dimensions: {
@@ -40,6 +54,22 @@ export default function CreateProductPage() {
       height: "",
     },
   });
+
+  // Load suppliers on component mount
+  useEffect(() => {
+    const loadSuppliers = async () => {
+      try {
+        const response = await fetch("/api/suppliers/list");
+        const result = await response.json();
+        if (result.success) {
+          setSuppliers(result.data);
+        }
+      } catch (error) {
+        console.error("Error loading suppliers:", error);
+      }
+    };
+    loadSuppliers();
+  }, []);
 
   const categories = [
     "Elektronik",
@@ -70,6 +100,8 @@ export default function CreateProductPage() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
+    console.log("Input change:", { name, value, type: typeof value });
+
     if (name.startsWith("dimensions.")) {
       const dimensionKey = name.split(".")[1];
       setFormData((prev) => ({
@@ -99,14 +131,38 @@ export default function CreateProductPage() {
     setLoading(true);
 
     try {
-      // Validate required fields
+      // Debug: log form data values
+      console.log("Form data validation check:", {
+        name: formData.name,
+        code: formData.code,
+        price: formData.price,
+        category: formData.category,
+        nameEmpty: !formData.name,
+        codeEmpty: !formData.code,
+        priceEmpty: !formData.price,
+        categoryEmpty: !formData.category,
+      });
+
+      // Validate required fields with more specific checks
       if (
         !formData.name ||
         !formData.code ||
         !formData.price ||
+        formData.price === "" ||
         !formData.category
       ) {
-        alert("Mohon isi semua field yang wajib diisi");
+        const missingFields = [];
+        if (!formData.name) missingFields.push("Nama Produk");
+        if (!formData.code) missingFields.push("Kode Produk");
+        if (!formData.price || formData.price === "")
+          missingFields.push("Harga");
+        if (!formData.category) missingFields.push("Kategori");
+
+        setDialogType("error");
+        setDialogMessage(
+          `Mohon isi field yang wajib: ${missingFields.join(", ")}`
+        );
+        setDialogOpen(true);
         setLoading(false);
         return;
       }
@@ -126,6 +182,8 @@ export default function CreateProductPage() {
         },
       };
 
+      console.log("Data to be submitted:", submitData);
+
       const response = await fetch("/api/products", {
         method: "POST",
         headers: {
@@ -137,13 +195,23 @@ export default function CreateProductPage() {
       const data = await response.json();
 
       if (data.success) {
-        router.push("/dashboard/products");
+        setDialogType("success");
+        setDialogMessage("Produk berhasil dibuat!");
+        setDialogOpen(true);
+        setTimeout(() => {
+          setDialogOpen(false);
+          router.push("/dashboard/products");
+        }, 1500);
       } else {
-        alert(data.error || "Gagal membuat produk");
+        setDialogType("error");
+        setDialogMessage(data.error || "Gagal membuat produk");
+        setDialogOpen(true);
       }
     } catch (error) {
       console.error("Error creating product:", error);
-      alert("Gagal membuat produk");
+      setDialogType("error");
+      setDialogMessage("Terjadi kesalahan saat membuat produk");
+      setDialogOpen(true);
     } finally {
       setLoading(false);
     }
@@ -202,13 +270,13 @@ export default function CreateProductPage() {
               </div>
 
               <div>
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Deskripsi</Label>
                 <textarea
                   id="description"
                   name="description"
                   value={formData.description}
                   onChange={handleInputChange}
-                  placeholder="Product description"
+                  placeholder="Deskripsi produk"
                   className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
                   rows={3}
                 />
@@ -216,7 +284,7 @@ export default function CreateProductPage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="category">Category *</Label>
+                  <Label htmlFor="category">Kategori *</Label>
                   <select
                     id="category"
                     name="category"
@@ -225,7 +293,7 @@ export default function CreateProductPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md"
                     required
                   >
-                    <option value="">Select category</option>
+                    <option value="">Pilih kategori</option>
                     {categories.map((category) => (
                       <option key={category} value={category}>
                         {category}
@@ -234,14 +302,21 @@ export default function CreateProductPage() {
                   </select>
                 </div>
                 <div>
-                  <Label htmlFor="supplier">Supplier</Label>
-                  <Input
-                    id="supplier"
-                    name="supplier"
-                    value={formData.supplier}
+                  <Label htmlFor="supplier_id">Supplier</Label>
+                  <select
+                    id="supplier_id"
+                    name="supplier_id"
+                    value={formData.supplier_id}
                     onChange={handleInputChange}
-                    placeholder="Supplier name"
-                  />
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="">Pilih Supplier (Opsional)</option>
+                    {suppliers.map((supplier) => (
+                      <option key={supplier.id} value={supplier.id}>
+                        {supplier.code} - {supplier.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -317,15 +392,16 @@ export default function CreateProductPage() {
         <div>
           <Card>
             <CardHeader>
-              <CardTitle>Pricing & Inventory</CardTitle>
-              <CardDescription>Set prices and stock levels</CardDescription>
+              <CardTitle>Harga & Stok</CardTitle>
+              <CardDescription>Atur harga dan level stok</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="price">Selling Price (IDR) *</Label>
-                <CurrencyInput
+                <Label htmlFor="price">Harga Jual (IDR) *</Label>
+                <Input
                   id="price"
                   name="price"
+                  type="number"
                   value={formData.price}
                   onChange={handleInputChange}
                   placeholder="0"
@@ -334,10 +410,11 @@ export default function CreateProductPage() {
               </div>
 
               <div>
-                <Label htmlFor="cost">Cost Price (IDR)</Label>
-                <CurrencyInput
+                <Label htmlFor="cost">Harga Beli (IDR)</Label>
+                <Input
                   id="cost"
                   name="cost"
+                  type="number"
                   value={formData.cost}
                   onChange={handleInputChange}
                   placeholder="0"
@@ -345,7 +422,7 @@ export default function CreateProductPage() {
               </div>
 
               <div>
-                <Label htmlFor="stock">Initial Stock</Label>
+                <Label htmlFor="stock">Stok Awal</Label>
                 <Input
                   id="stock"
                   name="stock"
@@ -357,7 +434,7 @@ export default function CreateProductPage() {
               </div>
 
               <div>
-                <Label htmlFor="minStock">Minimum Stock</Label>
+                <Label htmlFor="minStock">Stok Minimum</Label>
                 <Input
                   id="minStock"
                   name="minStock"
@@ -369,7 +446,7 @@ export default function CreateProductPage() {
               </div>
 
               <div>
-                <Label htmlFor="unit">Unit</Label>
+                <Label htmlFor="unit">Satuan</Label>
                 <select
                   id="unit"
                   name="unit"
@@ -394,8 +471,8 @@ export default function CreateProductPage() {
                   onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md"
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="active">Aktif</option>
+                  <option value="inactive">Tidak Aktif</option>
                 </select>
               </div>
             </CardContent>
@@ -409,18 +486,18 @@ export default function CreateProductPage() {
                   {loading ? (
                     <>
                       <Package className="h-4 w-4 mr-2 animate-spin" />
-                      Creating...
+                      Membuat...
                     </>
                   ) : (
                     <>
                       <Save className="h-4 w-4 mr-2" />
-                      Create Product
+                      Simpan Produk
                     </>
                   )}
                 </Button>
                 <Link href="/dashboard/products">
                   <Button variant="outline" className="w-full">
-                    Cancel
+                    Batal
                   </Button>
                 </Link>
               </div>
@@ -428,6 +505,18 @@ export default function CreateProductPage() {
           </Card>
         </div>
       </div>
+
+      {/* Dialog untuk notifikasi */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {dialogType === "success" ? "Berhasil!" : "Error"}
+            </DialogTitle>
+            <DialogDescription>{dialogMessage}</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </DashboardFormLayout>
   );
 }

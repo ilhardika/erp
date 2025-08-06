@@ -126,7 +126,7 @@ export default function EditCustomerPage() {
         payment_terms: parseInt(formData.payment_terms) || 0,
       };
 
-      const response = await fetch(`/api/customers/`, {
+      const response = await fetch(`/api/customers/${params.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -137,7 +137,13 @@ export default function EditCustomerPage() {
       const data = await response.json();
 
       if (data.success) {
-        router.push("/dashboard/customers");
+        setDialogType("success");
+        setDialogMessage("Customer berhasil diperbarui!");
+        setDialogOpen(true);
+        setTimeout(() => {
+          setDialogOpen(false);
+          router.push("/dashboard/customers");
+        }, 1500);
       } else {
         setDialogType("error");
         setDialogMessage(data.error || "Gagal memperbarui customer");
