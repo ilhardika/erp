@@ -39,7 +39,6 @@ export default function ProductDetailPage() {
         setError(data.error || "Produk tidak ditemukan");
       }
     } catch (error) {
-      console.error("Error fetching product:", error);
       setError("Terjadi kesalahan saat memuat produk");
     } finally {
       setLoading(false);

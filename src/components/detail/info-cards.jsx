@@ -368,3 +368,196 @@ export function MetadataInfo({ data, title = "Informasi Sistem" }) {
     </Card>
   );
 }
+
+// Supplier Basic Information Card
+export function SupplierBasicInfo({
+  supplier,
+  getSupplierTypeLabel,
+  getSupplierTypeVariant,
+}) {
+  if (!supplier) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Info className="h-5 w-5" />
+          Informasi Supplier
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium text-gray-500">
+              Nama Supplier
+            </label>
+            <p className="text-gray-900 font-medium">{supplier?.name || "-"}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">
+              Kode Supplier
+            </label>
+            <p className="text-gray-900 font-mono">{supplier?.code || "-"}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Email</label>
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-gray-500" />
+              <p className="text-gray-900">{supplier?.email || "-"}</p>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">
+              No. Telepon
+            </label>
+            <div className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-gray-500" />
+              <p className="text-gray-900">{supplier?.phone || "-"}</p>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">
+              Tipe Supplier
+            </label>
+            <div className="mt-1">
+              <Badge variant={getSupplierTypeVariant(supplier?.supplier_type)}>
+                {getSupplierTypeLabel(supplier?.supplier_type)}
+              </Badge>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">Status</label>
+            <div className="mt-1">
+              <Badge
+                variant={
+                  supplier?.status === "active" ? "default" : "secondary"
+                }
+              >
+                {supplier?.status === "active" ? "Aktif" : "Tidak Aktif"}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Supplier Address Information Card
+export function SupplierAddressInfo({ supplier }) {
+  if (!supplier) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <MapPin className="h-5 w-5" />
+          Informasi Alamat
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div>
+          <label className="text-sm font-medium text-gray-500">
+            Alamat Lengkap
+          </label>
+          <p className="text-gray-900">{supplier?.address || "-"}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Kota</label>
+          <p className="text-gray-900">{supplier?.city || "-"}</p>
+        </div>
+        <div>
+          <label className="text-sm font-medium text-gray-500">Kode Pos</label>
+          <p className="text-gray-900">{supplier?.postal_code || "-"}</p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Supplier Business Information Card
+export function SupplierBusinessInfo({ supplier }) {
+  if (!supplier) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Building className="h-5 w-5" />
+          Informasi Bisnis & Pembayaran
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm font-medium text-gray-500">
+              NPWP / Tax ID
+            </label>
+            <p className="text-gray-900">{supplier?.tax_id || "-"}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">
+              Batas Kredit
+            </label>
+            <p className="text-gray-900">
+              {supplier?.credit_limit ? formatIDR(supplier.credit_limit) : "-"}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">
+              Termin Pembayaran
+            </label>
+            <p className="text-gray-900">
+              {supplier?.payment_terms ? `${supplier.payment_terms} hari` : "-"}
+            </p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Supplier Bank Information Card
+export function SupplierBankInfo({ supplier }) {
+  if (!supplier) return null;
+
+  const hasBankInfo =
+    supplier.bank_name || supplier.bank_account || supplier.account_holder;
+
+  if (!hasBankInfo) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Building className="h-5 w-5" />
+          Informasi Bank
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label className="text-sm font-medium text-gray-500">
+              Nama Bank
+            </label>
+            <p className="text-gray-900">{supplier?.bank_name || "-"}</p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">
+              Nomor Rekening
+            </label>
+            <p className="text-gray-900 font-mono">
+              {supplier?.bank_account || "-"}
+            </p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-500">
+              Nama Pemegang Rekening
+            </label>
+            <p className="text-gray-900">{supplier?.account_holder || "-"}</p>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}

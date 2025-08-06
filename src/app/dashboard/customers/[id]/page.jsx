@@ -48,7 +48,6 @@ export default function CustomerDetailPage() {
         setError("Customer tidak ditemukan");
       }
     } catch (error) {
-      console.error("Error fetching customer:", error);
       setError("Gagal memuat data customer");
     } finally {
       setLoading(false);

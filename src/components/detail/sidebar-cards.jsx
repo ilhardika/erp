@@ -190,3 +190,69 @@ export function MetadataSidebar({ data, title = "Informasi Sistem" }) {
     </Card>
   );
 }
+
+// Supplier Quick Actions Sidebar
+export function SupplierQuickActions({ supplierId }) {
+  if (!supplierId) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Aksi Cepat</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-2">
+        <Link
+          href={`/dashboard/products/create?supplier=${supplierId}`}
+          className="block"
+        >
+          <Button variant="outline" className="w-full justify-start">
+            <BarChart3 className="h-4 w-4 mr-2" />
+            Tambah Produk
+          </Button>
+        </Link>
+        <Link
+          href={`/dashboard/purchase/new?supplier=${supplierId}`}
+          className="block"
+        >
+          <Button variant="outline" className="w-full justify-start">
+            <Users className="h-4 w-4 mr-2" />
+            Buat Pembelian
+          </Button>
+        </Link>
+      </CardContent>
+    </Card>
+  );
+}
+
+// Supplier Contact Sidebar
+export function SupplierContactInfo({ supplier }) {
+  if (!supplier) return null;
+
+  const hasContactInfo = supplier.email || supplier.phone;
+  if (!hasContactInfo) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          Kontak
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {supplier.email && (
+          <div className="flex items-center gap-3">
+            <Building className="h-4 w-4 text-gray-400" />
+            <span className="text-sm">{supplier.email}</span>
+          </div>
+        )}
+        {supplier.phone && (
+          <div className="flex items-center gap-3">
+            <Users className="h-4 w-4 text-gray-400" />
+            <span className="text-sm">{supplier.phone}</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

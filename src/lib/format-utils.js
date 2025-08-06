@@ -60,3 +60,23 @@ export const getCustomerTypeVariant = (type) => {
   };
   return variants[type] || "secondary";
 };
+
+export const getSupplierTypeLabel = (type) => {
+  const labels = {
+    material: "Material",
+    service: "Jasa",
+    goods: "Barang",
+    equipment: "Peralatan",
+  };
+  return labels[type] || type;
+};
+
+export const getSupplierTypeVariant = (type) => {
+  const variants = {
+    material: "default",
+    service: "secondary",
+    goods: "outline",
+    equipment: "destructive",
+  };
+  return variants[type] || "default";
+};

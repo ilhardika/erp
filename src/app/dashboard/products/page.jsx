@@ -4,63 +4,49 @@ import { useState, useEffect } from "react";
 import { Package } from "lucide-react";
 import DashboardDataTableLayout from "@/components/layouts/dashboard-datatable-layout";
 import { createProductColumns } from "@/components/columns/product-columns";
-import { useDeleteDialog } from "@/hooks/use-delete-dialog";
+import { useStandardDataTable, useDataFetch, API_ENDPOINTS } from "@/hooks";
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
 
-  // Use delete dialog hook
+  // Use standardized data table hook
   const {
+    data: products,
+    loading,
+    error,
+    onDelete,
     showDeleteDialog,
-    deleteId,
-    deleteError,
-    handleDeleteClick,
     closeDeleteDialog,
-    setDeleteError,
-  } = useDeleteDialog();
+    fetchData: fetchProducts,
+  } = useStandardDataTable(API_ENDPOINTS.PRODUCTS, {
+    pageSize: 20,
+    errorMessage: "Gagal memuat data produk",
+  });
 
-  // Columns for data table
-  const columns = createProductColumns(handleDeleteClick);
+  // Fetch categories separately
+  const { data: categoriesData, fetchData: fetchCategories } = useDataFetch(
+    "/api/products/categories",
+    {
+      immediate: true,
+      errorMessage: "Gagal memuat kategori",
+    }
+  );
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/products");
-      const data = await response.json();
-
-      if (data.success) {
-        setProducts(data.data.products || []);
-        setCategories(data.data.categories || []);
-      }
-    } catch (error) {
-      } finally {
-      setLoading(false);
+    if (categoriesData) {
+      setCategories(categoriesData);
     }
-  };
+  }, [categoriesData]);
+
+  // Columns for data table
+  const columns = createProductColumns((id, name) =>
+    onDelete(id, `produk "${name}"`)
+  );
 
   const confirmDelete = async () => {
-    if (!deleteId) return;
-    try {
-      const response = await fetch(`/api/products/${deleteId}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        closeDeleteDialog();
-        fetchProducts(); // Reload data after delete
-      } else {
-        setDeleteError("Gagal menghapus produk");
-      }
-    } catch (error) {
-      setDeleteError("Gagal menghapus produk");
-    }
+    await onDelete(showDeleteDialog?.id, showDeleteDialog?.name);
   };
 
   // Filter components for conditional filtering
@@ -120,11 +106,13 @@ export default function ProductsPage() {
       emptyActionLink="/dashboard/products/create"
       pageSize={10}
       // Delete dialog props
-      showDeleteDialog={showDeleteDialog}
+      showDeleteDialog={!!showDeleteDialog}
       onCloseDeleteDialog={closeDeleteDialog}
       deleteTitle="Konfirmasi Hapus Produk"
-      deleteDescription="Apakah Anda yakin ingin menghapus produk ini? Tindakan ini tidak dapat dibatalkan."
-      deleteError={deleteError}
+      deleteDescription={`Apakah Anda yakin ingin menghapus produk "${
+        showDeleteDialog?.name || ""
+      }"? Tindakan ini tidak dapat dibatalkan.`}
+      deleteError={error}
       onConfirmDelete={confirmDelete}
       // Card customization
       cardTitle="Daftar Produk"
@@ -133,4 +121,3 @@ export default function ProductsPage() {
     />
   );
 }
-

@@ -40,7 +40,6 @@ export default function SupplierDetailPage() {
         setError(data.error || "Supplier tidak ditemukan");
       }
     } catch (error) {
-      console.error("Error fetching supplier:", error);
       setError("Terjadi kesalahan saat memuat supplier");
     } finally {
       setIsLoading(false);
