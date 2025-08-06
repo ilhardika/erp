@@ -22,7 +22,6 @@ export async function GET(request, { params }) {
       data: customer[0],
     });
   } catch (error) {
-    console.error("Error fetching customer:", error);
     return NextResponse.json(
       { success: false, error: "Gagal mengambil data customer" },
       { status: 500 }
@@ -110,7 +109,6 @@ export async function PUT(request, { params }) {
       data: updatedCustomer[0],
     });
   } catch (error) {
-    console.error("Error updating customer:", error);
     return NextResponse.json(
       { success: false, error: "Gagal memperbarui customer" },
       { status: 500 }
@@ -147,7 +145,6 @@ export async function DELETE(request, { params }) {
       message: "Customer berhasil dihapus",
     });
   } catch (error) {
-    console.error("Error deleting customer:", error);
     return NextResponse.json(
       { success: false, error: "Gagal menghapus customer" },
       { status: 500 }

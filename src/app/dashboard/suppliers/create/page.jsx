@@ -71,6 +71,13 @@ export default function CreateSupplierPage() {
     }));
   };
 
+  const generateSupplierCode = () => {
+    const timestamp = Date.now().toString().slice(-6);
+    const random = Math.random().toString(36).substring(2, 5).toUpperCase();
+    const code = `SUP${timestamp}${random}`;
+    setFormData((prev) => ({ ...prev, code }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -106,7 +113,6 @@ export default function CreateSupplierPage() {
         setDialogOpen(true);
       }
     } catch (error) {
-      console.error("Error creating supplier:", error);
       setDialogType("error");
       setDialogMessage("Terjadi kesalahan saat membuat supplier");
       setDialogOpen(true);
@@ -154,14 +160,23 @@ export default function CreateSupplierPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="code">Kode Supplier *</Label>
-                  <Input
-                    id="code"
-                    name="code"
-                    value={formData.code}
-                    onChange={handleInputChange}
-                    placeholder="SUP001"
-                    required
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      id="code"
+                      name="code"
+                      value={formData.code}
+                      onChange={handleInputChange}
+                      placeholder="SUP001"
+                      required
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={generateSupplierCode}
+                    >
+                      Generate
+                    </Button>
+                  </div>
                 </div>
                 <div>
                   <Label htmlFor="name">Nama Supplier *</Label>

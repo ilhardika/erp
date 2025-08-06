@@ -53,8 +53,7 @@ export default function DashboardLayout({ children }) {
       await fetch("/api/auth/logout", { method: "POST" });
       router.push("/login");
     } catch (error) {
-      console.error("Logout error:", error);
-    }
+      }
   };
 
   const getMenuItems = () => {
@@ -95,12 +94,6 @@ export default function DashboardLayout({ children }) {
           { label: "Invoice Pembelian", href: "/dashboard/purchases/invoices" },
           { label: "Penerimaan Barang", href: "/dashboard/purchases/receive" },
         ],
-      },
-      {
-        icon: ShoppingCart,
-        label: "Point of Sale",
-        href: "/dashboard/pos",
-        roles: ["admin", "manager", "staff"],
       },
       {
         icon: Package,
@@ -316,3 +309,4 @@ export default function DashboardLayout({ children }) {
     </div>
   );
 }
+

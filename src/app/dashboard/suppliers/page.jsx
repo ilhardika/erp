@@ -35,11 +35,9 @@ export default function SuppliersPage() {
         // Handle the new API response format
         setSuppliers(result.success ? result.data : []);
       } else {
-        console.error("Failed to fetch suppliers");
-      }
+        }
     } catch (error) {
-      console.error("Error fetching suppliers:", error);
-    } finally {
+      } finally {
       setIsLoading(false);
     }
   };
@@ -96,3 +94,4 @@ export default function SuppliersPage() {
     </>
   );
 }
+

@@ -75,8 +75,7 @@ export default function DashboardPage() {
           setUser(data.user);
         }
       } catch (error) {
-        console.error("Error getting user info:", error);
-      }
+        }
     };
 
     // Get dashboard stats
@@ -88,8 +87,7 @@ export default function DashboardPage() {
           setStats(data);
         }
       } catch (error) {
-        console.error("Error getting stats:", error);
-      } finally {
+        } finally {
         setLoading(false);
       }
     };
@@ -390,3 +388,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+

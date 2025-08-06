@@ -98,7 +98,6 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error("Error fetching customers:", error);
     return NextResponse.json(
       { success: false, error: "Gagal mengambil data customer" },
       { status: 500 }
@@ -164,10 +163,10 @@ export async function POST(request) {
       data: newCustomer[0],
     });
   } catch (error) {
-    console.error("Error creating customer:", error);
     return NextResponse.json(
       { success: false, error: "Gagal menambahkan customer" },
       { status: 500 }
     );
   }
 }
+

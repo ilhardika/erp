@@ -74,7 +74,6 @@ export function usePWA() {
         await navigator.share(shareData);
         return true;
       } catch (err) {
-        console.log("Error sharing:", err);
         return false;
       }
     } else {
@@ -83,7 +82,6 @@ export function usePWA() {
         await navigator.clipboard.writeText(shareData.url);
         return true;
       } catch (err) {
-        console.log("Error copying to clipboard:", err);
         return false;
       }
     }
@@ -97,3 +95,4 @@ export function usePWA() {
     isStandalone: window.matchMedia("(display-mode: standalone)").matches,
   };
 }
+

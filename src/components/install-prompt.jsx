@@ -21,8 +21,7 @@ export default function InstallPrompt() {
       // Hide the install button after installation
       setShowInstallButton(false);
       setDeferredPrompt(null);
-      console.log("PWA was installed");
-    };
+      };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("appinstalled", handleAppInstalled);
@@ -46,10 +45,8 @@ export default function InstallPrompt() {
     const { outcome } = await deferredPrompt.userChoice;
 
     if (outcome === "accepted") {
-      console.log("User accepted the install prompt");
-    } else {
-      console.log("User dismissed the install prompt");
-    }
+      } else {
+      }
 
     // Clear the deferredPrompt
     setDeferredPrompt(null);
@@ -103,3 +100,4 @@ export default function InstallPrompt() {
     </div>
   );
 }
+

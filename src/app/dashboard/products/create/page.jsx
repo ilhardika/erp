@@ -65,8 +65,7 @@ export default function CreateProductPage() {
           setSuppliers(result.data);
         }
       } catch (error) {
-        console.error("Error loading suppliers:", error);
-      }
+        }
     };
     loadSuppliers();
   }, []);
@@ -100,8 +99,6 @@ export default function CreateProductPage() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
-    console.log("Input change:", { name, value, type: typeof value });
-
     if (name.startsWith("dimensions.")) {
       const dimensionKey = name.split(".")[1];
       setFormData((prev) => ({
@@ -132,17 +129,6 @@ export default function CreateProductPage() {
 
     try {
       // Debug: log form data values
-      console.log("Form data validation check:", {
-        name: formData.name,
-        code: formData.code,
-        price: formData.price,
-        category: formData.category,
-        nameEmpty: !formData.name,
-        codeEmpty: !formData.code,
-        priceEmpty: !formData.price,
-        categoryEmpty: !formData.category,
-      });
-
       // Validate required fields with more specific checks
       if (
         !formData.name ||
@@ -182,8 +168,6 @@ export default function CreateProductPage() {
         },
       };
 
-      console.log("Data to be submitted:", submitData);
-
       const response = await fetch("/api/products", {
         method: "POST",
         headers: {
@@ -208,7 +192,6 @@ export default function CreateProductPage() {
         setDialogOpen(true);
       }
     } catch (error) {
-      console.error("Error creating product:", error);
       setDialogType("error");
       setDialogMessage("Terjadi kesalahan saat membuat produk");
       setDialogOpen(true);
@@ -520,3 +503,4 @@ export default function CreateProductPage() {
     </DashboardFormLayout>
   );
 }
+

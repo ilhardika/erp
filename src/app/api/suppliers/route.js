@@ -65,7 +65,6 @@ export async function GET(request) {
       limit,
     });
   } catch (error) {
-    console.error("Error fetching suppliers:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch suppliers" },
       { status: 500 }
@@ -151,10 +150,10 @@ export async function POST(request) {
       data: result[0],
     });
   } catch (error) {
-    console.error("Error creating supplier:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create supplier" },
       { status: 500 }
     );
   }
 }
+

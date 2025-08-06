@@ -79,7 +79,6 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error("Error fetching products:", error);
     return NextResponse.json(
       { success: false, error: "Gagal mengambil data produk" },
       { status: 500 }
@@ -155,10 +154,10 @@ export async function POST(request) {
       data: result[0],
     });
   } catch (error) {
-    console.error("Error creating product:", error);
     return NextResponse.json(
       { success: false, error: "Gagal membuat produk" },
       { status: 500 }
     );
   }
 }
+

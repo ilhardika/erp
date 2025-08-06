@@ -80,7 +80,6 @@ export async function GET(request) {
       total: products.length,
     });
   } catch (error) {
-    console.error("Error searching products for POS:", error);
     return NextResponse.json(
       {
         success: false,
@@ -91,3 +90,4 @@ export async function GET(request) {
     );
   }
 }
+

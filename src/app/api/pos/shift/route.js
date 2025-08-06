@@ -16,10 +16,6 @@ export async function GET(request) {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         cashier_id = decoded.userId;
       } catch (jwtError) {
-        console.log(
-          "JWT verification failed, using fallback user ID:",
-          jwtError.message
-        );
         // Use fallback user ID, don't return error
       }
     }
@@ -106,7 +102,6 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error("Error fetching shift status:", error);
     return NextResponse.json(
       {
         success: false,
@@ -132,10 +127,6 @@ export async function POST(request) {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         cashier_id = decoded.userId;
       } catch (jwtError) {
-        console.log(
-          "JWT verification failed, using fallback user ID:",
-          jwtError.message
-        );
         // Use fallback user ID, don't return error
       }
     }
@@ -248,7 +239,6 @@ export async function POST(request) {
       );
     }
   } catch (error) {
-    console.error("Error managing cashier shift:", error);
     return NextResponse.json(
       {
         success: false,

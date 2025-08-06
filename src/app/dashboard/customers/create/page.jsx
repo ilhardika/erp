@@ -112,7 +112,6 @@ export default function CreateCustomerPage() {
         setDialogOpen(true);
       }
     } catch (error) {
-      console.error("Error creating customer:", error);
       setDialogType("error");
       setDialogMessage("Terjadi kesalahan saat menambahkan customer");
       setDialogOpen(true);
@@ -362,3 +361,4 @@ export default function CreateCustomerPage() {
     </>
   );
 }
+

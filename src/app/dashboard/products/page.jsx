@@ -41,8 +41,7 @@ export default function ProductsPage() {
         setCategories(data.data.categories || []);
       }
     } catch (error) {
-      console.error("Error fetching products:", error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
@@ -60,7 +59,6 @@ export default function ProductsPage() {
         setDeleteError("Gagal menghapus produk");
       }
     } catch (error) {
-      console.error("Error deleting product:", error);
       setDeleteError("Gagal menghapus produk");
     }
   };
@@ -135,3 +133,4 @@ export default function ProductsPage() {
     />
   );
 }
+

@@ -50,8 +50,6 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error("Token verification error:", error);
-
     if (error.name === "JsonWebTokenError") {
       return NextResponse.json({ error: "Token tidak valid" }, { status: 401 });
     }
@@ -69,3 +67,4 @@ export async function GET(request) {
     );
   }
 }
+

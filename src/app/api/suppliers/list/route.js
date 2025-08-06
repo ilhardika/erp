@@ -26,10 +26,10 @@ export async function GET(request) {
       total: suppliers.length,
     });
   } catch (error) {
-    console.error("Error fetching suppliers list:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch suppliers" },
       { status: 500 }
     );
   }
 }
+

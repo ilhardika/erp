@@ -72,7 +72,6 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error("Error fetching POS transactions:", error);
     return NextResponse.json(
       {
         success: false,
@@ -98,10 +97,6 @@ export async function POST(request) {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
         cashier_id = decoded.userId;
       } catch (jwtError) {
-        console.log(
-          "JWT verification failed, using fallback user ID:",
-          jwtError.message
-        );
         // Use fallback user ID, don't return error
       }
     }
@@ -227,7 +222,6 @@ export async function POST(request) {
       },
     });
   } catch (error) {
-    console.error("Error creating POS transaction:", error);
     return NextResponse.json(
       {
         success: false,

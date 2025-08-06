@@ -24,202 +24,42 @@ import {
 } from "lucide-react";
 import { formatIDR } from "@/lib/currency";
 import ShiftManagement from "@/components/pos/shift-management";
+import { useCart } from "@/hooks/use-cart";
+import { useProducts } from "@/hooks/use-products";
+import { useAlerts } from "@/hooks/use-alerts";
+import { usePayment } from "@/hooks/use-payment";
+import { useShift } from "@/hooks/use-shift";
 
 export default function POSPage() {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState([]);
-  const [customer, setCustomer] = useState(null);
-  const [discount, setDiscount] = useState(0);
-  const [tax, setTax] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [shift, setShift] = useState(null);
-  const [paymentDialog, setPaymentDialog] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [paymentAmount, setPaymentAmount] = useState("");
-
   // Mobile UI states
   const [showMobileCart, setShowMobileCart] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedCategory, setSelectedCategory] = useState("all");
-  const productsPerPage = 12;
+  const [loading, setLoading] = useState(false);
 
-  // Dialog states for alerts
-  const [alertDialog, setAlertDialog] = useState({
-    open: false,
-    title: "",
-    message: "",
-  });
-  const [successDialog, setSuccessDialog] = useState({
-    open: false,
-    title: "",
-    message: "",
-  });
-
-  useEffect(() => {
-    checkShiftStatus();
-    searchProducts();
-  }, []);
+  // Custom hooks for state management
+  const cart = useCart();
+  const products = useProducts();
+  const alerts = useAlerts();
+  const payment = usePayment();
+  const shift = useShift();
 
   // Auto-set payment amount for non-cash payments
   useEffect(() => {
-    if (paymentMethod !== "cash" && paymentDialog) {
-      setPaymentAmount(calculateTotal().toString());
-    }
-  }, [paymentMethod, paymentDialog]);
-
-  const checkShiftStatus = async () => {
-    try {
-      const response = await fetch("/api/pos/shift", {
-        credentials: "include",
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setShift(result.data);
-      }
-    } catch (error) {
-      console.error("Error checking shift status:", error);
-    }
-  };
-
-  const searchProducts = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/pos/products/search", {
-        credentials: "include",
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        setProducts(Array.isArray(result.data) ? result.data : []);
-      } else {
-        setProducts([]);
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    payment.autoSetPaymentAmount(cart.total);
+  }, [payment.paymentMethod, payment.paymentDialog, cart.total]);
 
   const handleSearch = (e) => {
     e.preventDefault();
     // Search is now handled by filtering
   };
 
-  const addToCart = (product) => {
-    const existingItem = cart.find((item) => item.id === product.id);
-
-    if (existingItem) {
-      if (existingItem.quantity >= product.stock) {
-        showAlert(
-          "Stok Tidak Mencukupi",
-          "Jumlah barang di keranjang sudah mencapai batas stok yang tersedia."
-        );
-        return;
-      }
-      setCart(
-        cart.map((item) =>
-          item.id === product.id
-            ? { ...item, quantity: item.quantity + 1 }
-            : item
-        )
-      );
-    } else {
-      if (product.stock === 0) {
-        showAlert("Stok Habis", "Produk ini sedang tidak tersedia.");
-        return;
-      }
-      setCart([...cart, { ...product, quantity: 1 }]);
-    }
-  };
-
-  const updateCartQuantity = (productId, change) => {
-    setCart(
-      cart
-        .map((item) => {
-          if (item.id === productId) {
-            const newQuantity = item.quantity + change;
-            if (newQuantity <= 0) {
-              return null;
-            }
-            if (newQuantity > item.stock) {
-              showAlert(
-                "Stok Tidak Mencukupi",
-                "Jumlah yang diminta melebihi stok yang tersedia."
-              );
-              return item;
-            }
-            return { ...item, quantity: newQuantity };
-          }
-          return item;
-        })
-        .filter(Boolean)
-    );
-  };
-
-  const removeFromCart = (productId) => {
-    setCart(cart.filter((item) => item.id !== productId));
-  };
-
-  const calculateSubtotal = () => {
-    return cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  };
-
-  const calculateTotal = () => {
-    const subtotal = calculateSubtotal();
-    return subtotal - discount + tax;
-  };
-
-  // Filter and paginate products
-  const filteredProducts = Array.isArray(products)
-    ? products.filter((product) => {
-        const matchesSearch =
-          product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          product.code?.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchesCategory =
-          selectedCategory === "all" || product.category === selectedCategory;
-        return matchesSearch && matchesCategory;
-      })
-    : [];
-
-  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * productsPerPage,
-    currentPage * productsPerPage
-  );
-
-  // Get unique categories
-  const categories = [
-    "all",
-    ...new Set(
-      Array.isArray(products)
-        ? products.map((p) => p.category).filter(Boolean)
-        : []
-    ),
-  ];
-
-  // Reset pagination when search or category changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, selectedCategory]);
-
-  // Helper functions for dialogs
-  const showAlert = (title, message) => {
-    setAlertDialog({ open: true, title, message });
-  };
-
-  const showSuccess = (title, message) => {
-    setSuccessDialog({ open: true, title, message });
-  };
-
   // Cart Component
   const CartComponent = ({ isMobile = false }) => (
     <div className={`space-y-4 ${isMobile ? "p-4" : ""}`}>
       {!isMobile && (
-        <ShiftManagement shift={shift} onShiftChange={checkShiftStatus} />
+        <ShiftManagement
+          shift={shift.shift}
+          onShiftChange={shift.checkShiftStatus}
+        />
       )}
 
       {/* Cart Header */}
@@ -227,11 +67,11 @@ export default function POSPage() {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-lg">
             <ShoppingCart className="w-5 h-5" />
-            Keranjang ({cart.length})
+            Keranjang ({cart.cart.length})
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {cart.length === 0 ? (
+          {cart.cart.length === 0 ? (
             <p className="text-gray-500 text-center py-8 text-sm">
               Keranjang kosong
             </p>
@@ -241,7 +81,7 @@ export default function POSPage() {
                 isMobile ? "max-h-48" : "max-h-64"
               } overflow-y-auto`}
             >
-              {cart.map((item) => (
+              {cart.cart.map((item) => (
                 <div
                   key={item.id}
                   className="flex items-center gap-2 p-2 border rounded text-sm"
@@ -256,7 +96,9 @@ export default function POSPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => updateCartQuantity(item.id, -1)}
+                      onClick={() =>
+                        cart.updateCartQuantity(item.id, -1, alerts.showAlert)
+                      }
                       className="h-6 w-6 p-0"
                     >
                       <Minus className="w-3 h-3" />
@@ -267,7 +109,9 @@ export default function POSPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => updateCartQuantity(item.id, 1)}
+                      onClick={() =>
+                        cart.updateCartQuantity(item.id, 1, alerts.showAlert)
+                      }
                       className="h-6 w-6 p-0"
                     >
                       <Plus className="w-3 h-3" />
@@ -275,7 +119,7 @@ export default function POSPage() {
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => cart.removeFromCart(item.id)}
                       className="h-6 w-6 p-0 ml-1"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -289,21 +133,21 @@ export default function POSPage() {
       </Card>
 
       {/* Totals */}
-      {cart.length > 0 && (
+      {cart.cart.length > 0 && (
         <Card>
           <CardContent className="p-4 space-y-3">
             <div className="flex justify-between text-sm">
               <span>Subtotal:</span>
-              <span className="font-medium">
-                {formatIDR(calculateSubtotal())}
-              </span>
+              <span className="font-medium">{formatIDR(cart.subtotal)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm">Diskon:</span>
               <Input
                 type="number"
-                value={discount}
-                onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                value={cart.discount}
+                onChange={(e) =>
+                  cart.setDiscount(parseFloat(e.target.value) || 0)
+                }
                 className="w-20 h-8 text-right text-sm"
                 min="0"
                 placeholder="0"
@@ -313,8 +157,8 @@ export default function POSPage() {
               <span className="text-sm">Pajak:</span>
               <Input
                 type="number"
-                value={tax}
-                onChange={(e) => setTax(parseFloat(e.target.value) || 0)}
+                value={cart.tax}
+                onChange={(e) => cart.setTax(parseFloat(e.target.value) || 0)}
                 className="w-20 h-8 text-right text-sm"
                 min="0"
                 placeholder="0"
@@ -323,17 +167,15 @@ export default function POSPage() {
             <hr className="my-2" />
             <div className="flex justify-between font-bold text-lg">
               <span>Total:</span>
-              <span className="text-blue-600">
-                {formatIDR(calculateTotal())}
-              </span>
+              <span className="text-blue-600">{formatIDR(cart.total)}</span>
             </div>
             <Button
               onClick={() => {
-                setPaymentDialog(true);
+                payment.openPaymentDialog();
                 if (isMobile) setShowMobileCart(false);
               }}
               className="w-full mt-4 h-10"
-              disabled={cart.length === 0}
+              disabled={cart.cart.length === 0}
               size="lg"
             >
               <CreditCard className="w-4 h-4 mr-2" />
@@ -346,27 +188,27 @@ export default function POSPage() {
   );
 
   const handlePayment = async () => {
-    if (cart.length === 0) {
-      showAlert(
+    if (cart.cart.length === 0) {
+      alerts.showAlert(
         "Keranjang Kosong",
         "Silakan tambahkan produk ke keranjang terlebih dahulu."
       );
       return;
     }
 
-    if (!shift?.active_shift) {
-      showAlert(
+    if (!shift.shift?.active_shift) {
+      alerts.showAlert(
         "Shift Belum Dibuka",
         "Silakan buka shift terlebih dahulu sebelum melakukan transaksi."
       );
       return;
     }
 
-    const total = calculateTotal();
-    const received = parseFloat(paymentAmount) || 0;
+    const total = cart.total;
+    const received = parseFloat(payment.paymentAmount) || 0;
 
-    if (paymentMethod === "cash" && received < total) {
-      showAlert(
+    if (payment.paymentMethod === "cash" && received < total) {
+      alerts.showAlert(
         "Jumlah Bayar Kurang",
         `Jumlah yang dibayar kurang dari total: ${formatIDR(total)}`
       );
@@ -377,15 +219,15 @@ export default function POSPage() {
       setLoading(true);
 
       const transactionData = {
-        items: cart.map((item) => ({
+        items: cart.cart.map((item) => ({
           product_id: item.id,
           quantity: item.quantity,
           price: item.price,
         })),
-        customer_id: customer?.id || null,
-        discount_amount: discount,
-        tax_amount: tax,
-        payment_method: paymentMethod,
+        customer_id: payment.customer?.id || null,
+        discount_amount: cart.discount,
+        tax_amount: cart.tax,
+        payment_method: payment.paymentMethod,
         payment_received: received,
         notes: "",
       };
@@ -403,31 +245,26 @@ export default function POSPage() {
 
       if (result.success) {
         const changeMessage =
-          paymentMethod === "cash"
+          payment.paymentMethod === "cash"
             ? `Kembalian: ${formatIDR(result.data.payment_change)}`
             : "Pembayaran berhasil diproses";
 
-        showSuccess(
+        alerts.showSuccess(
           "Transaksi Berhasil!",
           `Transaksi berhasil diproses. ${changeMessage}`
         );
         // Reset cart and form
-        setCart([]);
-        setDiscount(0);
-        setTax(0);
-        setPaymentAmount("");
-        setPaymentDialog(false);
-        setCustomer(null);
+        cart.clearCart();
+        payment.resetPaymentState();
 
         // Force refresh shift data after transaction
-        checkShiftStatus();
-        searchProducts(); // Refresh products for updated stock
+        shift.checkShiftStatus();
+        products.fetchProducts(); // Refresh products for updated stock
       } else {
-        showAlert("Transaksi Gagal", `Error: ${result.error}`);
+        alerts.showAlert("Transaksi Gagal", `Error: ${result.error}`);
       }
     } catch (error) {
-      console.error("Error processing payment:", error);
-      showAlert(
+      alerts.showAlert(
         "Kesalahan Sistem",
         "Terjadi kesalahan saat memproses pembayaran. Silakan coba lagi."
       );
@@ -436,11 +273,14 @@ export default function POSPage() {
     }
   };
 
-  if (!shift?.active_shift) {
+  if (!shift.shift?.active_shift) {
     return (
       <div className="container mx-auto p-4">
         <div className="max-w-md mx-auto mt-20">
-          <ShiftManagement shift={shift} onShiftChange={checkShiftStatus} />
+          <ShiftManagement
+            shift={shift.shift}
+            onShiftChange={shift.checkShiftStatus}
+          />
         </div>
       </div>
     );
@@ -460,29 +300,31 @@ export default function POSPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSearch} className="space-y-3">
+              <form onSubmit={products.handleSearch} className="space-y-3">
                 <div className="flex gap-2">
                   <Input
                     placeholder="Scan barcode atau ketik nama produk..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    value={products.searchQuery}
+                    onChange={(e) => products.updateSearchQuery(e.target.value)}
                     className="flex-1"
                   />
-                  <Button type="submit" disabled={loading} size="sm">
+                  <Button type="submit" disabled={products.loading} size="sm">
                     <Search className="w-4 h-4" />
                   </Button>
                 </div>
 
                 {/* Category Filter */}
                 <div className="flex gap-2 overflow-x-auto pb-2">
-                  {categories.map((category) => (
+                  {products.categories.map((category) => (
                     <Button
                       key={category}
                       variant={
-                        selectedCategory === category ? "default" : "outline"
+                        products.selectedCategory === category
+                          ? "default"
+                          : "outline"
                       }
                       size="sm"
-                      onClick={() => setSelectedCategory(category)}
+                      onClick={() => products.updateSelectedCategory(category)}
                       className="whitespace-nowrap flex-shrink-0"
                     >
                       {category === "all" ? "Semua" : category}
@@ -497,7 +339,7 @@ export default function POSPage() {
           <Card>
             <CardContent className="p-4">
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3">
-                {paginatedProducts.map((product) => (
+                {products.paginatedProducts.map((product) => (
                   <Card
                     key={product.id}
                     className="cursor-pointer hover:shadow-md transition-shadow"
@@ -522,7 +364,7 @@ export default function POSPage() {
                           {formatIDR(product.price)}
                         </p>
                         <Button
-                          onClick={() => addToCart(product)}
+                          onClick={() => cart.addToCart(product)}
                           size="sm"
                           className="w-full h-8 text-xs"
                           disabled={product.stock === 0}
@@ -537,35 +379,37 @@ export default function POSPage() {
               </div>
 
               {/* Pagination */}
-              {totalPages > 1 && (
+              {products.totalPages > 1 && (
                 <div className="flex justify-center items-center gap-2 mt-4 pt-4 border-t">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                      products.goToPage(Math.max(1, products.currentPage - 1))
                     }
-                    disabled={currentPage === 1}
+                    disabled={products.currentPage === 1}
                   >
                     Previous
                   </Button>
                   <span className="text-sm">
-                    Page {currentPage} of {totalPages}
+                    Page {products.currentPage} of {products.totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() =>
-                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                      products.goToPage(
+                        Math.min(products.totalPages, products.currentPage + 1)
+                      )
                     }
-                    disabled={currentPage === totalPages}
+                    disabled={products.currentPage === products.totalPages}
                   >
                     Next
                   </Button>
                 </div>
               )}
 
-              {filteredProducts.length === 0 && (
+              {products.filteredProducts.length === 0 && (
                 <div className="text-center py-8 text-gray-500">
                   <Search className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>Tidak ada produk ditemukan</p>
@@ -576,7 +420,10 @@ export default function POSPage() {
 
           {/* Mobile Shift Management - Show below products on mobile only */}
           <div className="lg:hidden">
-            <ShiftManagement shift={shift} onShiftChange={checkShiftStatus} />
+            <ShiftManagement
+              shift={shift.shift}
+              onShiftChange={shift.checkShiftStatus}
+            />
           </div>
         </div>
 
@@ -594,9 +441,9 @@ export default function POSPage() {
           size="lg"
         >
           <ShoppingCart className="w-5 h-5" />
-          {cart.length > 0 && (
+          {cart.cart.length > 0 && (
             <Badge className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs">
-              {cart.length}
+              {cart.cart.length}
             </Badge>
           )}
         </Button>
@@ -609,7 +456,7 @@ export default function POSPage() {
             <DialogHeader className="p-4 border-b">
               <DialogTitle className="flex items-center gap-2">
                 <ShoppingCart className="w-5 h-5" />
-                Keranjang ({cart.length})
+                Keranjang ({cart.cart.length})
               </DialogTitle>
             </DialogHeader>
             <div className="flex-1 overflow-hidden">
@@ -620,7 +467,10 @@ export default function POSPage() {
       </Dialog>
 
       {/* Payment Dialog */}
-      <Dialog open={paymentDialog} onOpenChange={setPaymentDialog}>
+      <Dialog
+        open={payment.paymentDialog}
+        onOpenChange={payment.closePaymentDialog}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-lg">Pembayaran</DialogTitle>
@@ -628,7 +478,7 @@ export default function POSPage() {
           <div className="space-y-4">
             <div className="bg-blue-50 p-3 rounded-lg">
               <p className="text-lg font-bold text-blue-800">
-                Total: {formatIDR(calculateTotal())}
+                Total: {formatIDR(cart.total)}
               </p>
             </div>
 
@@ -638,8 +488,10 @@ export default function POSPage() {
               </label>
               <div className="grid grid-cols-3 gap-2">
                 <Button
-                  variant={paymentMethod === "cash" ? "default" : "outline"}
-                  onClick={() => setPaymentMethod("cash")}
+                  variant={
+                    payment.paymentMethod === "cash" ? "default" : "outline"
+                  }
+                  onClick={() => payment.updatePaymentMethod("cash")}
                   className="flex flex-col items-center p-2 h-auto"
                   size="sm"
                 >
@@ -647,8 +499,10 @@ export default function POSPage() {
                   <span className="text-xs">Cash</span>
                 </Button>
                 <Button
-                  variant={paymentMethod === "transfer" ? "default" : "outline"}
-                  onClick={() => setPaymentMethod("transfer")}
+                  variant={
+                    payment.paymentMethod === "transfer" ? "default" : "outline"
+                  }
+                  onClick={() => payment.updatePaymentMethod("transfer")}
                   className="flex flex-col items-center p-2 h-auto"
                   size="sm"
                 >
@@ -656,8 +510,10 @@ export default function POSPage() {
                   <span className="text-xs">Transfer</span>
                 </Button>
                 <Button
-                  variant={paymentMethod === "qr" ? "default" : "outline"}
-                  onClick={() => setPaymentMethod("qr")}
+                  variant={
+                    payment.paymentMethod === "qr" ? "default" : "outline"
+                  }
+                  onClick={() => payment.updatePaymentMethod("qr")}
                   className="flex flex-col items-center p-2 h-auto"
                   size="sm"
                 >
@@ -667,36 +523,36 @@ export default function POSPage() {
               </div>
             </div>
 
-            {paymentMethod === "cash" && (
+            {payment.paymentMethod === "cash" && (
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Jumlah Bayar
                 </label>
                 <Input
                   type="number"
-                  value={paymentAmount}
-                  onChange={(e) => setPaymentAmount(e.target.value)}
+                  value={payment.paymentAmount}
+                  onChange={(e) => payment.updatePaymentAmount(e.target.value)}
                   placeholder="Masukkan jumlah bayar"
-                  min={calculateTotal()}
+                  min={cart.total}
                   className="text-lg"
                 />
-                {paymentAmount && paymentMethod === "cash" && (
+                {payment.paymentAmount && payment.paymentMethod === "cash" && (
                   <p className="text-sm text-green-600 mt-2 font-medium">
                     Kembalian:{" "}
-                    {formatIDR(parseFloat(paymentAmount) - calculateTotal())}
+                    {formatIDR(parseFloat(payment.paymentAmount) - cart.total)}
                   </p>
                 )}
               </div>
             )}
 
-            {paymentMethod !== "cash" && (
+            {payment.paymentMethod !== "cash" && (
               <div>
                 <label className="block text-sm font-medium mb-2">
                   Jumlah Bayar (Otomatis)
                 </label>
                 <Input
                   type="number"
-                  value={calculateTotal()}
+                  value={cart.total}
                   disabled
                   className="text-lg bg-gray-100"
                 />
@@ -709,7 +565,7 @@ export default function POSPage() {
             <div className="flex gap-2 pt-2">
               <Button
                 variant="outline"
-                onClick={() => setPaymentDialog(false)}
+                onClick={() => payment.closePaymentDialog()}
                 className="flex-1"
               >
                 Batal
@@ -728,24 +584,18 @@ export default function POSPage() {
       </Dialog>
 
       {/* Alert Dialog */}
-      <Dialog
-        open={alertDialog.open}
-        onOpenChange={(open) => setAlertDialog({ ...alertDialog, open })}
-      >
+      <Dialog open={alerts.alertDialog.open} onOpenChange={alerts.closeAlert}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-red-600">
-              {alertDialog.title}
+              {alerts.alertDialog.title}
             </DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-gray-700">{alertDialog.message}</p>
+            <p className="text-gray-700">{alerts.alertDialog.message}</p>
           </div>
           <div className="flex justify-end">
-            <Button
-              onClick={() => setAlertDialog({ ...alertDialog, open: false })}
-              className="flex-1"
-            >
+            <Button onClick={alerts.closeAlert} className="flex-1">
               OK
             </Button>
           </div>
@@ -754,25 +604,20 @@ export default function POSPage() {
 
       {/* Success Dialog */}
       <Dialog
-        open={successDialog.open}
-        onOpenChange={(open) => setSuccessDialog({ ...successDialog, open })}
+        open={alerts.successDialog.open}
+        onOpenChange={alerts.closeSuccess}
       >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-green-600">
-              {successDialog.title}
+              {alerts.successDialog.title}
             </DialogTitle>
           </DialogHeader>
           <div className="py-4">
-            <p className="text-gray-700">{successDialog.message}</p>
+            <p className="text-gray-700">{alerts.successDialog.message}</p>
           </div>
           <div className="flex justify-end">
-            <Button
-              onClick={() =>
-                setSuccessDialog({ ...successDialog, open: false })
-              }
-              className="flex-1"
-            >
+            <Button onClick={alerts.closeSuccess} className="flex-1">
               OK
             </Button>
           </div>
@@ -781,3 +626,4 @@ export default function POSPage() {
     </div>
   );
 }
+

@@ -39,8 +39,7 @@ export default function CustomersPage() {
         setCustomers(data.data || []);
       }
     } catch (error) {
-      console.error("Error fetching customers:", error);
-    } finally {
+      } finally {
       setLoading(false);
     }
   };
@@ -58,7 +57,6 @@ export default function CustomersPage() {
         setDeleteError("Gagal menghapus customer");
       }
     } catch (error) {
-      console.error("Error deleting customer:", error);
       setDeleteError("Gagal menghapus customer");
     }
   };
@@ -131,3 +129,4 @@ export default function CustomersPage() {
     />
   );
 }
+

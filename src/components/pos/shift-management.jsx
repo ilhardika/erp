@@ -131,8 +131,6 @@ export default function ShiftManagement({ shift, onShiftChange }) {
         notes: notes.trim(),
       };
 
-      console.log("Sending shift request:", requestData); // Debug log
-
       const response = await fetch("/api/pos/shift", {
         method: "POST",
         headers: {
@@ -145,15 +143,6 @@ export default function ShiftManagement({ shift, onShiftChange }) {
       const result = await response.json();
 
       if (result.success) {
-        showSuccess(
-          "Shift Berhasil",
-          `Shift berhasil ${action === "open" ? "dibuka" : "ditutup"}!`
-        );
-        setShiftDialog(false);
-        setOpeningCash("");
-        setClosingCash("");
-        setNotes("");
-
         // Force refresh data immediately
         if (onShiftChange) {
           onShiftChange();
@@ -166,7 +155,6 @@ export default function ShiftManagement({ shift, onShiftChange }) {
         showAlert("Gagal Memproses Shift", `Error: ${result.error}`);
       }
     } catch (error) {
-      console.error("Error handling shift:", error);
       showAlert(
         "Kesalahan Sistem",
         "Terjadi kesalahan saat memproses shift. Silakan coba lagi."
@@ -198,7 +186,7 @@ export default function ShiftManagement({ shift, onShiftChange }) {
             </span>
             <Badge
               variant={shift?.active_shift ? "default" : "secondary"}
-              className={shift?.active_shift ? "bg-green-600" : "bg-gray-500"}
+              className={shift?.active_shift ? "bg-green-600" : "bg-gray-200 "}
             >
               {shift?.active_shift ? (
                 <CheckCircle className="w-3 h-3 mr-1" />

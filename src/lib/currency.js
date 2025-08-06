@@ -55,7 +55,6 @@ export const formatIDR = (amount, options = {}) => {
 
     return formatted;
   } catch (error) {
-    console.error("Error formatting currency:", error);
     return showSymbol
       ? `Rp ${numericAmount.toLocaleString("id-ID")}`
       : numericAmount.toLocaleString("id-ID");
@@ -205,3 +204,4 @@ export const formatCurrencyChange = (oldValue, newValue) => {
 
 // Default export for main formatting function
 export default formatIDR;
+
