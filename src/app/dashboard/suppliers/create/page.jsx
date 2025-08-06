@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,411 +24,424 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Save, Building2 } from "lucide-react";
 import DashboardFormLayout from "@/components/layouts/dashboard-form-layout";
+import { useStandardForm, API_ENDPOINTS, VALIDATION_RULES } from "@/hooks";
 
 export default function CreateSupplierPage() {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    code: "",
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    postal_code: "",
-    tax_id: "",
-    supplier_type: "material",
-    payment_terms: "",
-    credit_limit: "",
-    bank_account: "",
-    bank_name: "",
-    account_holder: "",
-    status: "active",
-    notes: "",
+  // Form validation rules
+  const validationRules = {
+    name: VALIDATION_RULES.required("Nama supplier"),
+    code: VALIDATION_RULES.code("Kode supplier"),
+    email: VALIDATION_RULES.email("Email"),
+    phone: VALIDATION_RULES.required("Nomor telepon"),
+    address: VALIDATION_RULES.required("Alamat"),
+  };
+
+  // Use standard form hook
+  const {
+    formData,
+    updateField,
+    updateFields,
+    generateCode,
+    handleSubmit,
+    loading,
+    error,
+    success,
+    reset,
+  } = useStandardForm({
+    endpoint: API_ENDPOINTS.SUPPLIERS,
+    redirectPath: "/dashboard/suppliers",
+    validationRules,
+    autoGenerateCode: true,
+    codePrefix: "SUP",
+    successMessage: "Supplier berhasil ditambahkan",
+    errorMessage: "Gagal menambahkan supplier",
+    initialData: {
+      code: "",
+      name: "",
+      email: "",
+      phone: "",
+      address: "",
+      city: "",
+      postal_code: "",
+      tax_id: "",
+      supplier_type: "material",
+      payment_terms: "",
+      credit_limit: "",
+      bank_account: "",
+      bank_name: "",
+      account_holder: "",
+      status: "active",
+      notes: "",
+    },
   });
+
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [dialogType, setDialogType] = useState(""); // "error" | "success"
+  const [dialogType, setDialogType] = useState("");
   const [dialogMessage, setDialogMessage] = useState("");
+
+  // Watch for success/error states
+  useEffect(() => {
+    if (success) {
+      setDialogType("success");
+      setDialogMessage("Supplier berhasil ditambahkan!");
+      setDialogOpen(true);
+    } else if (error) {
+      setDialogType("error");
+      setDialogMessage(error);
+      setDialogOpen(true);
+    }
+  }, [success, error]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    updateField(name, value);
   };
 
   const handleSelectChange = (name, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    updateField(name, value);
   };
 
-  const generateSupplierCode = () => {
-    const timestamp = Date.now().toString().slice(-6);
-    const random = Math.random().toString(36).substring(2, 5).toUpperCase();
-    const code = `SUP${timestamp}${random}`;
-    setFormData((prev) => ({ ...prev, code }));
-  };
-
-  const handleSubmit = async (e) => {
+  // Handle form submission
+  const onSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
 
-    try {
-      const submitData = {
-        ...formData,
-        payment_terms: parseInt(formData.payment_terms) || 0,
-        credit_limit: parseFloat(formData.credit_limit) || 0,
-      };
+    // Convert numeric fields
+    const submitData = {
+      ...formData,
+      payment_terms: parseInt(formData.payment_terms) || 0,
+      credit_limit: parseFloat(formData.credit_limit) || 0,
+    };
 
-      const response = await fetch("/api/suppliers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(submitData),
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setDialogType("success");
-        setDialogMessage("Supplier berhasil dibuat!");
-        setDialogOpen(true);
-        setTimeout(() => {
-          setDialogOpen(false);
-          router.push("/dashboard/suppliers");
-        }, 1500);
-      } else {
-        setDialogType("error");
-        setDialogMessage(data.error || "Gagal membuat supplier");
-        setDialogOpen(true);
-      }
-    } catch (error) {
-      setDialogType("error");
-      setDialogMessage("Terjadi kesalahan saat membuat supplier");
-      setDialogOpen(true);
-    } finally {
-      setLoading(false);
-    }
+    await handleSubmit(false); // false = create mode
   };
+
+  // Close dialog handler
+  const closeDialog = () => {
+    setDialogOpen(false);
+    setDialogType("");
+    setDialogMessage("");
+  };
+
+  // Supplier types
+  const supplierTypes = [
+    { value: "material", label: "Material" },
+    { value: "service", label: "Service" },
+    { value: "distributor", label: "Distributor" },
+    { value: "manufacturer", label: "Manufacturer" },
+    { value: "wholesaler", label: "Wholesaler" },
+    { value: "retailer", label: "Retailer" },
+  ];
+
+  // Form content
+  const formContent = (
+    <form onSubmit={onSubmit} className="space-y-6">
+      {/* Basic Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5" />
+            Informasi Dasar
+          </CardTitle>
+          <CardDescription>Masukkan informasi dasar supplier</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Nama Supplier *</Label>
+            <Input
+              id="name"
+              name="name"
+              value={formData.name}
+              onChange={handleInputChange}
+              placeholder="Masukkan nama supplier"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="code">Kode Supplier *</Label>
+            <div className="flex gap-2">
+              <Input
+                id="code"
+                name="code"
+                value={formData.code}
+                onChange={handleInputChange}
+                placeholder="Masukkan kode supplier"
+                required
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={generateCode}
+                disabled={loading}
+              >
+                Generate
+              </Button>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="email">Email *</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleInputChange}
+              placeholder="Masukkan email"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="phone">Nomor Telepon *</Label>
+            <Input
+              id="phone"
+              name="phone"
+              value={formData.phone}
+              onChange={handleInputChange}
+              placeholder="Masukkan nomor telepon"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="supplier_type">Tipe Supplier</Label>
+            <Select
+              value={formData.supplier_type}
+              onValueChange={(value) =>
+                handleSelectChange("supplier_type", value)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih tipe supplier" />
+              </SelectTrigger>
+              <SelectContent>
+                {supplierTypes.map((type) => (
+                  <SelectItem key={type.value} value={type.value}>
+                    {type.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={formData.status}
+              onValueChange={(value) => handleSelectChange("status", value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Pilih status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active">Aktif</SelectItem>
+                <SelectItem value="inactive">Nonaktif</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Address Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Informasi Alamat</CardTitle>
+          <CardDescription>Masukkan alamat lengkap supplier</CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="address">Alamat *</Label>
+            <Textarea
+              id="address"
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+              placeholder="Masukkan alamat lengkap"
+              rows={3}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="city">Kota</Label>
+            <Input
+              id="city"
+              name="city"
+              value={formData.city}
+              onChange={handleInputChange}
+              placeholder="Masukkan kota"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="postal_code">Kode Pos</Label>
+            <Input
+              id="postal_code"
+              name="postal_code"
+              value={formData.postal_code}
+              onChange={handleInputChange}
+              placeholder="Masukkan kode pos"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Business Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Informasi Bisnis</CardTitle>
+          <CardDescription>
+            Masukkan informasi bisnis dan pembayaran
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="tax_id">NPWP</Label>
+            <Input
+              id="tax_id"
+              name="tax_id"
+              value={formData.tax_id}
+              onChange={handleInputChange}
+              placeholder="Masukkan NPWP"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="payment_terms">Termin Pembayaran (hari)</Label>
+            <Input
+              id="payment_terms"
+              name="payment_terms"
+              type="number"
+              value={formData.payment_terms}
+              onChange={handleInputChange}
+              placeholder="0"
+              min="0"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="credit_limit">Limit Kredit</Label>
+            <Input
+              id="credit_limit"
+              name="credit_limit"
+              type="number"
+              value={formData.credit_limit}
+              onChange={handleInputChange}
+              placeholder="0"
+              min="0"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Banking Information */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Informasi Bank</CardTitle>
+          <CardDescription>
+            Masukkan informasi rekening bank (opsional)
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="bank_name">Nama Bank</Label>
+            <Input
+              id="bank_name"
+              name="bank_name"
+              value={formData.bank_name}
+              onChange={handleInputChange}
+              placeholder="Masukkan nama bank"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bank_account">Nomor Rekening</Label>
+            <Input
+              id="bank_account"
+              name="bank_account"
+              value={formData.bank_account}
+              onChange={handleInputChange}
+              placeholder="Masukkan nomor rekening"
+            />
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="account_holder">Nama Pemegang Rekening</Label>
+            <Input
+              id="account_holder"
+              name="account_holder"
+              value={formData.account_holder}
+              onChange={handleInputChange}
+              placeholder="Masukkan nama pemegang rekening"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Notes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Catatan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="notes">Catatan Tambahan</Label>
+            <Textarea
+              id="notes"
+              name="notes"
+              value={formData.notes}
+              onChange={handleInputChange}
+              placeholder="Masukkan catatan tambahan"
+              rows={3}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Submit Button */}
+      <div className="flex gap-4">
+        <Button
+          type="submit"
+          disabled={loading}
+          className="flex items-center gap-2"
+        >
+          <Save className="h-4 w-4" />
+          {loading ? "Menyimpan..." : "Simpan Supplier"}
+        </Button>
+      </div>
+    </form>
+  );
 
   return (
     <>
-      {/* Dialog for error/success */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <DashboardFormLayout
+        title="Tambah Supplier"
+        description="Tambahkan supplier baru"
+        backLink="/dashboard/suppliers"
+      >
+        {formContent}
+      </DashboardFormLayout>
+
+      {/* Success/Error Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={closeDialog}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {dialogType === "success" ? "Berhasil" : "Terjadi Kesalahan"}
+              {dialogType === "success" ? "Berhasil" : "Gagal"}
             </DialogTitle>
+            <DialogDescription>{dialogMessage}</DialogDescription>
           </DialogHeader>
-          <div
-            className={
-              dialogType === "error" ? "text-red-700" : "text-green-700"
-            }
-          >
-            {dialogMessage}
+          <div className="flex justify-end">
+            <Button onClick={closeDialog}>OK</Button>
           </div>
         </DialogContent>
       </Dialog>
-
-      <DashboardFormLayout
-        title="Tambah Supplier"
-        description="Tambahkan supplier baru ke dalam sistem"
-        backLink="/dashboard/suppliers"
-        onSubmit={handleSubmit}
-      >
-        <div className="space-y-6">
-          {/* Basic Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Informasi Supplier</CardTitle>
-              <CardDescription>
-                Detail dasar tentang supplier Anda
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="code">Kode Supplier *</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="code"
-                      name="code"
-                      value={formData.code}
-                      onChange={handleInputChange}
-                      placeholder="SUP001"
-                      required
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={generateSupplierCode}
-                    >
-                      Generate
-                    </Button>
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="name">Nama Supplier *</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    placeholder="Nama supplier"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="email@example.com"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Telepon</Label>
-                  <Input
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    placeholder="08xx-xxxx-xxxx"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="address">Alamat</Label>
-                <Textarea
-                  id="address"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  placeholder="Alamat lengkap supplier"
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="city">Kota</Label>
-                  <Input
-                    id="city"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    placeholder="Nama kota"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="postal_code">Kode Pos</Label>
-                  <Input
-                    id="postal_code"
-                    name="postal_code"
-                    value={formData.postal_code}
-                    onChange={handleInputChange}
-                    placeholder="12345"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="tax_id">NPWP</Label>
-                  <Input
-                    id="tax_id"
-                    name="tax_id"
-                    value={formData.tax_id}
-                    onChange={handleInputChange}
-                    placeholder="XX.XXX.XXX.X-XXX.XXX"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Business Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Informasi Bisnis</CardTitle>
-              <CardDescription>
-                Pengaturan tipe supplier dan pembayaran
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                  <Label htmlFor="supplier_type">Tipe Supplier</Label>
-                  <Select
-                    value={formData.supplier_type}
-                    onValueChange={(value) =>
-                      handleSelectChange("supplier_type", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="material">Material</SelectItem>
-                      <SelectItem value="service">Jasa</SelectItem>
-                      <SelectItem value="goods">Barang</SelectItem>
-                      <SelectItem value="equipment">Peralatan</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="status">Status</Label>
-                  <Select
-                    value={formData.status}
-                    onValueChange={(value) =>
-                      handleSelectChange("status", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="active">Aktif</SelectItem>
-                      <SelectItem value="inactive">Nonaktif</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="payment_terms">
-                    Termin Pembayaran (hari)
-                  </Label>
-                  <Input
-                    id="payment_terms"
-                    name="payment_terms"
-                    type="number"
-                    value={formData.payment_terms}
-                    onChange={handleInputChange}
-                    placeholder="30"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="credit_limit">Batas Kredit</Label>
-                  <Input
-                    id="credit_limit"
-                    name="credit_limit"
-                    type="number"
-                    value={formData.credit_limit}
-                    onChange={handleInputChange}
-                    placeholder="0"
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Bank Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Informasi Bank</CardTitle>
-              <CardDescription>
-                Detail rekening bank untuk pembayaran
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <Label htmlFor="bank_name">Nama Bank</Label>
-                  <Input
-                    id="bank_name"
-                    name="bank_name"
-                    value={formData.bank_name}
-                    onChange={handleInputChange}
-                    placeholder="Bank Mandiri"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="bank_account">Nomor Rekening</Label>
-                  <Input
-                    id="bank_account"
-                    name="bank_account"
-                    value={formData.bank_account}
-                    onChange={handleInputChange}
-                    placeholder="1234567890"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="account_holder">Nama Pemegang Rekening</Label>
-                  <Input
-                    id="account_holder"
-                    name="account_holder"
-                    value={formData.account_holder}
-                    onChange={handleInputChange}
-                    placeholder="Nama pemegang rekening"
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Additional Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Informasi Tambahan</CardTitle>
-              <CardDescription>Catatan dan informasi lainnya</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div>
-                <Label htmlFor="notes">Catatan</Label>
-                <Textarea
-                  id="notes"
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleInputChange}
-                  placeholder="Catatan tambahan tentang supplier..."
-                  rows={4}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Actions */}
-          <Card className="mt-6">
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-3">
-                <Button type="submit" disabled={loading} className="w-full">
-                  {loading ? (
-                    <>
-                      <Building2 className="h-4 w-4 mr-2 animate-spin" />
-                      Menyimpan...
-                    </>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Simpan Supplier
-                    </>
-                  )}
-                </Button>
-                <Link href="/dashboard/suppliers">
-                  <Button type="button" variant="outline" className="w-full">
-                    Batal
-                  </Button>
-                </Link>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </DashboardFormLayout>
     </>
   );
 }

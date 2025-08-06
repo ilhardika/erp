@@ -1,64 +1,36 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Users } from "lucide-react";
 import DashboardDataTableLayout from "@/components/layouts/dashboard-datatable-layout";
 import { createCustomerColumns } from "@/components/columns/customer-columns";
-import { useDeleteDialog } from "@/hooks/use-delete-dialog";
+import { useStandardDataTable, API_ENDPOINTS } from "@/hooks";
 
 export default function CustomersPage() {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [selectedStatus, setSelectedStatus] = useState("");
   const [selectedType, setSelectedType] = useState("");
 
-  // Use delete dialog hook
+  // Use standardized data table hook
   const {
+    data: customers,
+    loading,
+    error,
+    onDelete,
     showDeleteDialog,
-    deleteId,
-    deleteError,
-    handleDeleteClick,
     closeDeleteDialog,
-    setDeleteError,
-  } = useDeleteDialog();
+    fetchData: fetchCustomers,
+  } = useStandardDataTable(API_ENDPOINTS.CUSTOMERS, {
+    pageSize: 20,
+    errorMessage: "Gagal memuat data customer",
+  });
 
   // Columns for data table
-  const columns = createCustomerColumns(handleDeleteClick);
-
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  const fetchCustomers = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/customers?limit=1000");
-      const data = await response.json();
-
-      if (data.success) {
-        setCustomers(data.data || []);
-      }
-    } catch (error) {
-      } finally {
-      setLoading(false);
-    }
-  };
+  const columns = createCustomerColumns((id, name) =>
+    onDelete(id, `customer "${name}"`)
+  );
 
   const confirmDelete = async () => {
-    if (!deleteId) return;
-    try {
-      const response = await fetch(`/api/customers/${deleteId}`, {
-        method: "DELETE",
-      });
-      if (response.ok) {
-        closeDeleteDialog();
-        fetchCustomers(); // Reload data after delete
-      } else {
-        setDeleteError("Gagal menghapus customer");
-      }
-    } catch (error) {
-      setDeleteError("Gagal menghapus customer");
-    }
+    await onDelete(showDeleteDialog?.id, showDeleteDialog?.name);
   };
 
   // Filter components for conditional filtering
@@ -116,11 +88,13 @@ export default function CustomersPage() {
       emptyActionLink="/dashboard/customers/create"
       pageSize={10}
       // Delete dialog props
-      showDeleteDialog={showDeleteDialog}
+      showDeleteDialog={!!showDeleteDialog}
       onCloseDeleteDialog={closeDeleteDialog}
       deleteTitle="Konfirmasi Hapus Customer"
-      deleteDescription="Apakah Anda yakin ingin menghapus customer ini? Tindakan ini tidak dapat dibatalkan."
-      deleteError={deleteError}
+      deleteDescription={`Apakah Anda yakin ingin menghapus customer "${
+        showDeleteDialog?.name || ""
+      }"? Tindakan ini tidak dapat dibatalkan.`}
+      deleteError={error}
       onConfirmDelete={confirmDelete}
       // Card customization
       cardTitle="Daftar Customer"
@@ -129,4 +103,3 @@ export default function CustomersPage() {
     />
   );
 }
-

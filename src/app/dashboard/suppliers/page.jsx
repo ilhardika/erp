@@ -1,97 +1,105 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Plus } from "lucide-react";
+import { useState } from "react";
+import { Building2 } from "lucide-react";
 import DashboardDataTableLayout from "@/components/layouts/dashboard-datatable-layout";
 import { createSupplierColumns } from "@/components/columns/supplier-columns";
-import { useDeleteDialog } from "@/hooks/use-delete-dialog";
+import { useStandardDataTable, API_ENDPOINTS } from "@/hooks";
 
 export default function SuppliersPage() {
-  const router = useRouter();
-  const [suppliers, setSuppliers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("");
 
+  // Use standardized data table hook
   const {
+    data: suppliers,
+    loading,
+    error,
+    onDelete,
     showDeleteDialog,
-    deleteId,
-    deleteError,
-    handleDeleteClick: openDeleteDialog,
     closeDeleteDialog,
-    setDeleteError,
-  } = useDeleteDialog();
+    fetchData: fetchSuppliers,
+  } = useStandardDataTable(API_ENDPOINTS.SUPPLIERS, {
+    pageSize: 20,
+    errorMessage: "Gagal memuat data supplier",
+  });
 
-  useEffect(() => {
-    fetchSuppliers();
-  }, []);
-
-  const fetchSuppliers = async () => {
-    try {
-      const response = await fetch("/api/suppliers");
-      if (response.ok) {
-        const result = await response.json();
-        // Handle the new API response format
-        setSuppliers(result.success ? result.data : []);
-      } else {
-        }
-    } catch (error) {
-      } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDeleteClick = (id) => {
-    openDeleteDialog(id);
-  };
+  // Columns for data table
+  const columns = createSupplierColumns((id, name) =>
+    onDelete(id, `supplier "${name}"`)
+  );
 
   const confirmDelete = async () => {
-    if (!deleteId) return;
-
-    try {
-      const response = await fetch(`/api/suppliers/${deleteId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setSuppliers((prev) =>
-          prev.filter((supplier) => supplier.id !== deleteId)
-        );
-        closeDeleteDialog();
-      } else {
-        setDeleteError("Failed to delete supplier");
-      }
-    } catch (error) {
-      setDeleteError("Error deleting supplier");
-    }
+    await onDelete(showDeleteDialog?.id, showDeleteDialog?.name);
   };
 
-  const columnsWithDelete = createSupplierColumns(handleDeleteClick);
+  // Filter components for conditional filtering
+  const filters = [
+    <select
+      key="type"
+      value={selectedType}
+      onChange={(e) => setSelectedType(e.target.value)}
+      className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    >
+      <option value="">Semua Tipe</option>
+      <option value="distributor">Distributor</option>
+      <option value="manufacturer">Manufacturer</option>
+      <option value="wholesaler">Wholesaler</option>
+      <option value="retailer">Retailer</option>
+    </select>,
+    <select
+      key="status"
+      value={selectedStatus}
+      onChange={(e) => setSelectedStatus(e.target.value)}
+      className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+    >
+      <option value="">Semua Status</option>
+      <option value="active">Aktif</option>
+      <option value="inactive">Nonaktif</option>
+    </select>,
+  ];
+
+  // Filter data based on selected filters
+  const filteredSuppliers = suppliers.filter((supplier) => {
+    const matchesType = !selectedType || supplier.type === selectedType;
+    const matchesStatus = !selectedStatus || supplier.status === selectedStatus;
+    return matchesType && matchesStatus;
+  });
 
   return (
-    <>
-      <DashboardDataTableLayout
-        title="Suppliers"
-        description="Manage your suppliers"
-        data={suppliers}
-        filteredData={suppliers}
-        loading={isLoading}
-        columns={columnsWithDelete}
-        emptyTitle="Belum ada supplier"
-        emptyDescription="Mulai dengan menambahkan supplier pertama Anda"
-        emptyActionText="Tambah Supplier"
-        emptyActionLink="/dashboard/suppliers/create"
-        addButtonText="Tambah Supplier"
-        addButtonLink="/dashboard/suppliers/create"
-        showDeleteDialog={showDeleteDialog}
-        onCloseDeleteDialog={closeDeleteDialog}
-        deleteTitle="Konfirmasi Hapus"
-        deleteDescription="Apakah Anda yakin ingin menghapus supplier ini? Tindakan ini tidak dapat dibatalkan."
-        deleteError={deleteError}
-        onConfirmDelete={confirmDelete}
-      />
-    </>
+    <DashboardDataTableLayout
+      // Header props
+      title="Supplier"
+      description="Kelola data supplier dan vendor"
+      addButtonText="Tambah Supplier"
+      addButtonLink="/dashboard/suppliers/create"
+      // Data props
+      data={suppliers}
+      filteredData={filteredSuppliers}
+      loading={loading}
+      columns={columns}
+      // DataTable props
+      searchPlaceholder="Cari supplier, nama perusahaan, atau kontak..."
+      filters={filters}
+      emptyStateIcon={Building2}
+      emptyTitle="Belum ada supplier"
+      emptyDescription="Mulai dengan menambahkan supplier pertama Anda"
+      emptyActionText="Tambah Supplier Pertama"
+      emptyActionLink="/dashboard/suppliers/create"
+      pageSize={10}
+      // Delete dialog props
+      showDeleteDialog={!!showDeleteDialog}
+      onCloseDeleteDialog={closeDeleteDialog}
+      deleteTitle="Konfirmasi Hapus Supplier"
+      deleteDescription={`Apakah Anda yakin ingin menghapus supplier "${
+        showDeleteDialog?.name || ""
+      }"? Tindakan ini tidak dapat dibatalkan.`}
+      deleteError={error}
+      onConfirmDelete={confirmDelete}
+      // Card customization
+      cardTitle="Daftar Supplier"
+      cardDescription={`Menampilkan ${filteredSuppliers.length} dari ${suppliers.length} supplier`}
+      loadingMessage="Memuat supplier..."
+    />
   );
 }
-
