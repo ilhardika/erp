@@ -97,6 +97,12 @@ export default function DashboardLayout({ children }) {
         ],
       },
       {
+        icon: ShoppingCart,
+        label: "Point of Sale",
+        href: "/dashboard/pos",
+        roles: ["admin", "manager", "staff"],
+      },
+      {
         icon: Package,
         label: "Produk",
         href: "/dashboard/products",
