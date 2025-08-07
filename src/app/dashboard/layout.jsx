@@ -52,8 +52,7 @@ export default function DashboardLayout({ children }) {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       router.push("/login");
-    } catch (error) {
-      }
+    } catch (error) {}
   };
 
   const getMenuItems = () => {
@@ -82,7 +81,7 @@ export default function DashboardLayout({ children }) {
         roles: ["admin", "manager", "staff"],
         subItems: [
           { label: "Pesanan Penjualan", href: "/dashboard/sales/orders" },
-          { label: "Buat Pesanan", href: "/dashboard/sales/create" },
+          { label: "Buat Pesanan", href: "/dashboard/sales/orders/create" },
         ],
       },
       {
@@ -309,4 +308,3 @@ export default function DashboardLayout({ children }) {
     </div>
   );
 }
-
