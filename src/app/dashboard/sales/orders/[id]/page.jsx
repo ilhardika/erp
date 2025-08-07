@@ -103,46 +103,58 @@ export default function SalesOrderDetailPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Back Button */}
+      <div className="flex items-center space-x-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard/sales/orders")}
+          className="shrink-0 p-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+      </div>
+
       {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            onClick={() => router.push("/dashboard/sales/orders")}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Kembali
-          </Button>
+      <div className="space-y-4">
+        <div className="flex flex-col space-y-2 md:flex-row md:justify-between md:items-start md:space-y-0">
           <div>
-            <h1 className="text-3xl font-bold">{order.order_number}</h1>
-            <p className="text-gray-600">Detail Sales Order</p>
+            <h1 className="text-2xl md:text-3xl font-bold">
+              {order.order_number}
+            </h1>
+            <p className="text-gray-600 text-sm md:text-base">
+              Detail Sales Order
+            </p>
           </div>
         </div>
-        <div className="flex space-x-2">
-          <Button variant="outline">
-            <Download className="h-4 w-4 mr-2" />
-            Download PDF
+
+        {/* Action Buttons - Responsive Grid */}
+        <div className="grid grid-cols-2 md:flex md:space-x-2 gap-2 md:gap-0">
+          <Button variant="outline" className="text-xs md:text-sm">
+            <Download className="h-4 w-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Download </span>PDF
           </Button>
-          <Button variant="outline">
-            <Mail className="h-4 w-4 mr-2" />
-            Email Customer
+          <Button variant="outline" className="text-xs md:text-sm">
+            <Mail className="h-4 w-4 mr-1 md:mr-2" />
+            <span className="hidden sm:inline">Email </span>Customer
           </Button>
           <Button
             variant="outline"
             onClick={() =>
               router.push(`/dashboard/sales/orders/${orderId}/edit`)
             }
+            className="text-xs md:text-sm"
           >
-            <Edit className="h-4 w-4 mr-2" />
+            <Edit className="h-4 w-4 mr-1 md:mr-2" />
             Edit
           </Button>
           <Button
             variant="outline"
             onClick={handleDelete}
-            className="text-red-600 hover:text-red-800"
+            className="text-red-600 hover:text-red-800 text-xs md:text-sm"
           >
-            <Trash2 className="h-4 w-4 mr-2" />
+            <Trash2 className="h-4 w-4 mr-1 md:mr-2" />
             Hapus
           </Button>
         </div>

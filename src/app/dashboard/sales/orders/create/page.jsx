@@ -119,12 +119,12 @@ export default function CreateSalesOrderPage() {
     e.preventDefault();
 
     if (!formData.customer_id) {
-      alert("Pilih customer terlebih dahulu");
+      console.error("Pilih customer terlebih dahulu");
       return;
     }
 
     if (formData.items.length === 0 || !formData.items[0].product_id) {
-      alert("Tambahkan minimal satu item");
+      console.error("Tambahkan minimal satu item");
       return;
     }
 
@@ -142,14 +142,13 @@ export default function CreateSalesOrderPage() {
       const data = await response.json();
 
       if (data.success) {
-        alert("Sales order berhasil dibuat!");
+        console.log("Sales order berhasil dibuat!");
         router.push(`/dashboard/sales/orders/${data.data.id}`);
       } else {
-        alert(`Gagal membuat sales order: ${data.error}`);
+        console.error(`Gagal membuat sales order: ${data.error}`);
       }
     } catch (error) {
       console.error("Error creating order:", error);
-      alert("Terjadi kesalahan saat membuat sales order");
     } finally {
       setLoading(false);
     }
@@ -166,26 +165,31 @@ export default function CreateSalesOrderPage() {
   const totals = calculateOrderTotals();
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex justify-between items-center">
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="outline"
-            onClick={() => router.push("/dashboard/sales/orders")}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Kembali
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold">Buat Sales Order</h1>
-            <p className="text-gray-600">Buat pesanan penjualan baru</p>
-          </div>
-        </div>
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Back Button */}
+      <div className="flex items-center space-x-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => router.push("/dashboard/sales/orders")}
+          className="shrink-0 p-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold">
+          Buat Pesanan Penjualan
+        </h1>
+        <p className="text-gray-600 text-sm md:text-base">
+          Buat pesanan penjualan baru
+        </p>
+      </div>
+
+      <form id="order-form" onSubmit={handleSubmit} className="space-y-6">
+        <div className="lg:grid lg:grid-cols-3 lg:gap-6 space-y-6 lg:space-y-0">
           {/* Main Form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Order Information */}
@@ -335,107 +339,119 @@ export default function CreateSalesOrderPage() {
               <CardContent>
                 <div className="space-y-4">
                   {formData.items.map((item, index) => (
-                    <div key={index} className="border rounded-lg p-4">
-                      <div className="grid grid-cols-12 gap-4 items-end">
-                        <div className="col-span-4">
-                          <label className="block text-sm font-medium mb-2">
-                            Product *
-                          </label>
-                          <select
-                            value={item.product_id}
-                            onChange={(e) =>
-                              updateItem(index, "product_id", e.target.value)
-                            }
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                          >
-                            <option value="">Pilih Product</option>
-                            {products.map((product) => (
-                              <option key={product.id} value={product.id}>
-                                {product.name} - {formatCurrency(product.price)}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-sm font-medium mb-2">
-                            Qty *
-                          </label>
-                          <input
-                            type="number"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) =>
-                              updateItem(
-                                index,
-                                "quantity",
-                                parseInt(e.target.value) || 1
-                              )
-                            }
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-sm font-medium mb-2">
-                            Unit Price
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            value={item.unit_price}
-                            onChange={(e) =>
-                              updateItem(
-                                index,
-                                "unit_price",
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        <div className="col-span-2">
-                          <label className="block text-sm font-medium mb-2">
-                            Discount %
-                          </label>
-                          <input
-                            type="number"
-                            min="0"
-                            max="100"
-                            value={item.discount_percentage}
-                            onChange={(e) =>
-                              updateItem(
-                                index,
-                                "discount_percentage",
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          />
-                        </div>
-                        <div className="col-span-1">
-                          <div className="text-sm font-medium text-right">
-                            {formatCurrency(calculateItemTotal(item))}
+                    <div
+                      key={index}
+                      className="border rounded-lg p-4 bg-gray-50"
+                    >
+                      {/* Mobile responsive layout */}
+                      <div className="space-y-4">
+                        {/* Row 1: Product (full width on mobile) */}
+                        <div className="grid grid-cols-1 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">
+                              Produk *
+                            </label>
+                            <select
+                              value={item.product_id}
+                              onChange={(e) =>
+                                updateItem(index, "product_id", e.target.value)
+                              }
+                              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              required
+                            >
+                              <option value="">Pilih Produk</option>
+                              {products.map((product) => (
+                                <option key={product.id} value={product.id}>
+                                  {product.name} -{" "}
+                                  {formatCurrency(product.price)}
+                                </option>
+                              ))}
+                            </select>
                           </div>
                         </div>
-                        <div className="col-span-1">
-                          {formData.items.length > 1 && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => removeItem(index)}
-                              className="text-red-600 hover:text-red-800"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
+
+                        {/* Row 2: Qty, Price, Discount, Delete (responsive grid) */}
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 items-end">
+                          <div>
+                            <label className="block text-sm font-medium mb-2">
+                              Jumlah *
+                            </label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={item.quantity}
+                              onChange={(e) =>
+                                updateItem(
+                                  index,
+                                  "quantity",
+                                  parseInt(e.target.value) || 1
+                                )
+                              }
+                              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">
+                              Harga Satuan
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={item.unit_price}
+                              onChange={(e) =>
+                                updateItem(
+                                  index,
+                                  "unit_price",
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium mb-2">
+                              Diskon %
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="100"
+                              value={item.discount_percentage}
+                              onChange={(e) =>
+                                updateItem(
+                                  index,
+                                  "discount_percentage",
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </div>
+                          <div className="text-center">
+                            <label className="block text-sm font-medium mb-2">
+                              Total
+                            </label>
+                            <div className="text-sm font-medium py-2">
+                              {formatCurrency(calculateItemTotal(item))}
+                            </div>
+                          </div>
+                          <div className="text-center">
+                            {formData.items.length > 1 && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeItem(index)}
+                                className="text-red-600 hover:text-red-800 w-full md:w-auto"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      {index < formData.items.length - 1 && (
-                        <hr className="mt-4" />
-                      )}
                     </div>
                   ))}
                 </div>
@@ -443,50 +459,96 @@ export default function CreateSalesOrderPage() {
             </Card>
           </div>
 
-          {/* Sidebar - Order Summary */}
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>{formatCurrency(totals.subtotal)}</span>
+          {/* Desktop Sidebar - Sticky Order Summary */}
+          <div className="hidden lg:block">
+            <div className="sticky top-6 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ringkasan Pesanan</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>{formatCurrency(totals.subtotal)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Pajak (10%)</span>
+                      <span>{formatCurrency(totals.tax)}</span>
+                    </div>
+                    <hr />
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total</span>
+                      <span>{formatCurrency(totals.total)}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span>Tax (10%)</span>
-                    <span>{formatCurrency(totals.tax)}</span>
-                  </div>
-                  <hr />
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total</span>
-                    <span>{formatCurrency(totals.total)}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
 
-            <div className="space-y-3">
-              <Button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700"
-              >
-                <Save className="h-4 w-4 mr-2" />
-                {loading ? "Menyimpan..." : "Simpan Order"}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => router.push("/dashboard/sales/orders")}
-                className="w-full"
-              >
-                Batal
-              </Button>
+              <div className="space-y-3">
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  {loading ? "Menyimpan..." : "Simpan Pesanan"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => router.push("/dashboard/sales/orders")}
+                  className="w-full"
+                >
+                  Batal
+                </Button>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Mobile Action Buttons - Shows at bottom on mobile */}
+        <div className="lg:hidden space-y-3">
+          {/* Mobile Order Summary Card - Shows before save button on mobile */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Ringkasan Pesanan</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal</span>
+                  <span>{formatCurrency(totals.subtotal)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Pajak (10%)</span>
+                  <span>{formatCurrency(totals.tax)}</span>
+                </div>
+                <hr />
+                <div className="flex justify-between font-bold">
+                  <span>Total</span>
+                  <span>{formatCurrency(totals.total)}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700"
+          >
+            <Save className="h-4 w-4 mr-2" />
+            {loading ? "Menyimpan..." : "Simpan Pesanan"}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => router.push("/dashboard/sales/orders")}
+            className="w-full"
+          >
+            Batal
+          </Button>
         </div>
       </form>
     </div>

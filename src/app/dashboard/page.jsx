@@ -74,8 +74,7 @@ export default function DashboardPage() {
           const data = await response.json();
           setUser(data.user);
         }
-      } catch (error) {
-        }
+      } catch (error) {}
     };
 
     // Get dashboard stats
@@ -87,7 +86,7 @@ export default function DashboardPage() {
           setStats(data);
         }
       } catch (error) {
-        } finally {
+      } finally {
         setLoading(false);
       }
     };
@@ -305,16 +304,232 @@ export default function DashboardPage() {
                     <p className="text-sm font-medium text-gray-600">
                       {card.title}
                     </p>
-                    <p className="text-xl font-bold text-gray-900 mb-1">
+                    <p className="text-xl font-bold text-gray-900 mb-1 truncate">
                       {card.value}
                     </p>
-                    <p className="text-sm text-gray-500">{card.subtitle}</p>
+                    <p className="text-sm text-gray-500 truncate">
+                      {card.subtitle}
+                    </p>
                   </div>
                 </CardContent>
               </Card>
             );
           })}
         </div>
+      </div>
+
+      {/* Top Customers */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Pelanggan Teratas - Customer
+        </h2>
+        <Card>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-medium">1</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      PT. Maju Jaya Abadi
+                    </p>
+                    <p className="text-sm text-gray-500">15 transaksi</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(25000000)}
+                  </p>
+                  <p className="text-sm text-green-600">+12% bulan ini</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 font-medium">2</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      CV. Berkah Sejahtera
+                    </p>
+                    <p className="text-sm text-gray-500">12 transaksi</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(18500000)}
+                  </p>
+                  <p className="text-sm text-green-600">+8% bulan ini</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <span className="text-yellow-600 font-medium">3</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      Toko Sumber Rejeki
+                    </p>
+                    <p className="text-sm text-gray-500">9 transaksi</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(14200000)}
+                  </p>
+                  <p className="text-sm text-red-600">-3% bulan ini</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <span className="text-purple-600 font-medium">4</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      UD. Makmur Sentosa
+                    </p>
+                    <p className="text-sm text-gray-500">7 transaksi</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(9800000)}
+                  </p>
+                  <p className="text-sm text-green-600">+5% bulan ini</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                    <span className="text-red-600 font-medium">5</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      John Doe Enterprise
+                    </p>
+                    <p className="text-sm text-gray-500">6 transaksi</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(7600000)}
+                  </p>
+                  <p className="text-sm text-gray-500">= bulan ini</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Top Salesperson */}
+      <div>
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Salesperson Teratas - Sales
+        </h2>
+        <Card>
+          <CardContent className="p-6">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-medium">1</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Ahmad Sudirman</p>
+                    <p className="text-sm text-gray-500">28 penjualan</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(22500000)}
+                  </p>
+                  <p className="text-sm text-green-600">+15% bulan ini</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                    <span className="text-green-600 font-medium">2</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Siti Nurjanah</p>
+                    <p className="text-sm text-gray-500">24 penjualan</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(19800000)}
+                  </p>
+                  <p className="text-sm text-green-600">+10% bulan ini</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center">
+                    <span className="text-yellow-600 font-medium">3</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Budi Santoso</p>
+                    <p className="text-sm text-gray-500">21 penjualan</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(16700000)}
+                  </p>
+                  <p className="text-sm text-green-600">+7% bulan ini</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                    <span className="text-purple-600 font-medium">4</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Maria Dewi</p>
+                    <p className="text-sm text-gray-500">18 penjualan</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(13900000)}
+                  </p>
+                  <p className="text-sm text-red-600">-2% bulan ini</p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                    <span className="text-red-600 font-medium">5</span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">Hendro Wijaya</p>
+                    <p className="text-sm text-gray-500">15 penjualan</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold text-gray-900">
+                    {formatCurrency(11200000)}
+                  </p>
+                  <p className="text-sm text-gray-500">= bulan ini</p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Quick Actions */}
@@ -388,4 +603,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-

@@ -34,6 +34,9 @@ export function DataTable({
   enableSorting = true,
   enableFiltering = true,
   onRowClick = null, // optional row click handler
+  loading = false, // loading state
+  pagination = null, // external pagination
+  onPageChange = null, // external page change handler
 }) {
   const [sorting, setSorting] = useState([]);
   const [columnFilters, setColumnFilters] = useState([]);
@@ -141,7 +144,15 @@ export function DataTable({
               ))}
             </TableHeader>
             <TableBody>
-              {table.getRowModel().rows?.length ? (
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="text-center">
+                    <div className="py-8 text-gray-500 text-base font-medium">
+                      Memuat data...
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow
                     key={row.id}
@@ -185,8 +196,18 @@ export function DataTable({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() => {
+                if (pagination && onPageChange) {
+                  onPageChange(pagination.currentPage - 1);
+                } else {
+                  table.previousPage();
+                }
+              }}
+              disabled={
+                pagination
+                  ? !pagination.hasPreviousPage
+                  : !table.getCanPreviousPage()
+              }
               className="flex items-center gap-1"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -195,21 +216,41 @@ export function DataTable({
             <div className="flex items-center gap-1 text-sm">
               <span>Halaman</span>
               <span className="font-medium">
-                {totalPages > 0 ? currentPage : 0}
+                {pagination
+                  ? pagination.currentPage
+                  : table.getState().pagination.pageIndex + 1}
               </span>
               <span>/</span>
-              <span className="font-medium">{totalPages}</span>
+              <span className="font-medium">
+                {pagination ? pagination.totalPages : table.getPageCount()}
+              </span>
             </div>
 
             <Button
               variant="outline"
               size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              onClick={() => {
+                if (pagination && onPageChange) {
+                  onPageChange(pagination.currentPage + 1);
+                } else {
+                  table.nextPage();
+                }
+              }}
+              disabled={
+                pagination ? !pagination.hasNextPage : !table.getCanNextPage()
+              }
               className="flex items-center gap-1"
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
+          </div>
+
+          <div className="text-sm text-gray-600">
+            {pagination
+              ? `Menampilkan ${pagination.totalItems} total data`
+              : `Menampilkan ${table.getFilteredRowModel().rows.length} dari ${
+                  table.getCoreRowModel().rows.length
+                } data`}
           </div>
         </div>
       )}
