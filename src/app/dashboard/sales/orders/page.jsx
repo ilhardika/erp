@@ -1,6 +1,5 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,101 +20,24 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const statusOptions = [
-  { value: "all", label: "Semua Status" },
-  { value: "draft", label: "Draft" },
-  { value: "confirmed", label: "Dikonfirmasi" },
-  { value: "processing", label: "Diproses" },
-  { value: "shipped", label: "Dikirim" },
-  { value: "delivered", label: "Selesai" },
-];
-
-const statusColors = {
-  draft: "bg-gray-100 text-gray-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  processing: "bg-yellow-100 text-yellow-800",
-  shipped: "bg-purple-100 text-purple-800",
-  delivered: "bg-green-100 text-green-800",
-};
+import { formatCurrency, formatDateOnly } from "@/lib/format-utils";
+import { STATUS_COLORS, STATUS_OPTIONS } from "@/lib/sales-constants";
+import { useSalesOrders } from "@/hooks/use-sales";
 
 export default function SalesOrdersPage() {
   const router = useRouter();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState({
-    status: "all",
-    search: "",
-    page: 1,
-    pageSize: 20,
-  });
-  const [pagination, setPagination] = useState({
-    currentPage: 1,
-    totalPages: 1,
-    totalItems: 0,
-    hasNextPage: false,
-    hasPreviousPage: false,
-  });
-
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-
-      if (filter.status !== "all") params.append("status", filter.status);
-      if (filter.search) params.append("search", filter.search);
-      params.append("page", filter.page.toString());
-      params.append("pageSize", filter.pageSize.toString());
-
-      const response = await fetch(`/api/sales/orders?${params}`);
-      const data = await response.json();
-
-      if (data.success) {
-        setOrders(data.data);
-        setPagination(data.pagination);
-      }
-    } catch (error) {
-      console.error("Error fetching orders:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    fetchOrders();
-  }, [filter]);
+  const { orders, loading, error, filter, pagination, setFilter, deleteOrder } =
+    useSalesOrders();
 
   const handleDelete = async (id) => {
     if (!confirm("Apakah Anda yakin ingin menghapus sales order ini?")) return;
 
-    try {
-      const response = await fetch(`/api/sales/orders/${id}`, {
-        method: "DELETE",
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.success) {
-        console.log("Sales order berhasil dihapus");
-        fetchOrders();
-      } else {
-        console.error(data.error || "Gagal menghapus sales order");
-      }
-    } catch (error) {
-      console.error("Error deleting order:", error);
+    const result = await deleteOrder(id);
+    if (result.success) {
+      console.log(result.message);
+    } else {
+      console.error(result.message);
     }
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString("id-ID");
   };
 
   const statusLabels = {
@@ -156,7 +78,7 @@ export default function SalesOrdersPage() {
       cell: ({ row }) => (
         <Badge
           className={`${
-            statusColors[row.original.status] || "bg-gray-100 text-gray-800"
+            STATUS_COLORS[row.original.status] || "bg-gray-100 text-gray-800"
           } text-xs`}
         >
           {statusLabels[row.original.status] || row.original.status}
@@ -260,7 +182,7 @@ export default function SalesOrdersPage() {
                 }
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               >
-                {statusOptions.map((option) => (
+                {STATUS_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
                   </option>
@@ -280,24 +202,6 @@ export default function SalesOrdersPage() {
                 }
                 className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               />
-            </div>
-            <div className="flex items-end">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setFilter({
-                    status: "all",
-                    search: "",
-                    page: 1,
-                    pageSize: 20,
-                  })
-                }
-                className="w-full md:w-auto"
-              >
-                <Filter className="h-4 w-4 mr-2" />
-                Reset Filter
-              </Button>
             </div>
           </div>
         </CardHeader>

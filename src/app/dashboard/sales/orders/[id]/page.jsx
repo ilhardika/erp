@@ -1,53 +1,20 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Edit, Trash2, Download, Mail } from "lucide-react";
-
-const statusColors = {
-  draft: "bg-gray-100 text-gray-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  processing: "bg-yellow-100 text-yellow-800",
-  shipped: "bg-purple-100 text-purple-800",
-  delivered: "bg-green-100 text-green-800",
-};
+import { formatCurrency, formatDateOnly } from "@/lib/format-utils";
+import { STATUS_COLORS } from "@/lib/sales-constants";
+import { useSalesOrder } from "@/hooks/use-sales";
 
 export default function SalesOrderDetailPage() {
   const router = useRouter();
   const params = useParams();
   const orderId = params.id;
 
-  const [order, setOrder] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchOrderDetail = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/sales/orders/${orderId}`);
-      const data = await response.json();
-
-      if (data.success) {
-        setOrder(data.data);
-      } else {
-        alert("Order tidak ditemukan");
-        router.push("/dashboard/sales/orders");
-      }
-    } catch (error) {
-      console.error("Error fetching order detail:", error);
-      alert("Terjadi kesalahan saat mengambil data order");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (orderId) {
-      fetchOrderDetail();
-    }
-  }, [orderId]);
+  const { order, loading, error } = useSalesOrder(orderId);
 
   const handleDelete = async () => {
     if (!confirm("Apakah Anda yakin ingin menghapus sales order ini?")) return;
@@ -58,38 +25,26 @@ export default function SalesOrderDetailPage() {
       });
 
       if (response.ok) {
-        alert("Sales order berhasil dihapus");
         router.push("/dashboard/sales/orders");
       } else {
-        alert("Gagal menghapus sales order");
       }
     } catch (error) {
       console.error("Error deleting order:", error);
-      alert("Terjadi kesalahan saat menghapus sales order");
     }
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString("id-ID", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-red-600">Error: {error}</div>
       </div>
     );
   }
@@ -185,7 +140,7 @@ export default function SalesOrderDetailPage() {
                   <div>
                     <Badge
                       className={
-                        statusColors[order.status] ||
+                        STATUS_COLORS[order.status] ||
                         "bg-gray-100 text-gray-800"
                       }
                     >
@@ -197,13 +152,13 @@ export default function SalesOrderDetailPage() {
                   <label className="text-sm font-medium text-gray-500">
                     Order Date
                   </label>
-                  <p>{formatDate(order.order_date)}</p>
+                  <p>{formatDateOnly(order.order_date)}</p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">
                     Delivery Date
                   </label>
-                  <p>{formatDate(order.delivery_date)}</p>
+                  <p>{formatDateOnly(order.delivery_date)}</p>
                 </div>
                 <div className="col-span-2">
                   <label className="text-sm font-medium text-gray-500">

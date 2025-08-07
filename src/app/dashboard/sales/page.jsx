@@ -1,62 +1,30 @@
 "use client";
 
-import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, TrendingUp, ShoppingBag, Users, DollarSign } from "lucide-react";
-
-const statusColors = {
-  draft: "bg-gray-100 text-gray-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  processing: "bg-yellow-100 text-yellow-800",
-  shipped: "bg-purple-100 text-purple-800",
-  delivered: "bg-green-100 text-green-800",
-};
+import { formatCurrency, formatDate } from "@/lib/format-utils";
+import { STATUS_COLORS } from "@/lib/sales-constants";
+import { useSalesStats } from "@/hooks/use-sales";
 
 export default function SalesDashboardPage() {
   const router = useRouter();
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("/api/sales/stats");
-      const data = await response.json();
-
-      if (data.success) {
-        setStats(data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching sales stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
-  }, []);
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "-";
-    return new Date(dateString).toLocaleDateString("id-ID");
-  };
+  const { stats, loading, error } = useSalesStats();
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-lg">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-lg text-red-600">Error: {error}</div>
       </div>
     );
   }
@@ -162,7 +130,8 @@ export default function SalesDashboardPage() {
                   <div className="flex items-center space-x-3">
                     <Badge
                       className={
-                        statusColors[item.status] || "bg-gray-100 text-gray-800"
+                        STATUS_COLORS[item.status] ||
+                        "bg-gray-100 text-gray-800"
                       }
                     >
                       {item.status}
@@ -213,7 +182,7 @@ export default function SalesDashboardPage() {
                     </div>
                     <Badge
                       className={
-                        statusColors[order.status] ||
+                        STATUS_COLORS[order.status] ||
                         "bg-gray-100 text-gray-800"
                       }
                     >

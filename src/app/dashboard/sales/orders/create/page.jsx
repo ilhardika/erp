@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Plus, Trash2, Save } from "lucide-react";
+import { formatCurrency } from "@/lib/format-utils";
+import { FORM_DEFAULTS } from "@/lib/sales-constants";
 
 export default function CreateSalesOrderPage() {
   const router = useRouter();
@@ -14,24 +16,7 @@ export default function CreateSalesOrderPage() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const [formData, setFormData] = useState({
-    customer_id: "",
-    salesperson_id: "",
-    order_date: new Date().toISOString().split("T")[0],
-    delivery_date: "",
-    notes: "",
-    shipping_address: "",
-    terms_conditions: "",
-    items: [
-      {
-        product_id: "",
-        quantity: 1,
-        unit_price: 0,
-        discount_percentage: 0,
-        notes: "",
-      },
-    ],
-  });
+  const [formData, setFormData] = useState(FORM_DEFAULTS.salesOrder);
 
   const fetchData = async () => {
     try {
@@ -152,14 +137,6 @@ export default function CreateSalesOrderPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
   };
 
   const totals = calculateOrderTotals();

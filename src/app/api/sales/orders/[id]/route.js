@@ -96,23 +96,29 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Validate status changes (business rules)
+    // Validate status changes (progressive status - only forward movement)
     const currentStatus = existingOrder[0].status;
-    const allowedTransitions = {
-      draft: ["confirmed", "cancelled"],
-      confirmed: ["processing", "cancelled"],
-      processing: ["shipped", "cancelled"],
-      shipped: ["delivered"],
-      delivered: [],
-      cancelled: [],
+
+    // Progressive status validation (only allow forward movement)
+    const statusLevels = {
+      draft: 0,
+      confirmed: 1,
+      processing: 2,
+      shipped: 3,
+      delivered: 4,
+      cancelled: -1, // Special case - can be set from any status
     };
 
     if (status && status !== currentStatus) {
-      if (!allowedTransitions[currentStatus]?.includes(status)) {
+      const currentLevel = statusLevels[currentStatus] || 0;
+      const newLevel = statusLevels[status];
+
+      // Allow cancelled from any status, or forward progression only
+      if (status !== "cancelled" && newLevel < currentLevel) {
         return NextResponse.json(
           {
             success: false,
-            error: `Tidak dapat mengubah status dari ${currentStatus} ke ${status}`,
+            error: `Status hanya dapat dimajukan. Tidak dapat mengubah dari ${currentStatus} ke ${status}`,
           },
           { status: 400 }
         );

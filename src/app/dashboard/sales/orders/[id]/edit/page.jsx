@@ -6,22 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Save } from "lucide-react";
-
-const statusOptions = [
-  { value: "draft", label: "Draft" },
-  { value: "confirmed", label: "Confirmed" },
-  { value: "processing", label: "Processing" },
-  { value: "shipped", label: "Shipped" },
-  { value: "delivered", label: "Delivered" },
-];
-
-const statusColors = {
-  draft: "bg-gray-100 text-gray-800",
-  confirmed: "bg-blue-100 text-blue-800",
-  processing: "bg-yellow-100 text-yellow-800",
-  shipped: "bg-purple-100 text-purple-800",
-  delivered: "bg-green-100 text-green-800",
-};
+import { formatCurrency } from "@/lib/format-utils";
+import { STATUS_COLORS, STATUS_OPTIONS } from "@/lib/sales-constants";
 
 export default function EditSalesOrderPage() {
   const router = useRouter();
@@ -74,7 +60,6 @@ export default function EditSalesOrderPage() {
           terms_conditions: orderData.data.terms_conditions || "",
         });
       } else {
-        alert("Order tidak ditemukan");
         router.push("/dashboard/sales/orders");
       }
 
@@ -87,7 +72,6 @@ export default function EditSalesOrderPage() {
       }
     } catch (error) {
       console.error("Error fetching data:", error);
-      alert("Terjadi kesalahan saat mengambil data");
     } finally {
       setLoading(false);
     }
@@ -103,7 +87,6 @@ export default function EditSalesOrderPage() {
     e.preventDefault();
 
     if (!formData.customer_id) {
-      alert("Pilih customer terlebih dahulu");
       return;
     }
 
@@ -121,30 +104,37 @@ export default function EditSalesOrderPage() {
       const data = await response.json();
 
       if (data.success) {
-        alert("Sales order berhasil diupdate!");
         router.push(`/dashboard/sales/orders/${orderId}`);
       } else {
-        alert(`Gagal update sales order: ${data.error}`);
       }
     } catch (error) {
       console.error("Error updating order:", error);
-      alert("Terjadi kesalahan saat mengupdate sales order");
     } finally {
       setSaving(false);
     }
   };
 
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   const formatDate = (dateString) => {
     if (!dateString) return "";
     return new Date(dateString).toISOString().split("T")[0];
+  };
+
+  // Function to get allowed status options (only forward progression)
+  const getProgressiveStatusOptions = (currentStatus) => {
+    const statusLevels = {
+      draft: 0,
+      confirmed: 1,
+      processing: 2,
+      shipped: 3,
+      delivered: 4,
+    };
+
+    const currentLevel = statusLevels[currentStatus] || 0;
+
+    return STATUS_OPTIONS.filter((option) => {
+      const optionLevel = statusLevels[option.value];
+      return optionLevel >= currentLevel;
+    });
   };
 
   if (loading) {
@@ -187,10 +177,6 @@ export default function EditSalesOrderPage() {
             {order.order_number}
           </p>
         </div>
-        <Button type="submit" form="edit-form" disabled={saving}>
-          <Save className="h-4 w-4 mr-2" />
-          {saving ? "Menyimpan..." : "Simpan Perubahan"}
-        </Button>
       </div>
 
       <form id="edit-form" onSubmit={handleSubmit} className="space-y-6">
@@ -227,11 +213,13 @@ export default function EditSalesOrderPage() {
                       className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     >
-                      {statusOptions.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {option.label}
-                        </option>
-                      ))}
+                      {getProgressiveStatusOptions(order.status).map(
+                        (option) => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        )
+                      )}
                     </select>
                   </div>
                   <div>
@@ -372,37 +360,53 @@ export default function EditSalesOrderPage() {
                     hapus order ini dan buat order baru.
                   </p>
                 </div>
+
+                {/* Simple Table */}
                 <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2">Product</th>
-                        <th className="text-center py-2">Qty</th>
-                        <th className="text-right py-2">Unit Price</th>
-                        <th className="text-right py-2">Total</th>
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Produk
+                        </th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Qty
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Harga Satuan
+                        </th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Total
+                        </th>
                       </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="bg-white divide-y divide-gray-200">
                       {order.items?.map((item) => (
-                        <tr key={item.id} className="border-b">
-                          <td className="py-3">
+                        <tr key={item.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-4 whitespace-nowrap">
                             <div>
-                              <div className="font-medium">
+                              <div className="text-sm font-medium text-gray-900">
                                 {item.product_name}
                               </div>
                               <div className="text-sm text-gray-500">
-                                {item.product_code} - {item.product_category}
+                                {item.product_code} • {item.product_category}
                               </div>
                             </div>
                           </td>
-                          <td className="text-center py-3">
-                            {item.quantity} {item.product_unit}
+                          <td className="px-4 py-4 text-center whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {item.quantity} {item.product_unit}
+                            </div>
                           </td>
-                          <td className="text-right py-3">
-                            {formatCurrency(item.unit_price)}
+                          <td className="px-4 py-4 text-right whitespace-nowrap">
+                            <div className="text-sm text-gray-900">
+                              {formatCurrency(item.unit_price)}
+                            </div>
                           </td>
-                          <td className="text-right py-3 font-medium">
-                            {formatCurrency(item.total_price)}
+                          <td className="px-4 py-4 text-right whitespace-nowrap">
+                            <div className="text-sm font-medium text-gray-900">
+                              {formatCurrency(item.total_price)}
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -415,7 +419,7 @@ export default function EditSalesOrderPage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Current Status */}
+            {/* Current Status (Read Only) */}
             <Card>
               <CardHeader>
                 <CardTitle>Status Saat Ini</CardTitle>
@@ -423,10 +427,11 @@ export default function EditSalesOrderPage() {
               <CardContent>
                 <Badge
                   className={
-                    statusColors[order.status] || "bg-gray-100 text-gray-800"
+                    STATUS_COLORS[order.status] || "bg-gray-100 text-gray-800"
                   }
                 >
-                  {order.status}
+                  {STATUS_OPTIONS.find((opt) => opt.value === order.status)
+                    ?.label || order.status}
                 </Badge>
               </CardContent>
             </Card>
