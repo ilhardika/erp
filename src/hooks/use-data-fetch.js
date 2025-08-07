@@ -115,6 +115,7 @@ export const usePaginatedFetch = (baseEndpoint, options = {}) => {
     const params = new URLSearchParams();
     params.append("page", pagination.page.toString());
     params.append("pageSize", pagination.pageSize.toString());
+    params.append("limit", pagination.pageSize.toString()); // Also add limit for compatibility
 
     if (filters.search) {
       params.append("search", filters.search);
@@ -141,15 +142,37 @@ export const usePaginatedFetch = (baseEndpoint, options = {}) => {
       const result = await response.json();
 
       if (result.success) {
-        setData(result.data.items || result.data);
+        // Support multiple data formats
+        let items = result.data;
+        let totalItems = 0;
+        let totalPages = 1;
+
+        if (result.data.products) {
+          // Products API format
+          items = result.data.products;
+          totalItems = result.data.pagination?.total || items.length;
+          totalPages =
+            result.data.pagination?.totalPages ||
+            Math.ceil(totalItems / pagination.pageSize);
+        } else if (result.data.items) {
+          // Standard items format
+          items = result.data.items;
+          totalItems = result.data.totalItems || items.length;
+          totalPages =
+            result.data.totalPages ||
+            Math.ceil(totalItems / pagination.pageSize);
+        } else if (Array.isArray(result.data)) {
+          // Direct array format
+          items = result.data;
+          totalItems = items.length;
+          totalPages = Math.ceil(totalItems / pagination.pageSize);
+        }
+
+        setData(items);
         setPagination((prev) => ({
           ...prev,
-          totalItems: result.data.totalItems || result.data.length,
-          totalPages:
-            result.data.totalPages ||
-            Math.ceil(
-              (result.data.totalItems || result.data.length) / prev.pageSize
-            ),
+          totalItems,
+          totalPages,
         }));
         return { success: true, data: result.data };
       } else {

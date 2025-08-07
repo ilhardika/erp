@@ -1,3 +1,9 @@
+// Explicit imports to avoid ReferenceError in runtime
+import { useApiCall } from "./use-api-call";
+import { useFormSubmit, useFormData } from "./use-form-submit";
+import { usePaginatedFetch } from "./use-data-fetch";
+import { useDeleteDialog } from "./use-delete-dialog";
+
 // API Hooks
 export { useApiCall } from "./use-api-call";
 export { useFormSubmit, useFormData } from "./use-form-submit";

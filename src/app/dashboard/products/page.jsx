@@ -76,8 +76,9 @@ export default function ProductsPage() {
     </select>,
   ];
 
-  // Filter data based on selected filters
-  const filteredProducts = products.filter((product) => {
+  // Filter data based on selected filters - ensure products is array
+  const safeProducts = Array.isArray(products) ? products : [];
+  const filteredProducts = safeProducts.filter((product) => {
     const matchesCategory =
       !selectedCategory || product.category === selectedCategory;
     const matchesStatus = !selectedStatus || product.status === selectedStatus;
@@ -92,7 +93,7 @@ export default function ProductsPage() {
       addButtonText="Tambah Produk"
       addButtonLink="/dashboard/products/create"
       // Data props
-      data={products}
+      data={safeProducts}
       filteredData={filteredProducts}
       loading={loading}
       columns={columns}
@@ -116,7 +117,7 @@ export default function ProductsPage() {
       onConfirmDelete={confirmDelete}
       // Card customization
       cardTitle="Daftar Produk"
-      cardDescription={`Menampilkan ${filteredProducts.length} dari ${products.length} produk`}
+      cardDescription={`Menampilkan ${filteredProducts.length} dari ${safeProducts.length} produk`}
       loadingMessage="Memuat produk..."
     />
   );
