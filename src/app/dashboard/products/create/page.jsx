@@ -73,16 +73,16 @@ export default function CreateProductPage() {
       code: "",
       description: "",
       category: "",
-      price: "",
-      cost: "",
-      stock: "",
-      minStock: "",
+      price: "0",
+      cost: "0",
+      stock: "0",
+      minStock: "0",
       unit: "pcs",
       barcode: "",
       supplier: "",
       supplier_id: "",
       status: "active",
-      weight: "",
+      weight: "0",
       dimensions: {
         length: "",
         width: "",
@@ -197,9 +197,9 @@ export default function CreateProductPage() {
               <Input
                 id="code"
                 name="code"
-                value={formData.code}
+                value={String(formData.code || "")}
                 onChange={handleInputChange}
-                placeholder="Masukkan kode produk"
+                placeholder="Kode akan dibuat otomatis atau masukkan manual"
                 required
               />
               <Button
@@ -224,11 +224,12 @@ export default function CreateProductPage() {
               required
             >
               <option value="">Pilih kategori</option>
-              {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
+              {categories &&
+                categories.map((category) => (
+                  <option key={category} value={category}>
+                    {category}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -241,11 +242,12 @@ export default function CreateProductPage() {
               onChange={handleInputChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              {units.map((unit) => (
-                <option key={unit} value={unit}>
-                  {unit}
-                </option>
-              ))}
+              {units &&
+                units.map((unit) => (
+                  <option key={unit} value={unit}>
+                    {unit}
+                  </option>
+                ))}
             </select>
           </div>
 
@@ -352,11 +354,12 @@ export default function CreateProductPage() {
               disabled={suppliersLoading}
             >
               <option value="">Pilih supplier</option>
-              {suppliers.map((supplier) => (
-                <option key={supplier.id} value={supplier.id}>
-                  {supplier.name}
-                </option>
-              ))}
+              {suppliers &&
+                suppliers.map((supplier) => (
+                  <option key={supplier.id} value={supplier.id}>
+                    {supplier.name}
+                  </option>
+                ))}
             </select>
           </div>
 

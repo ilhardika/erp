@@ -17,6 +17,9 @@ export default function CustomersPage() {
     error,
     onDelete,
     showDeleteDialog,
+    deleteId,
+    deleteError,
+    handleDeleteClick,
     closeDeleteDialog,
     fetchData: fetchCustomers,
   } = useStandardDataTable(API_ENDPOINTS.CUSTOMERS, {
@@ -25,12 +28,11 @@ export default function CustomersPage() {
   });
 
   // Columns for data table
-  const columns = createCustomerColumns((id, name) =>
-    onDelete(id, `customer "${name}"`)
-  );
+  const columns = createCustomerColumns(handleDeleteClick);
 
   const confirmDelete = async () => {
-    await onDelete(showDeleteDialog?.id, showDeleteDialog?.name);
+    const customer = customers.find((c) => c.id === deleteId);
+    await onDelete(deleteId, customer?.name || `customer ${deleteId}`);
   };
 
   // Filter components for conditional filtering
@@ -92,9 +94,9 @@ export default function CustomersPage() {
       onCloseDeleteDialog={closeDeleteDialog}
       deleteTitle="Konfirmasi Hapus Customer"
       deleteDescription={`Apakah Anda yakin ingin menghapus customer "${
-        showDeleteDialog?.name || ""
+        customers.find((c) => c.id === deleteId)?.name || ""
       }"? Tindakan ini tidak dapat dibatalkan.`}
-      deleteError={error}
+      deleteError={deleteError}
       onConfirmDelete={confirmDelete}
       // Card customization
       cardTitle="Daftar Customer"

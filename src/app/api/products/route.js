@@ -119,6 +119,22 @@ export async function POST(request) {
       );
     }
 
+    // Convert empty strings to null for numeric fields
+    const numericPrice = price === "" ? null : parseFloat(price);
+    const numericCost = cost === "" ? null : parseFloat(cost);
+    const numericStock = stock === "" ? 0 : parseInt(stock);
+    const numericMinStock = minStock === "" ? 0 : parseInt(minStock);
+    const numericSupplierId = supplier_id === "" ? null : parseInt(supplier_id);
+    const numericWeight = weight === "" ? null : parseFloat(weight);
+
+    // Validate numeric values
+    if (numericPrice !== null && (isNaN(numericPrice) || numericPrice < 0)) {
+      return NextResponse.json(
+        { success: false, error: "Harga harus berupa angka positif" },
+        { status: 400 }
+      );
+    }
+
     // Check if product code already exists
     const existingProduct = await sql`
       SELECT id FROM products WHERE code = ${code} LIMIT 1
@@ -137,13 +153,13 @@ export async function POST(request) {
         name, code, description, category, price, cost, stock, min_stock,
         unit, barcode, supplier, supplier_id, status, weight, dimensions
       ) VALUES (
-        ${name}, ${code}, ${description || ""}, ${category}, ${price}, ${
-      cost || 0
-    },
-        ${stock || 0}, ${minStock || 0}, ${unit || "pcs"}, ${barcode || ""},
-        ${supplier || ""}, ${supplier_id || null}, ${status || "active"}, ${
-      weight || 0
-    }, ${JSON.stringify(dimensions || {})}
+        ${name}, ${code}, ${
+      description || ""
+    }, ${category}, ${numericPrice}, ${numericCost},
+        ${numericStock}, ${numericMinStock}, ${unit || "pcs"}, ${barcode || ""},
+        ${supplier || ""}, ${numericSupplierId}, ${
+      status || "active"
+    }, ${numericWeight}, ${JSON.stringify(dimensions || {})}
       )
       RETURNING id, name, code, category, price, stock, status, supplier_id, created_at
     `;
@@ -160,4 +176,3 @@ export async function POST(request) {
     );
   }
 }
-

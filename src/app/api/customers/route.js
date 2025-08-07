@@ -132,6 +132,30 @@ export async function POST(request) {
       );
     }
 
+    // Convert empty strings to null/default for numeric fields
+    const numericCreditLimit =
+      credit_limit === "" ? 0 : parseFloat(credit_limit);
+    const numericPaymentTerms =
+      payment_terms === "" ? 0 : parseInt(payment_terms);
+
+    // Validate numeric values
+    if (isNaN(numericCreditLimit) || numericCreditLimit < 0) {
+      return NextResponse.json(
+        { success: false, error: "Limit kredit harus berupa angka positif" },
+        { status: 400 }
+      );
+    }
+
+    if (isNaN(numericPaymentTerms) || numericPaymentTerms < 0) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Syarat pembayaran harus berupa angka positif",
+        },
+        { status: 400 }
+      );
+    }
+
     // Check if code already exists
     const existingCustomer = await sql`
       SELECT id FROM customers WHERE code = ${code} LIMIT 1
@@ -150,9 +174,13 @@ export async function POST(request) {
         code, name, email, phone, address, city, postal_code, tax_id,
         customer_type, credit_limit, payment_terms, notes
       ) VALUES (
-        ${code}, ${name}, ${email}, ${phone}, ${address}, ${city}, 
-        ${postal_code}, ${tax_id}, ${customer_type}, ${credit_limit}, 
-        ${payment_terms}, ${notes}
+        ${code}, ${name}, ${email || ""}, ${phone || ""}, ${address || ""}, ${
+      city || ""
+    }, 
+        ${postal_code || ""}, ${
+      tax_id || ""
+    }, ${customer_type}, ${numericCreditLimit}, 
+        ${numericPaymentTerms}, ${notes || ""}
       )
       RETURNING *
     `;
@@ -163,10 +191,10 @@ export async function POST(request) {
       data: newCustomer[0],
     });
   } catch (error) {
+    console.error("Customer creation error:", error);
     return NextResponse.json(
       { success: false, error: "Gagal menambahkan customer" },
       { status: 500 }
     );
   }
 }
-

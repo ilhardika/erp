@@ -102,6 +102,27 @@ export async function POST(request) {
       );
     }
 
+    // Convert empty strings to null/default for numeric fields
+    const numericPaymentTerms =
+      payment_terms === "" ? 0 : parseInt(payment_terms);
+    const numericCreditLimit =
+      credit_limit === "" ? 0 : parseFloat(credit_limit);
+
+    // Validate numeric values
+    if (isNaN(numericPaymentTerms) || numericPaymentTerms < 0) {
+      return NextResponse.json(
+        { success: false, error: "Payment terms harus berupa angka positif" },
+        { status: 400 }
+      );
+    }
+
+    if (isNaN(numericCreditLimit) || numericCreditLimit < 0) {
+      return NextResponse.json(
+        { success: false, error: "Credit limit harus berupa angka positif" },
+        { status: 400 }
+      );
+    }
+
     // Check if code already exists
     const existingSupplier = await sql.query(
       `SELECT id FROM suppliers WHERE code = $1`,
@@ -128,18 +149,18 @@ export async function POST(request) {
       [
         code,
         name,
-        email,
-        phone,
-        address,
-        city,
-        postal_code,
-        tax_id,
+        email || "",
+        phone || "",
+        address || "",
+        city || "",
+        postal_code || "",
+        tax_id || "",
         supplier_type,
-        payment_terms,
-        credit_limit,
-        bank_account,
-        bank_name,
-        account_holder,
+        numericPaymentTerms,
+        numericCreditLimit,
+        bank_account || "",
+        bank_name || "",
+        account_holder || "",
         notes,
         status,
       ]
@@ -150,10 +171,10 @@ export async function POST(request) {
       data: result[0],
     });
   } catch (error) {
+    console.error("Supplier creation error:", error);
     return NextResponse.json(
       { success: false, error: "Failed to create supplier" },
       { status: 500 }
     );
   }
 }
-

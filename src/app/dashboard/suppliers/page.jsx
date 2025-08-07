@@ -17,6 +17,9 @@ export default function SuppliersPage() {
     error,
     onDelete,
     showDeleteDialog,
+    deleteId,
+    deleteError,
+    handleDeleteClick,
     closeDeleteDialog,
     fetchData: fetchSuppliers,
   } = useStandardDataTable(API_ENDPOINTS.SUPPLIERS, {
@@ -25,12 +28,11 @@ export default function SuppliersPage() {
   });
 
   // Columns for data table
-  const columns = createSupplierColumns((id, name) =>
-    onDelete(id, `supplier "${name}"`)
-  );
+  const columns = createSupplierColumns(handleDeleteClick);
 
   const confirmDelete = async () => {
-    await onDelete(showDeleteDialog?.id, showDeleteDialog?.name);
+    const supplier = suppliers.find((s) => s.id === deleteId);
+    await onDelete(deleteId, supplier?.name || `supplier ${deleteId}`);
   };
 
   // Filter components for conditional filtering
@@ -92,9 +94,9 @@ export default function SuppliersPage() {
       onCloseDeleteDialog={closeDeleteDialog}
       deleteTitle="Konfirmasi Hapus Supplier"
       deleteDescription={`Apakah Anda yakin ingin menghapus supplier "${
-        showDeleteDialog?.name || ""
+        suppliers.find((s) => s.id === deleteId)?.name || ""
       }"? Tindakan ini tidak dapat dibatalkan.`}
-      deleteError={error}
+      deleteError={deleteError}
       onConfirmDelete={confirmDelete}
       // Card customization
       cardTitle="Daftar Supplier"

@@ -5,7 +5,7 @@ import { useState, useCallback } from "react";
  * @param {string} baseUrl - Base URL untuk API endpoint
  * @param {Object} options - Konfigurasi tambahan
  */
-export const useApiCall = (baseUrl, options = {}) => {
+export const useApiCall = (baseUrl = "", options = {}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [data, setData] = useState(null);
@@ -17,7 +17,8 @@ export const useApiCall = (baseUrl, options = {}) => {
         setLoading(true);
         setError("");
 
-        const url = baseUrl + endpoint;
+        // Handle URL construction
+        const url = baseUrl ? baseUrl + endpoint : endpoint;
         const requestOptions = {
           method,
           headers: {

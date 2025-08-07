@@ -130,30 +130,38 @@ export const useStandardDataTable = (endpoint, options = {}) => {
 
   const { delete: deleteApi } = useApiCall();
   const {
-    showDialog,
-    closeDialog,
-    handleDelete,
-    loading: deleteLoading,
+    showDeleteDialog,
+    deleteId,
+    deleteError,
+    handleDeleteClick,
+    closeDeleteDialog,
+    setDeleteError,
   } = useDeleteDialog();
 
   const onDelete = async (id, name) => {
-    const result = await handleDelete(
-      () => deleteApi(`${deleteEndpoint}/${id}`),
-      name
-    );
+    try {
+      const result = await deleteApi(`${deleteEndpoint}/${id}`);
 
-    if (result?.success) {
-      // Remove item from local state
-      setData((prev) => prev.filter((item) => item.id !== id));
+      if (result?.success) {
+        // Remove item from local state
+        setData((prev) => prev.filter((item) => item.id !== id));
+        closeDeleteDialog();
+      } else {
+        setDeleteError(result?.error || "Gagal menghapus data");
+      }
+
+      return result;
+    } catch (error) {
+      const errorMessage = error.message || "Gagal menghapus data";
+      setDeleteError(errorMessage);
+      return { success: false, error: errorMessage };
     }
-
-    return result;
   };
 
   return {
     // Data table state
     data,
-    loading: loading || deleteLoading,
+    loading: loading,
     error,
     pagination,
     filters,
@@ -168,7 +176,10 @@ export const useStandardDataTable = (endpoint, options = {}) => {
 
     // Delete actions
     onDelete,
-    showDeleteDialog: showDialog,
-    closeDeleteDialog: closeDialog,
+    showDeleteDialog,
+    deleteId,
+    deleteError,
+    handleDeleteClick,
+    closeDeleteDialog,
   };
 };

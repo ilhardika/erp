@@ -18,6 +18,9 @@ export default function ProductsPage() {
     error,
     onDelete,
     showDeleteDialog,
+    deleteId,
+    deleteError,
+    handleDeleteClick,
     closeDeleteDialog,
     fetchData: fetchProducts,
   } = useStandardDataTable(API_ENDPOINTS.PRODUCTS, {
@@ -41,12 +44,11 @@ export default function ProductsPage() {
   }, [categoriesData]);
 
   // Columns for data table
-  const columns = createProductColumns((id, name) =>
-    onDelete(id, `produk "${name}"`)
-  );
+  const columns = createProductColumns(handleDeleteClick);
 
   const confirmDelete = async () => {
-    await onDelete(showDeleteDialog?.id, showDeleteDialog?.name);
+    const product = products.find((p) => p.id === deleteId);
+    await onDelete(deleteId, product?.name || `produk ${deleteId}`);
   };
 
   // Filter components for conditional filtering
@@ -111,9 +113,9 @@ export default function ProductsPage() {
       onCloseDeleteDialog={closeDeleteDialog}
       deleteTitle="Konfirmasi Hapus Produk"
       deleteDescription={`Apakah Anda yakin ingin menghapus produk "${
-        showDeleteDialog?.name || ""
+        products.find((p) => p.id === deleteId)?.name || ""
       }"? Tindakan ini tidak dapat dibatalkan.`}
-      deleteError={error}
+      deleteError={deleteError}
       onConfirmDelete={confirmDelete}
       // Card customization
       cardTitle="Daftar Produk"
