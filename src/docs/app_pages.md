@@ -24,13 +24,13 @@
 
 #### 📆 Sales
 
-- `/dashboard/sales/orders` – Sales order list
+- `/dashboard/sales/` – Sales order list
 - `/dashboard/sales/create` – Create new sales order
 
 #### 📅 Purchasing
 
-- `/dashboard/purchases/invoices` – Purchase invoice list
-- `/dashboard/purchases/receive` – Goods receiving page
+- `/dashboard/purchases/` – Purchase invoice list
+- `/dashboard/purchases/create` – Goods receiving page
 
 #### 🏢 Inventory Management
 

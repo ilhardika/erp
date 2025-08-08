@@ -90,7 +90,11 @@ export default function DashboardLayout({ children }) {
         href: "/dashboard/purchases",
         roles: ["admin", "manager"],
         subItems: [
-          { label: "Invoice Pembelian", href: "/dashboard/purchases/invoices" },
+          { label: "Purchase Order", href: "/dashboard/purchases/orders" },
+          {
+            label: "Buat Purchase Order",
+            href: "/dashboard/purchases/orders/create",
+          },
           { label: "Penerimaan Barang", href: "/dashboard/purchases/receive" },
         ],
       },
