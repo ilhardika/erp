@@ -31,11 +31,10 @@
 
 #### 📅 Purchasing
 
-- `/dashboard/purchases/` – Purchase dashboard with stats
-- `/dashboard/purchases/orders` – Purchase orders datatable
-- `/dashboard/purchases/orders/create` – Create new purchase order
-- `/dashboard/purchases/orders/:id` – View purchase order detail
-- `/dashboard/purchases/orders/:id/edit` – Edit purchase order
+- `/dashboard/purchases/` – Purchase orders datatable
+- `/dashboard/purchases/create` – Create new purchase order
+- `/dashboard/purchases/:id` – View purchase order detail
+- `/dashboard/purchases/:id/edit` – Edit purchase order
 
 #### 🏢 Inventory Management
 
