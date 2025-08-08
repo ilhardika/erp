@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { DEFAULT_PAGINATION } from "@/lib/sales-constants";
 
 /**
@@ -22,7 +22,7 @@ export const useSalesOrders = (initialFilters = {}) => {
     hasPreviousPage: false,
   });
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -48,7 +48,7 @@ export const useSalesOrders = (initialFilters = {}) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
 
   const deleteOrder = async (id) => {
     try {
@@ -77,7 +77,7 @@ export const useSalesOrders = (initialFilters = {}) => {
 
   useEffect(() => {
     fetchOrders();
-  }, [filter]);
+  }, [fetchOrders]);
 
   return {
     orders,
@@ -140,7 +140,7 @@ export const useSalesOrder = (orderId) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchOrder = async () => {
+  const fetchOrder = useCallback(async () => {
     if (!orderId) return;
 
     try {
@@ -161,7 +161,7 @@ export const useSalesOrder = (orderId) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [orderId]);
 
   const updateOrder = async (updateData) => {
     try {
@@ -194,7 +194,7 @@ export const useSalesOrder = (orderId) => {
 
   useEffect(() => {
     fetchOrder();
-  }, [orderId]);
+  }, [fetchOrder]);
 
   return {
     order,

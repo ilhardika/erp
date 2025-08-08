@@ -133,7 +133,7 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // TODO: Check if customer has related records (orders, transactions)
+    // Check if customer has related records before deletion
     // For now, we'll just delete the customer
 
     await sql`

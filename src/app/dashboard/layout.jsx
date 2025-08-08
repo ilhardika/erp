@@ -80,8 +80,8 @@ export default function DashboardLayout({ children }) {
         href: "/dashboard/sales",
         roles: ["admin", "manager", "staff"],
         subItems: [
-          { label: "Pesanan Penjualan", href: "/dashboard/sales/orders" },
-          { label: "Buat Pesanan", href: "/dashboard/sales/orders/create" },
+          { label: "Pesanan Penjualan", href: "/dashboard/sales" },
+          { label: "Buat Pesanan", href: "/dashboard/sales/create" },
         ],
       },
       {

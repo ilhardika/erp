@@ -160,15 +160,53 @@ export async function POST(request) {
       );
     }
 
-    // Generate order number
-    const orderCount = await sql`
-      SELECT COUNT(*) + 1 as next_number FROM sales_orders 
-      WHERE order_number LIKE 'SO-2025-%'
-    `;
-    const orderNumber = `SO-2025-${String(orderCount[0].next_number).padStart(
-      4,
-      "0"
-    )}`;
+    // Generate order number with retry logic
+    let orderNumber;
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    while (attempts < maxAttempts) {
+      try {
+        // Get current max number for this year
+        const maxNumberResult = await sql`
+          SELECT COALESCE(
+            MAX(
+              CAST(
+                SUBSTRING(order_number FROM 'SO-2025-([0-9]+)') AS INTEGER
+              )
+            ), 0
+          ) as max_number 
+          FROM sales_orders 
+          WHERE order_number LIKE 'SO-2025-%'
+        `;
+
+        const nextNumber = maxNumberResult[0].max_number + 1;
+        orderNumber = `SO-2025-${String(nextNumber).padStart(4, "0")}`;
+
+        // Check if this number already exists (double check)
+        const existingOrder = await sql`
+          SELECT id FROM sales_orders WHERE order_number = ${orderNumber}
+        `;
+
+        if (existingOrder.length === 0) {
+          break; // Number is available
+        }
+
+        attempts++;
+      } catch (error) {
+        attempts++;
+        if (attempts >= maxAttempts) {
+          throw error;
+        }
+      }
+    }
+
+    if (attempts >= maxAttempts) {
+      return NextResponse.json(
+        { success: false, error: "Gagal generate order number" },
+        { status: 500 }
+      );
+    }
 
     // Calculate totals
     let subtotal = 0;
@@ -211,7 +249,8 @@ export async function POST(request) {
         tax_amount, tax_percentage, total_amount, shipping_cost,
         notes, terms_conditions, shipping_address
       ) VALUES (
-        ${orderNumber}, ${customer_id}, ${salesperson_id}, ${order_date}, ${delivery_date},
+        ${orderNumber}, ${customer_id}, ${salesperson_id}, 
+        ${order_date || null}, ${delivery_date || null},
         ${status}, ${subtotal}, ${discountAmount}, ${discount_percentage},
         ${taxAmount}, ${tax_percentage}, ${totalAmount}, ${shipping_cost},
         ${notes || ""}, ${terms_conditions || ""}, ${shipping_address || ""}

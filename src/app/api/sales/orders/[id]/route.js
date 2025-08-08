@@ -84,6 +84,19 @@ export async function PUT(request, { params }) {
       items = [],
     } = body;
 
+    // Validate and format dates
+    const validOrderDate =
+      order_date && order_date.trim() !== "" ? order_date : null;
+    const validDeliveryDate =
+      delivery_date && delivery_date.trim() !== "" ? delivery_date : null;
+
+    console.log("Date validation:", {
+      order_date,
+      validOrderDate,
+      delivery_date,
+      validDeliveryDate,
+    });
+
     // Check if order exists
     const existingOrder = await sql`
       SELECT id, status FROM sales_orders WHERE id = ${id} LIMIT 1
@@ -171,8 +184,8 @@ export async function PUT(request, { params }) {
       UPDATE sales_orders SET
         customer_id = COALESCE(${customer_id}, customer_id),
         salesperson_id = COALESCE(${salesperson_id}, salesperson_id),
-        order_date = COALESCE(${order_date}, order_date),
-        delivery_date = COALESCE(${delivery_date}, delivery_date),
+        order_date = COALESCE(${validOrderDate}, order_date),
+        delivery_date = COALESCE(${validDeliveryDate}, delivery_date),
         status = COALESCE(${status}, status),
         subtotal = ${subtotal},
         discount_amount = ${discountAmount},

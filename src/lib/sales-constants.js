@@ -3,6 +3,14 @@
  * Centralized constants for sales orders and related functionality
  */
 
+export const SALES_ORDER_STATUS = {
+  DRAFT: "draft",
+  CONFIRMED: "confirmed",
+  PROCESSING: "processing",
+  SHIPPED: "shipped",
+  DELIVERED: "delivered",
+};
+
 export const STATUS_COLORS = {
   draft: "bg-gray-100 text-gray-800",
   confirmed: "bg-blue-100 text-blue-800",

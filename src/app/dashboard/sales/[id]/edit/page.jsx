@@ -60,7 +60,7 @@ export default function EditSalesOrderPage() {
           terms_conditions: orderData.data.terms_conditions || "",
         });
       } else {
-        router.push("/dashboard/sales/orders");
+        router.push("/dashboard/sales");
       }
 
       if (customersData.success) setCustomers(customersData.data);
@@ -71,7 +71,7 @@ export default function EditSalesOrderPage() {
         setUsers(salesUsers);
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      alert("Gagal mengambil data: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -104,8 +104,9 @@ export default function EditSalesOrderPage() {
       const data = await response.json();
 
       if (data.success) {
-        router.push(`/dashboard/sales/orders/${orderId}`);
+        router.push("/dashboard/sales");
       } else {
+        alert("Gagal mengupdate order: " + (data.error || "Unknown error"));
       }
     } catch (error) {
       console.error("Error updating order:", error);
@@ -160,7 +161,7 @@ export default function EditSalesOrderPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push(`/dashboard/sales/orders/${orderId}`)}
+          onClick={() => router.push("/dashboard/sales")}
           className="shrink-0 p-2"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -484,9 +485,7 @@ export default function EditSalesOrderPage() {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() =>
-                  router.push(`/dashboard/sales/orders/${orderId}`)
-                }
+                onClick={() => router.push("/dashboard/sales")}
                 className="w-full"
               >
                 Batal

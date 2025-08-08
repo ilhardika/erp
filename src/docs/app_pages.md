@@ -24,13 +24,18 @@
 
 #### 📆 Sales
 
-- `/dashboard/sales/` – Sales order list
+- `/dashboard/sales` – Sales order datatable (main interface)
 - `/dashboard/sales/create` – Create new sales order
+- `/dashboard/sales/:id` – View sales order detail
+- `/dashboard/sales/:id/edit` – Edit sales order
 
 #### 📅 Purchasing
 
-- `/dashboard/purchases/` – Purchase invoice list
-- `/dashboard/purchases/create` – Goods receiving page
+- `/dashboard/purchases/` – Purchase dashboard with stats
+- `/dashboard/purchases/orders` – Purchase orders datatable
+- `/dashboard/purchases/orders/create` – Create new purchase order
+- `/dashboard/purchases/orders/:id` – View purchase order detail
+- `/dashboard/purchases/orders/:id/edit` – Edit purchase order
 
 #### 🏢 Inventory Management
 

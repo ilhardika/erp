@@ -127,10 +127,10 @@ export default function CreateSalesOrderPage() {
       const data = await response.json();
 
       if (data.success) {
-        console.log("Sales order berhasil dibuat!");
-        router.push(`/dashboard/sales/orders/${data.data.id}`);
+        router.push("/dashboard/sales");
       } else {
         console.error(`Gagal membuat sales order: ${data.error}`);
+        alert(`Gagal membuat sales order: ${data.error}`);
       }
     } catch (error) {
       console.error("Error creating order:", error);
@@ -148,7 +148,7 @@ export default function CreateSalesOrderPage() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => router.push("/dashboard/sales/orders")}
+          onClick={() => router.push("/dashboard/sales")}
           className="shrink-0 p-2"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -474,7 +474,7 @@ export default function CreateSalesOrderPage() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => router.push("/dashboard/sales/orders")}
+                  onClick={() => router.push("/dashboard/sales")}
                   className="w-full"
                 >
                   Batal
@@ -521,7 +521,7 @@ export default function CreateSalesOrderPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push("/dashboard/sales/orders")}
+            onClick={() => router.push("/dashboard/sales")}
             className="w-full"
           >
             Batal
