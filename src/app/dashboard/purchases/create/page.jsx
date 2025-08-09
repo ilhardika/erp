@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,11 +9,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Save, Send } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  ArrowLeft,
+  Plus,
+  Trash2,
+  Save,
+  Send,
+  AlertCircle,
+  Edit,
+  Package,
+} from "lucide-react";
 
 export default function CreatePurchaseOrderPage() {
   const router = useRouter();
@@ -22,183 +37,340 @@ export default function CreatePurchaseOrderPage() {
   const [suppliers, setSuppliers] = useState([]);
   const [products, setProducts] = useState([]);
 
-  // Form state
+  // Dialog state
+  const [dialog, setDialog] = useState({
+    open: false,
+    title: "",
+    message: "",
+    type: "error", // 'error', 'success', 'warning'
+  });
+
+  // Product CRUD Dialog state
+  const [productDialog, setProductDialog] = useState({
+    open: false,
+    mode: "create", // 'create', 'edit'
+    productData: {
+      code: "",
+      name: "",
+      category: "",
+      unit: "",
+      cost_price: 0,
+      price: 0,
+      description: "",
+    },
+    editingId: null,
+  }); // Form state
   const [formData, setFormData] = useState({
     supplier_id: "",
     order_date: new Date().toISOString().split("T")[0],
     expected_date: "",
     notes: "",
-    items: [],
+    status: "draft",
+    items: [
+      {
+        product_id: "",
+        quantity: 1,
+        unit_cost: 0,
+        discount_type: "amount",
+        discount_value: 0,
+        notes: "",
+      },
+    ],
   });
 
-  // Item being added
-  const [newItem, setNewItem] = useState({
-    product_id: "",
-    quantity: 1,
-    unit_cost: 0,
-    discount_amount: 0,
-    discount_percentage: 0,
-    notes: "",
-  });
-
-  // Fetch suppliers and products on mount
+  // Load suppliers and products
   useEffect(() => {
-    fetchSuppliers();
-    fetchProducts();
+    const loadData = async () => {
+      try {
+        const [suppliersRes, productsRes] = await Promise.all([
+          fetch("/api/suppliers"),
+          fetch("/api/products"),
+        ]);
+
+        if (suppliersRes.ok) {
+          const suppliersData = await suppliersRes.json();
+          setSuppliers(suppliersData.data || []);
+        }
+
+        if (productsRes.ok) {
+          const productsData = await productsRes.json();
+          setProducts(productsData.data || []);
+        }
+      } catch (error) {
+        console.error("Error loading data:", error);
+      }
+    };
+
+    loadData();
   }, []);
 
-  const fetchSuppliers = async () => {
-    try {
-      const response = await fetch("/api/suppliers");
-      const data = await response.json();
-      if (data.success) {
-        setSuppliers(data.data);
-      }
-    } catch (error) {
-      console.error("Error fetching suppliers:", error);
-    }
+  // Dialog functions
+  const showDialog = (title, message, type = "error") => {
+    setDialog({ open: true, title, message, type });
   };
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch("/api/products");
-      const data = await response.json();
-      if (data.success) {
-        setProducts(data.data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching products:", error);
-      setProducts([]);
-    }
+  const closeDialog = () => {
+    setDialog({ open: false, title: "", message: "", type: "error" });
   };
 
-  // Add item to purchase order
-  const addItem = () => {
-    if (!newItem.product_id) {
-      alert("Please select a product");
-      return;
-    }
-
-    const product = Array.isArray(products)
-      ? products.find((p) => p.id === parseInt(newItem.product_id))
-      : null;
-    if (!product) {
-      alert("Product not found");
-      return;
-    }
-
-    // Check if product already exists in items
-    const existingItemIndex = formData.items.findIndex(
-      (item) => item.product_id === parseInt(newItem.product_id)
-    );
-
-    if (existingItemIndex >= 0) {
-      // Update existing item quantity
-      const updatedItems = [...formData.items];
-      updatedItems[existingItemIndex].quantity += parseInt(newItem.quantity);
-      updatedItems[existingItemIndex].total_cost =
-        updatedItems[existingItemIndex].quantity *
-          updatedItems[existingItemIndex].unit_cost -
-        updatedItems[existingItemIndex].discount_amount;
-
-      setFormData((prev) => ({ ...prev, items: updatedItems }));
-    } else {
-      // Add new item
-      const totalCost =
-        parseFloat(newItem.unit_cost) * parseInt(newItem.quantity) -
-        parseFloat(newItem.discount_amount || 0);
-      const item = {
-        ...newItem,
-        product_id: parseInt(newItem.product_id),
-        quantity: parseInt(newItem.quantity),
-        unit_cost: parseFloat(newItem.unit_cost),
-        discount_amount: parseFloat(newItem.discount_amount || 0),
-        discount_percentage: parseFloat(newItem.discount_percentage || 0),
-        total_cost: totalCost,
-        product_name: product.name,
-        product_code: product.code,
-      };
-
-      setFormData((prev) => ({
-        ...prev,
-        items: [...prev.items, item],
-      }));
-    }
-
-    // Reset new item form
-    setNewItem({
-      product_id: "",
-      quantity: 1,
-      unit_cost: 0,
-      discount_amount: 0,
-      discount_percentage: 0,
-      notes: "",
+  // Product CRUD functions
+  const openProductDialog = (mode = "create", product = null) => {
+    setProductDialog({
+      open: true,
+      mode,
+      productData: product
+        ? {
+            code: product.code || "",
+            name: product.name || "",
+            category: product.category || "",
+            unit: product.unit || "",
+            cost_price: product.cost_price || 0,
+            price: product.price || 0,
+            description: product.description || "",
+          }
+        : {
+            code: "",
+            name: "",
+            category: "",
+            unit: "",
+            cost_price: 0,
+            price: 0,
+            description: "",
+          },
+      editingId: product?.id || null,
     });
   };
 
-  // Remove item from purchase order
-  const removeItem = (index) => {
-    setFormData((prev) => ({
-      ...prev,
-      items: prev.items.filter((_, i) => i !== index),
-    }));
+  const closeProductDialog = () => {
+    setProductDialog({
+      open: false,
+      mode: "create",
+      productData: {
+        code: "",
+        name: "",
+        category: "",
+        unit: "",
+        cost_price: 0,
+        price: 0,
+        description: "",
+      },
+      editingId: null,
+    });
   };
 
-  // Update item in purchase order
-  const updateItem = (index, field, value) => {
-    const updatedItems = [...formData.items];
-    updatedItems[index][field] = value;
+  const handleProductSubmit = async () => {
+    try {
+      const { productData, mode, editingId } = productDialog;
 
-    // Recalculate total cost if quantity, unit_cost, or discount changed
-    if (
-      field === "quantity" ||
-      field === "unit_cost" ||
-      field === "discount_amount"
-    ) {
-      updatedItems[index].total_cost =
-        parseFloat(updatedItems[index].unit_cost) *
-          parseInt(updatedItems[index].quantity) -
-        parseFloat(updatedItems[index].discount_amount || 0);
+      if (!productData.code || !productData.name) {
+        showDialog(
+          "Validation Error",
+          "Product code and name are required",
+          "error"
+        );
+        return;
+      }
+
+      const url =
+        mode === "create" ? "/api/products" : `/api/products/${editingId}`;
+      const method = mode === "create" ? "POST" : "PUT";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(productData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        // Refresh products list
+        const productsRes = await fetch("/api/products");
+        if (productsRes.ok) {
+          const productsData = await productsRes.json();
+          setProducts(productsData.data || []);
+        }
+
+        showDialog(
+          "Success",
+          `Product ${mode === "create" ? "created" : "updated"} successfully!`,
+          "success"
+        );
+        closeProductDialog();
+      } else {
+        const error = await response.json();
+        showDialog(
+          "Error",
+          error.message || `Failed to ${mode} product`,
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Error saving product:", error);
+      showDialog("Error", "Failed to save product. Please try again.", "error");
+    }
+  };
+
+  const handleProductDelete = async (productId) => {
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // Refresh products list
+        const productsRes = await fetch("/api/products");
+        if (productsRes.ok) {
+          const productsData = await productsRes.json();
+          setProducts(productsData.data || []);
+        }
+
+        showDialog("Success", "Product deleted successfully!", "success");
+      } else {
+        const error = await response.json();
+        showDialog(
+          "Error",
+          error.message || "Failed to delete product",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting product:", error);
+      showDialog(
+        "Error",
+        "Failed to delete product. Please try again.",
+        "error"
+      );
+    }
+  };
+
+  // Calculate item totals
+  const calculateItemTotal = (item) => {
+    const subtotal = item.quantity * item.unit_cost;
+    let discount = 0;
+
+    if (item.discount_type === "percentage") {
+      discount = subtotal * (item.discount_value / 100);
+    } else {
+      discount = item.discount_value;
     }
 
-    setFormData((prev) => ({ ...prev, items: updatedItems }));
+    return Math.max(0, subtotal - discount);
   };
 
-  // Calculate totals
-  const calculateTotals = () => {
-    const subtotal = formData.items.reduce(
-      (sum, item) => sum + item.total_cost,
-      0
-    );
-    const taxAmount = subtotal * 0.11; // 11% PPN
-    const total = subtotal + taxAmount;
+  // Calculate order totals
+  const calculateOrderTotals = () => {
+    const subtotal = formData.items.reduce((sum, item) => {
+      return sum + item.quantity * item.unit_cost;
+    }, 0);
 
-    return { subtotal, taxAmount, total };
+    const totalDiscount = formData.items.reduce((sum, item) => {
+      const itemSubtotal = item.quantity * item.unit_cost;
+      if (item.discount_type === "percentage") {
+        return sum + itemSubtotal * (item.discount_value / 100);
+      } else {
+        return sum + item.discount_value;
+      }
+    }, 0);
+
+    const total = subtotal - totalDiscount;
+
+    return {
+      subtotal: subtotal.toFixed(2),
+      totalDiscount: totalDiscount.toFixed(2),
+      total: total.toFixed(2),
+    };
   };
 
-  // Handle form submission
+  // Add new item row
+  const addItem = () => {
+    setFormData({
+      ...formData,
+      items: [
+        ...formData.items,
+        {
+          product_id: "",
+          quantity: 1,
+          unit_cost: 0,
+          discount_type: "amount",
+          discount_value: 0,
+          notes: "",
+        },
+      ],
+    });
+  };
+
+  // Remove item
+  const removeItem = (index) => {
+    if (formData.items.length === 1) {
+      showDialog(
+        "Warning",
+        "At least one item is required for a purchase order",
+        "warning"
+      );
+      return;
+    }
+    const newItems = formData.items.filter((_, i) => i !== index);
+    setFormData({ ...formData, items: newItems });
+  };
+
+  // Update item
+  const updateItem = (index, field, value) => {
+    const newItems = [...formData.items];
+    newItems[index] = { ...newItems[index], [field]: value };
+
+    // Auto-fill unit cost when product is selected
+    if (field === "product_id" && value) {
+      const selectedProduct = products.find((p) => p.id == value);
+      if (selectedProduct) {
+        newItems[index].unit_cost = parseFloat(
+          selectedProduct.cost_price || selectedProduct.price || 0
+        );
+      }
+    }
+
+    setFormData({ ...formData, items: newItems });
+  };
+
+  // Submit order
   const handleSubmit = async (status = "draft") => {
     if (!formData.supplier_id) {
-      alert("Please select a supplier");
+      showDialog("Validation Error", "Please select a supplier", "error");
       return;
     }
 
-    if (formData.items.length === 0) {
-      alert("Please add at least one item");
+    if (!formData.order_date) {
+      showDialog("Validation Error", "Please set order date", "error");
       return;
     }
+
+    // Check if all items have products selected
+    const invalidItems = formData.items.filter((item) => !item.product_id);
+    if (invalidItems.length > 0) {
+      showDialog(
+        "Validation Error",
+        "Please select products for all items",
+        "error"
+      );
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      setLoading(true);
-      const { subtotal, taxAmount, total } = calculateTotals();
-
-      const payload = {
+      const orderData = {
         ...formData,
-        supplier_id: parseInt(formData.supplier_id),
         status,
-        subtotal,
-        tax_amount: taxAmount,
-        total_amount: total,
+        items: formData.items.map((item) => ({
+          product_id: parseInt(item.product_id),
+          quantity: parseInt(item.quantity),
+          unit_cost: parseFloat(item.unit_cost),
+          discount_type: item.discount_type,
+          discount_value: parseFloat(item.discount_value),
+          notes: item.notes,
+        })),
       };
 
       const response = await fetch("/api/purchases/orders", {
@@ -206,77 +378,97 @@ export default function CreatePurchaseOrderPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(orderData),
       });
 
-      const data = await response.json();
-
-      if (data.success) {
-        alert("Purchase order created successfully!");
-        router.push(`/dashboard/purchases/${data.data.purchase_order.id}`);
+      if (response.ok) {
+        const result = await response.json();
+        showDialog(
+          "Success",
+          "Purchase order created successfully!",
+          "success"
+        );
+        setTimeout(() => {
+          router.push(`/dashboard/purchases/`);
+        }, 1500);
       } else {
-        alert("Error creating purchase order: " + data.error);
+        const error = await response.json();
+        showDialog(
+          "Error",
+          error.message || "Failed to create purchase order",
+          "error"
+        );
       }
     } catch (error) {
       console.error("Error creating purchase order:", error);
-      alert("Error creating purchase order");
+      showDialog(
+        "Error",
+        "Failed to create purchase order. Please try again.",
+        "error"
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const { subtotal, taxAmount, total } = calculateTotals();
+  const totals = calculateOrderTotals();
 
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <Button variant="ghost" size="sm" asChild className="mb-4">
-          <Link href="/dashboard/purchases">
+    <div className="container mx-auto p-4 max-w-7xl">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.back()}
+            className="flex items-center gap-2"
+          >
             <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Create Purchase Order
-          </h1>
-          <p className="text-muted-foreground">
-            Create a new purchase order for procurement
-          </p>
+            Back
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold">Create Purchase Order</h1>
+            <p className="text-gray-600">
+              Create a new purchase order for your suppliers
+            </p>
+          </div>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Form */}
+        {/* Main Content */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Basic Information */}
+          {/* Order Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Basic Information</CardTitle>
+              <CardTitle>Order Information</CardTitle>
+              <CardDescription>Basic purchase order details</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Supplier */}
                 <div>
-                  <Label htmlFor="supplier_id">Supplier *</Label>
+                  <Label htmlFor="supplier">Supplier *</Label>
                   <select
-                    id="supplier_id"
-                    className="w-full px-3 py-2 border border-input rounded-md"
+                    id="supplier"
                     value={formData.supplier_id}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        supplier_id: e.target.value,
-                      }))
+                      setFormData({ ...formData, supplier_id: e.target.value })
                     }
+                    className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
                   >
                     <option value="">Select Supplier</option>
                     {suppliers.map((supplier) => (
                       <option key={supplier.id} value={supplier.id}>
-                        {supplier.name}
+                        {supplier.name} - {supplier.company || "Individual"}
                       </option>
                     ))}
                   </select>
                 </div>
 
+                {/* Order Date */}
                 <div>
                   <Label htmlFor="order_date">Order Date *</Label>
                   <Input
@@ -284,278 +476,587 @@ export default function CreatePurchaseOrderPage() {
                     type="date"
                     value={formData.order_date}
                     onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        order_date: e.target.value,
-                      }))
+                      setFormData({ ...formData, order_date: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+
+                {/* Expected Date */}
+                <div>
+                  <Label htmlFor="expected_date">Expected Date</Label>
+                  <Input
+                    id="expected_date"
+                    type="date"
+                    value={formData.expected_date}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        expected_date: e.target.value,
+                      })
                     }
                   />
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="expected_date">Expected Delivery Date</Label>
-                <Input
-                  id="expected_date"
-                  type="date"
-                  value={formData.expected_date}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      expected_date: e.target.value,
-                    }))
-                  }
-                />
-              </div>
-
+              {/* Notes */}
               <div>
                 <Label htmlFor="notes">Notes</Label>
                 <textarea
                   id="notes"
-                  className="w-full px-3 py-2 border border-input rounded-md min-h-[80px]"
-                  placeholder="Additional notes..."
                   value={formData.notes}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                    setFormData({ ...formData, notes: e.target.value })
                   }
+                  className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  rows="3"
+                  placeholder="Additional notes or requirements..."
                 />
               </div>
             </CardContent>
           </Card>
 
-          {/* Add Item */}
+          {/* Order Items - Sales Style Pattern */}
           <Card>
             <CardHeader>
-              <CardTitle>Add Item</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-12 gap-4 items-end">
-                <div className="col-span-4">
-                  <Label htmlFor="product_id">Product</Label>
-                  <select
-                    id="product_id"
-                    className="w-full px-3 py-2 border border-input rounded-md"
-                    value={newItem.product_id}
-                    onChange={(e) =>
-                      setNewItem((prev) => ({
-                        ...prev,
-                        product_id: e.target.value,
-                      }))
-                    }
-                  >
-                    <option value="">Select Product</option>
-                    {Array.isArray(products) &&
-                      products.map((product) => (
-                        <option key={product.id} value={product.id}>
-                          {product.code} - {product.name}
-                        </option>
-                      ))}
-                  </select>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>Order Items</CardTitle>
+                  <CardDescription>
+                    Add and manage items for this purchase order
+                  </CardDescription>
                 </div>
-
-                <div className="col-span-2">
-                  <Label htmlFor="quantity">Quantity</Label>
-                  <Input
-                    id="quantity"
-                    type="number"
-                    min="1"
-                    value={newItem.quantity}
-                    onChange={(e) =>
-                      setNewItem((prev) => ({
-                        ...prev,
-                        quantity: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-
-                <div className="col-span-3">
-                  <Label htmlFor="unit_cost">Unit Cost</Label>
-                  <Input
-                    id="unit_cost"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={newItem.unit_cost}
-                    onChange={(e) =>
-                      setNewItem((prev) => ({
-                        ...prev,
-                        unit_cost: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <Label>Total</Label>
-                  <Input
-                    value={new Intl.NumberFormat("id-ID", {
-                      style: "currency",
-                      currency: "IDR",
-                    }).format(
-                      parseFloat(newItem.unit_cost) *
-                        parseInt(newItem.quantity || 0) -
-                        parseFloat(newItem.discount_amount || 0)
-                    )}
-                    disabled
-                  />
-                </div>
-
-                <div className="col-span-1">
-                  <Button onClick={addItem} className="w-full">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
+                <Button type="button" onClick={addItem} variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Item
+                </Button>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Items List */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Purchase Items ({formData.items.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              {formData.items.length === 0 ? (
-                <p className="text-muted-foreground text-center py-8">
-                  No items added yet. Add items using the form above.
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {formData.items.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-4 p-4 border rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium">{item.product_name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {item.product_code}
+              <div className="space-y-4">
+                {formData.items.map((item, index) => (
+                  <div key={index} className="border rounded-lg p-4 bg-gray-50">
+                    {/* Mobile responsive layout like sales */}
+                    <div className="space-y-4">
+                      {/* Row 1: Product (full width on mobile) */}
+                      <div className="grid grid-cols-1 gap-4">
+                        <div>
+                          <div className="flex justify-between items-center mb-2">
+                            <Label className="block text-sm font-medium">
+                              Product *
+                            </Label>
+                            <div className="flex gap-2">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openProductDialog("create")}
+                                className="text-xs"
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                Add New
+                              </Button>
+                              {item.product_id && (
+                                <>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const product = products.find(
+                                        (p) => p.id == item.product_id
+                                      );
+                                      if (product)
+                                        openProductDialog("edit", product);
+                                    }}
+                                    className="text-xs"
+                                  >
+                                    <Edit className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      if (
+                                        window.confirm(
+                                          "Are you sure you want to delete this product?"
+                                        )
+                                      ) {
+                                        handleProductDelete(item.product_id);
+                                      }
+                                    }}
+                                    className="text-xs text-red-600 hover:text-red-800"
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                          <select
+                            value={item.product_id}
+                            onChange={(e) =>
+                              updateItem(index, "product_id", e.target.value)
+                            }
+                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            required
+                          >
+                            <option value="">Select Product</option>
+                            {products.map((product) => (
+                              <option key={product.id} value={product.id}>
+                                {product.code} - {product.name} - Rp{" "}
+                                {(
+                                  product.cost_price ||
+                                  product.price ||
+                                  0
+                                ).toLocaleString()}
+                              </option>
+                            ))}
+                          </select>
                         </div>
                       </div>
 
-                      <div className="w-20">
+                      {/* Row 2: Qty, Unit Cost, Discount, Total, Delete (responsive grid) */}
+                      <div className="grid grid-cols-2 md:grid-cols-6 gap-4 items-end">
+                        <div>
+                          <Label className="block text-sm font-medium mb-2">
+                            Quantity *
+                          </Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateItem(
+                                index,
+                                "quantity",
+                                parseInt(e.target.value) || 1
+                              )
+                            }
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="block text-sm font-medium mb-2">
+                            Unit Cost
+                          </Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            value={item.unit_cost}
+                            onChange={(e) =>
+                              updateItem(
+                                index,
+                                "unit_cost",
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div>
+                          <Label className="block text-sm font-medium mb-2">
+                            Discount Type
+                          </Label>
+                          <select
+                            value={item.discount_type}
+                            onChange={(e) =>
+                              updateItem(index, "discount_type", e.target.value)
+                            }
+                            className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="amount">Amount (Rp)</option>
+                            <option value="percentage">Percentage (%)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <Label className="block text-sm font-medium mb-2">
+                            Discount{" "}
+                            {item.discount_type === "percentage"
+                              ? "(%)"
+                              : "(Rp)"}
+                          </Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            step={
+                              item.discount_type === "percentage" ? "0.01" : "1"
+                            }
+                            max={
+                              item.discount_type === "percentage"
+                                ? "100"
+                                : undefined
+                            }
+                            value={item.discount_value}
+                            onChange={(e) =>
+                              updateItem(
+                                index,
+                                "discount_value",
+                                parseFloat(e.target.value) || 0
+                              )
+                            }
+                          />
+                        </div>
+
+                        <div className="text-center">
+                          <Label className="block text-sm font-medium mb-2">
+                            Total
+                          </Label>
+                          <div className="text-sm font-medium py-2">
+                            Rp {calculateItemTotal(item).toLocaleString()}
+                          </div>
+                        </div>
+
+                        <div className="text-center">
+                          {formData.items.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => removeItem(index)}
+                              className="text-red-600 hover:text-red-800 w-full md:w-auto"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Notes Row */}
+                      <div>
+                        <Label className="block text-sm font-medium mb-2">
+                          Item Notes
+                        </Label>
                         <Input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
+                          value={item.notes}
                           onChange={(e) =>
-                            updateItem(
-                              index,
-                              "quantity",
-                              parseInt(e.target.value)
-                            )
+                            updateItem(index, "notes", e.target.value)
                           }
+                          placeholder="Additional notes for this item..."
                         />
                       </div>
-
-                      <div className="w-32">
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.unit_cost}
-                          onChange={(e) =>
-                            updateItem(
-                              index,
-                              "unit_cost",
-                              parseFloat(e.target.value)
-                            )
-                          }
-                        />
-                      </div>
-
-                      <div className="w-32 text-right font-medium">
-                        {new Intl.NumberFormat("id-ID", {
-                          style: "currency",
-                          currency: "IDR",
-                        }).format(item.total_cost)}
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(index)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
                     </div>
-                  ))}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Summary */}
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex justify-between">
-                <span>Subtotal:</span>
-                <span>
-                  {new Intl.NumberFormat("id-ID", {
-                    style: "currency",
-                    currency: "IDR",
-                  }).format(subtotal)}
-                </span>
-              </div>
+        {/* Desktop Sidebar - Sticky Order Summary */}
+        <div className="hidden lg:block">
+          <div className="sticky top-6 space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span>Subtotal</span>
+                    <span>
+                      Rp {parseFloat(totals.subtotal).toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Total Discount</span>
+                    <span>
+                      -Rp {parseFloat(totals.totalDiscount).toLocaleString()}
+                    </span>
+                  </div>
+                  <hr />
+                  <div className="flex justify-between font-bold text-lg">
+                    <span>Total</span>
+                    <span>Rp {parseFloat(totals.total).toLocaleString()}</span>
+                  </div>
+                  <div className="text-sm text-gray-600">
+                    {formData.items.length} item(s)
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-              <div className="flex justify-between">
-                <span>Tax (11%):</span>
-                <span>
-                  {new Intl.NumberFormat("id-ID", {
-                    style: "currency",
-                    currency: "IDR",
-                  }).format(taxAmount)}
-                </span>
-              </div>
-
-              <hr />
-
-              <div className="flex justify-between font-bold text-lg">
-                <span>Total:</span>
-                <span>
-                  {new Intl.NumberFormat("id-ID", {
-                    style: "currency",
-                    currency: "IDR",
-                  }).format(total)}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
+            <div className="space-y-3">
               <Button
                 onClick={() => handleSubmit("draft")}
                 disabled={loading}
                 className="w-full"
                 variant="outline"
               >
-                <Save className="mr-2 h-4 w-4" />
-                Save as Draft
+                <Save className="h-4 w-4 mr-2" />
+                {loading ? "Saving..." : "Save as Draft"}
               </Button>
-
               <Button
-                onClick={() => handleSubmit("pending_approval")}
+                onClick={() => handleSubmit("pending")}
                 disabled={loading}
+                className="w-full bg-blue-600 hover:bg-blue-700"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                {loading ? "Submitting..." : "Submit for Approval"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.push("/dashboard/purchases")}
                 className="w-full"
               >
-                <Send className="mr-2 h-4 w-4" />
-                Submit for Approval
+                Cancel
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Mobile Action Buttons - Shows at bottom on mobile */}
+      <div className="lg:hidden space-y-3 mt-6">
+        {/* Mobile Order Summary Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Order Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span>Subtotal</span>
+                <span>Rp {parseFloat(totals.subtotal).toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Total Discount</span>
+                <span>
+                  -Rp {parseFloat(totals.totalDiscount).toLocaleString()}
+                </span>
+              </div>
+              <hr />
+              <div className="flex justify-between font-bold">
+                <span>Total</span>
+                <span>Rp {parseFloat(totals.total).toLocaleString()}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Button
+          onClick={() => handleSubmit("draft")}
+          disabled={loading}
+          className="w-full"
+          variant="outline"
+        >
+          <Save className="h-4 w-4 mr-2" />
+          {loading ? "Saving..." : "Save as Draft"}
+        </Button>
+        <Button
+          onClick={() => handleSubmit("pending")}
+          disabled={loading}
+          className="w-full bg-blue-600 hover:bg-blue-700"
+        >
+          <Send className="h-4 w-4 mr-2" />
+          {loading ? "Submitting..." : "Submit for Approval"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => router.push("/dashboard/purchases")}
+          className="w-full"
+        >
+          Cancel
+        </Button>
+      </div>
+
+      {/* Dialog for alerts - replaces all alert() calls */}
+      <Dialog open={dialog.open} onOpenChange={closeDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {dialog.type === "error" && (
+                <AlertCircle className="h-5 w-5 text-red-500" />
+              )}
+              {dialog.type === "success" && (
+                <AlertCircle className="h-5 w-5 text-green-500" />
+              )}
+              {dialog.type === "warning" && (
+                <AlertCircle className="h-5 w-5 text-yellow-500" />
+              )}
+              {dialog.title}
+            </DialogTitle>
+            <DialogDescription>{dialog.message}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={closeDialog}>
+              {dialog.type === "success" ? "Continue" : "OK"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Product CRUD Dialog */}
+      <Dialog open={productDialog.open} onOpenChange={closeProductDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              {productDialog.mode === "create"
+                ? "Add New Product"
+                : "Edit Product"}
+            </DialogTitle>
+            <DialogDescription>
+              {productDialog.mode === "create"
+                ? "Create a new product to add to the order"
+                : "Update product information"}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div>
+              <Label htmlFor="product-code">Product Code *</Label>
+              <Input
+                id="product-code"
+                value={productDialog.productData.code}
+                onChange={(e) =>
+                  setProductDialog({
+                    ...productDialog,
+                    productData: {
+                      ...productDialog.productData,
+                      code: e.target.value,
+                    },
+                  })
+                }
+                placeholder="e.g., PROD001"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="product-name">Product Name *</Label>
+              <Input
+                id="product-name"
+                value={productDialog.productData.name}
+                onChange={(e) =>
+                  setProductDialog({
+                    ...productDialog,
+                    productData: {
+                      ...productDialog.productData,
+                      name: e.target.value,
+                    },
+                  })
+                }
+                placeholder="e.g., Office Chair"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="product-category">Category</Label>
+              <Input
+                id="product-category"
+                value={productDialog.productData.category}
+                onChange={(e) =>
+                  setProductDialog({
+                    ...productDialog,
+                    productData: {
+                      ...productDialog.productData,
+                      category: e.target.value,
+                    },
+                  })
+                }
+                placeholder="e.g., Furniture"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="product-unit">Unit</Label>
+              <Input
+                id="product-unit"
+                value={productDialog.productData.unit}
+                onChange={(e) =>
+                  setProductDialog({
+                    ...productDialog,
+                    productData: {
+                      ...productDialog.productData,
+                      unit: e.target.value,
+                    },
+                  })
+                }
+                placeholder="e.g., pcs, kg, box"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="product-cost">Cost Price (Rp)</Label>
+              <Input
+                id="product-cost"
+                type="number"
+                min="0"
+                step="0.01"
+                value={productDialog.productData.cost_price}
+                onChange={(e) =>
+                  setProductDialog({
+                    ...productDialog,
+                    productData: {
+                      ...productDialog.productData,
+                      cost_price: parseFloat(e.target.value) || 0,
+                    },
+                  })
+                }
+                placeholder="0"
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="product-price">Selling Price (Rp)</Label>
+              <Input
+                id="product-price"
+                type="number"
+                min="0"
+                step="0.01"
+                value={productDialog.productData.price}
+                onChange={(e) =>
+                  setProductDialog({
+                    ...productDialog,
+                    productData: {
+                      ...productDialog.productData,
+                      price: parseFloat(e.target.value) || 0,
+                    },
+                  })
+                }
+                placeholder="0"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <Label htmlFor="product-description">Description</Label>
+              <textarea
+                id="product-description"
+                value={productDialog.productData.description}
+                onChange={(e) =>
+                  setProductDialog({
+                    ...productDialog,
+                    productData: {
+                      ...productDialog.productData,
+                      description: e.target.value,
+                    },
+                  })
+                }
+                className="w-full mt-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                rows="3"
+                placeholder="Product description..."
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeProductDialog}>
+              Cancel
+            </Button>
+            <Button onClick={handleProductSubmit}>
+              {productDialog.mode === "create"
+                ? "Create Product"
+                : "Update Product"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

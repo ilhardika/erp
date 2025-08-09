@@ -29,17 +29,33 @@ export default function PurchaseOrderDetailPage() {
   const [purchaseOrder, setPurchaseOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [resolvedParams, setResolvedParams] = useState(null);
+
+  // Resolve params for Next.js 15
+  useEffect(() => {
+    const resolveParams = async () => {
+      const resolved = await params;
+      setResolvedParams(resolved);
+    };
+    resolveParams();
+  }, [params]);
 
   useEffect(() => {
-    if (params.id) {
-      fetchPurchaseOrder();
-    }
-  }, [params.id]);
+    const loadPurchaseOrder = async () => {
+      if (resolvedParams?.id) {
+        await fetchPurchaseOrder();
+      }
+    };
+    loadPurchaseOrder();
+  }, [resolvedParams?.id]);
 
   const fetchPurchaseOrder = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/purchases/orders/${params.id}`);
+      console.log("Fetching purchase order with ID:", resolvedParams?.id);
+      const response = await fetch(
+        `/api/purchases/orders/${resolvedParams.id}`
+      );
       const data = await response.json();
 
       if (data.success) {

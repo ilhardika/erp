@@ -194,7 +194,7 @@ export async function POST(request) {
         po_number,
         supplier_id,
         order_date,
-        expected_date,
+        expected_date || null, // Handle empty string
         status,
         subtotal,
         discount_amount,
@@ -215,9 +215,9 @@ export async function POST(request) {
         const orderItemResult = await sql.query(
           `
           INSERT INTO purchase_order_items (
-            po_id, product_id, quantity, unit_cost, discount_amount, total_cost, notes
+            po_id, product_id, quantity, unit_cost, discount_amount, discount_percentage, total_cost, notes
           ) VALUES (
-            $1, $2, $3, $4, $5, $6, $7
+            $1, $2, $3, $4, $5, $6, $7, $8
           )
           RETURNING *
         `,
@@ -227,6 +227,7 @@ export async function POST(request) {
             item.quantity,
             item.unit_cost || 0,
             item.discount_amount || 0,
+            item.discount_percentage || 0,
             item.total_cost || 0,
             item.notes || "",
           ]

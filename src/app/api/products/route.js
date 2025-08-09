@@ -67,16 +67,14 @@ export async function GET(request) {
 
     return NextResponse.json({
       success: true,
-      data: {
-        products,
-        pagination: {
-          page,
-          limit,
-          total,
-          totalPages: Math.ceil(total / limit),
-        },
-        categories,
+      data: products,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
       },
+      categories,
     });
   } catch (error) {
     return NextResponse.json(

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 // GET /api/purchases/orders/[id] - Get single purchase order by ID
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Get purchase order with supplier details
     const purchaseOrderResult = await sql.query(
@@ -79,7 +79,7 @@ export async function GET(request, { params }) {
 // PUT /api/purchases/orders/[id] - Update purchase order
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     const {
       supplier_id,
@@ -141,7 +141,7 @@ export async function PUT(request, { params }) {
     }
     if (expected_date !== undefined) {
       updateFields.push(`expected_date = $${paramIndex}`);
-      updateValues.push(expected_date);
+      updateValues.push(expected_date || null);
       paramIndex++;
     }
     if (status !== undefined) {
@@ -204,17 +204,19 @@ export async function PUT(request, { params }) {
         await sql.query(
           `
           INSERT INTO purchase_order_items (
-            po_id, product_id, quantity, unit_price, total_amount, notes
+            po_id, product_id, quantity, unit_cost, discount_amount, discount_percentage, total_cost, notes
           ) VALUES (
-            $1, $2, $3, $4, $5, $6
+            $1, $2, $3, $4, $5, $6, $7, $8
           )
         `,
           [
             id,
             item.product_id,
             item.quantity,
-            item.unit_price || 0,
-            item.total_amount || 0,
+            item.unit_cost || 0,
+            item.discount_amount || 0,
+            item.discount_percentage || 0,
+            item.total_cost || 0,
             item.notes || "",
           ]
         );
@@ -242,7 +244,7 @@ export async function PUT(request, { params }) {
 // DELETE /api/purchases/orders/[id] - Delete purchase order
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Check if purchase order exists
     const existingPO = await sql.query(
