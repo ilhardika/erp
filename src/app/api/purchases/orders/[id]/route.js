@@ -86,12 +86,11 @@ export async function PUT(request, { params }) {
       order_date,
       expected_date,
       status,
+      notes,
       subtotal,
       discount_amount,
       tax_amount,
       total_amount,
-      payment_status,
-      notes,
       items = [],
     } = body;
 
@@ -113,12 +112,15 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Check if PO can be edited (only draft and pending_approval can be edited)
-    if (!["draft", "pending_approval"].includes(existingPO[0].status)) {
+    // Check if PO can be edited (only draft, pending, and pending_approval can be edited)
+    if (
+      !["draft", "pending", "pending_approval"].includes(existingPO[0].status)
+    ) {
       return NextResponse.json(
         {
           success: false,
-          error: "Cannot edit purchase order in current status",
+          error:
+            "Cannot edit purchase order in current status. Only draft, pending, and pending approval orders can be edited.",
         },
         { status: 400 }
       );
@@ -149,34 +151,29 @@ export async function PUT(request, { params }) {
       updateValues.push(status);
       paramIndex++;
     }
+    if (notes !== undefined) {
+      updateFields.push(`notes = $${paramIndex}`);
+      updateValues.push(notes);
+      paramIndex++;
+    }
     if (subtotal !== undefined) {
       updateFields.push(`subtotal = $${paramIndex}`);
-      updateValues.push(subtotal);
+      updateValues.push(subtotal || 0);
       paramIndex++;
     }
     if (discount_amount !== undefined) {
       updateFields.push(`discount_amount = $${paramIndex}`);
-      updateValues.push(discount_amount);
+      updateValues.push(discount_amount || 0);
       paramIndex++;
     }
     if (tax_amount !== undefined) {
       updateFields.push(`tax_amount = $${paramIndex}`);
-      updateValues.push(tax_amount);
+      updateValues.push(tax_amount || 0);
       paramIndex++;
     }
     if (total_amount !== undefined) {
       updateFields.push(`total_amount = $${paramIndex}`);
-      updateValues.push(total_amount);
-      paramIndex++;
-    }
-    if (payment_status !== undefined) {
-      updateFields.push(`payment_status = $${paramIndex}`);
-      updateValues.push(payment_status);
-      paramIndex++;
-    }
-    if (notes !== undefined) {
-      updateFields.push(`notes = $${paramIndex}`);
-      updateValues.push(notes);
+      updateValues.push(total_amount || 0);
       paramIndex++;
     }
 
@@ -264,13 +261,13 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Check if PO can be deleted (only draft can be deleted)
-    if (existingPO[0].status !== "draft") {
+    // Check if PO can be deleted (only draft and pending can be deleted)
+    if (!["draft", "pending"].includes(existingPO[0].status)) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "Cannot delete purchase order in current status. Only draft orders can be deleted.",
+            "Tidak dapat menghapus pesanan pembelian dengan status ini. Hanya pesanan dengan status draft dan pending yang dapat dihapus.",
         },
         { status: 400 }
       );
@@ -281,7 +278,7 @@ export async function DELETE(request, { params }) {
 
     return NextResponse.json({
       success: true,
-      message: "Purchase order deleted successfully",
+      message: "Pesanan pembelian berhasil dihapus",
     });
   } catch (error) {
     console.error("Error deleting purchase order:", error);

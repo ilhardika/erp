@@ -13,6 +13,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Plus,
   Eye,
   Edit,
@@ -22,7 +30,14 @@ import {
   XCircle,
   Clock,
   AlertCircle,
+  MoreHorizontal,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 
 export default function PurchaseOrdersPage() {
@@ -35,6 +50,14 @@ export default function PurchaseOrdersPage() {
     total: 0,
     totalPages: 0,
   });
+
+  // Dialog states
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [deleteOrderId, setDeleteOrderId] = useState(null);
+  const [deleteOrderNumber, setDeleteOrderNumber] = useState("");
 
   const [stats, setStats] = useState({
     totalOrders: 0,
@@ -57,11 +80,12 @@ export default function PurchaseOrdersPage() {
 
       if (response.ok) {
         const data = await response.json();
-        setPurchaseOrders(data.orders || []);
+        console.log("Purchase orders response:", data); // Debug log
+        setPurchaseOrders(data.data || []); // Fixed: use data.data instead of data.orders
         setPagination((prev) => ({
           ...prev,
-          total: data.total || 0,
-          totalPages: data.totalPages || 0,
+          total: data.pagination?.total || 0,
+          totalPages: data.pagination?.totalPages || 0,
         }));
       } else {
         console.error("Failed to fetch purchase orders");
@@ -98,27 +122,48 @@ export default function PurchaseOrdersPage() {
       pending: {
         variant: "outline",
         icon: Clock,
-        label: "Pending",
+        label: "Menunggu",
         className:
           "bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100",
+      },
+      pending_approval: {
+        variant: "outline",
+        icon: AlertCircle,
+        label: "Menunggu Persetujuan",
+        className:
+          "bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100",
       },
       approved: {
         variant: "default",
         icon: CheckCircle,
-        label: "Approved",
+        label: "Disetujui",
+        className: "bg-green-100 text-green-800 hover:bg-green-200",
+      },
+      processing: {
+        variant: "outline",
+        icon: Clock,
+        label: "Diproses",
+        className:
+          "bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100",
+      },
+      shipped: {
+        variant: "outline",
+        icon: CheckCircle,
+        label: "Dikirim",
+        className:
+          "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100",
+      },
+      received: {
+        variant: "default",
+        icon: CheckCircle,
+        label: "Diterima",
         className: "bg-green-100 text-green-800 hover:bg-green-200",
       },
       rejected: {
         variant: "destructive",
         icon: XCircle,
-        label: "Rejected",
+        label: "Ditolak",
         className: "bg-red-100 text-red-800 hover:bg-red-200",
-      },
-      received: {
-        variant: "default",
-        icon: CheckCircle,
-        label: "Received",
-        className: "bg-blue-100 text-blue-800 hover:bg-blue-200",
       },
     };
 
@@ -153,7 +198,7 @@ export default function PurchaseOrdersPage() {
   const columns = [
     {
       accessorKey: "po_number",
-      header: "PO Number",
+      header: "Nomor PO",
       cell: ({ row }) => (
         <div className="font-medium text-blue-600">
           {row.getValue("po_number")}
@@ -165,18 +210,18 @@ export default function PurchaseOrdersPage() {
       header: "Supplier",
       cell: ({ row }) => (
         <div className="font-medium">
-          {row.getValue("supplier_name") || "Unknown"}
+          {row.getValue("supplier_name") || "Tidak diketahui"}
         </div>
       ),
     },
     {
       accessorKey: "order_date",
-      header: "Order Date",
+      header: "Tanggal Order",
       cell: ({ row }) => formatDate(row.getValue("order_date")),
     },
     {
       accessorKey: "expected_date",
-      header: "Expected Date",
+      header: "Tanggal Diharapkan",
       cell: ({ row }) => {
         const date = row.getValue("expected_date");
         return date ? formatDate(date) : "-";
@@ -189,7 +234,7 @@ export default function PurchaseOrdersPage() {
     },
     {
       accessorKey: "total_amount",
-      header: "Total Amount",
+      header: "Total Jumlah",
       cell: ({ row }) => (
         <div className="text-right font-medium">
           {formatCurrency(row.getValue("total_amount"))}
@@ -198,140 +243,108 @@ export default function PurchaseOrdersPage() {
     },
     {
       id: "actions",
-      header: "Actions",
+      header: "Aksi",
       cell: ({ row }) => {
         const purchaseOrder = row.original;
 
         return (
-          <div className="flex items-center space-x-2">
-            <Link href={`/dashboard/purchases/${purchaseOrder.id}`}>
-              <Button variant="outline" size="sm">
-                <Eye className="w-4 h-4 mr-1" />
-                View
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Buka menu</span>
+                <MoreHorizontal className="h-4 w-4" />
               </Button>
-            </Link>
-            <Link href={`/dashboard/purchases/${purchaseOrder.id}/edit`}>
-              <Button variant="outline" size="sm">
-                <Edit className="w-4 h-4 mr-1" />
-                Edit
-              </Button>
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDelete(purchaseOrder.id)}
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-            >
-              <Trash2 className="w-4 h-4 mr-1" />
-              Delete
-            </Button>
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/purchases/${purchaseOrder.id}`}>
+                  <Eye className="mr-2 h-4 w-4" />
+                  Lihat Detail
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/purchases/${purchaseOrder.id}/edit`}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  setDeleteOrderId(purchaseOrder.id);
+                  setDeleteOrderNumber(purchaseOrder.po_number);
+                  setShowDeleteDialog(true);
+                }}
+                className="text-red-600 focus:text-red-600"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Hapus
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         );
       },
     },
   ];
 
-  const handleDelete = async (id) => {
-    if (
-      !window.confirm("Are you sure you want to delete this purchase order?")
-    ) {
-      return;
-    }
-
+  const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/purchases/orders/${id}`, {
+      const response = await fetch(`/api/purchases/orders/${deleteOrderId}`, {
         method: "DELETE",
       });
 
+      const data = await response.json();
+
       if (response.ok) {
+        setShowDeleteDialog(false);
+        setDialogMessage("Pesanan pembelian berhasil dihapus!");
+        setShowSuccessDialog(true);
         fetchPurchaseOrders(); // Refresh the list
       } else {
-        alert("Failed to delete purchase order");
+        setShowDeleteDialog(false);
+        setDialogMessage(data.error || "Gagal menghapus pesanan pembelian");
+        setShowErrorDialog(true);
       }
     } catch (error) {
       console.error("Error deleting purchase order:", error);
-      alert("Error deleting purchase order");
+      setShowDeleteDialog(false);
+      setDialogMessage("Terjadi error saat menghapus pesanan pembelian");
+      setShowErrorDialog(true);
     }
   };
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center space-y-4 md:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Purchase Orders</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Pesanan Pembelian
+          </h1>
           <p className="text-muted-foreground">
-            Manage your purchase orders and track supplier deliveries
+            Kelola pesanan pembelian dan lacak pengiriman supplier
           </p>
         </div>
-        <Link href="/dashboard/purchases/create">
+        <Link href="/dashboard/purchases/create" className="hidden md:block">
           <Button>
             <Plus className="w-4 h-4 mr-2" />
-            Create Purchase Order
+            Buat Pesanan Pembelian
           </Button>
         </Link>
-      </div>
-
-      {/* Statistics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Orders</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.totalOrders}</div>
-            <p className="text-xs text-muted-foreground">All purchase orders</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-            <Clock className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {stats.pendingOrders}
-            </div>
-            <p className="text-xs text-muted-foreground">Awaiting approval</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Approved</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {stats.approvedOrders}
-            </div>
-            <p className="text-xs text-muted-foreground">Ready for delivery</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(stats.totalValue)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Combined order value
-            </p>
-          </CardContent>
-        </Card>
+        <div className="block md:hidden">
+          <Link href="/dashboard/purchases/create">
+            <Button className="w-full">
+              <Plus className="w-4 h-4 mr-2" />
+              Buat Pesanan Pembelian
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* Purchase Orders Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Purchase Orders</CardTitle>
+          <CardTitle>Pesanan Pembelian</CardTitle>
           <CardDescription>
-            A list of all purchase orders with their current status and details.
+            Daftar semua pesanan pembelian dengan status dan detail terkini.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -355,6 +368,57 @@ export default function PurchaseOrdersPage() {
           />
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Konfirmasi Hapus</DialogTitle>
+            <DialogDescription>
+              Apakah Anda yakin ingin menghapus pesanan pembelian{" "}
+              <span className="font-semibold">{deleteOrderNumber}</span>? Aksi
+              ini tidak dapat dibatalkan.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              Batal
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              Hapus
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Berhasil</DialogTitle>
+            <DialogDescription>{dialogMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowSuccessDialog(false)}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>{dialogMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowErrorDialog(false)}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

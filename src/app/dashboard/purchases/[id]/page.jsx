@@ -11,6 +11,15 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DataTable } from "@/components/ui/data-table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -22,6 +31,7 @@ import {
   Truck,
   Eye,
 } from "lucide-react";
+import { formatCurrency, formatDate } from "@/lib/format-utils";
 
 export default function PurchaseOrderDetailPage() {
   const params = useParams();
@@ -30,6 +40,15 @@ export default function PurchaseOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [resolvedParams, setResolvedParams] = useState(null);
+
+  // Dialog states
+  const [showApproveDialog, setShowApproveDialog] = useState(false);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [showErrorDialog, setShowErrorDialog] = useState(false);
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [successAction, setSuccessAction] = useState("");
 
   // Resolve params for Next.js 15
   useEffect(() => {
@@ -71,14 +90,15 @@ export default function PurchaseOrderDetailPage() {
   };
 
   // Handle approval actions
-  const handleApproval = async (action) => {
-    const confirmMessage =
-      action === "approve"
-        ? "Are you sure you want to approve this purchase order?"
-        : "Are you sure you want to reject this purchase order?";
+  const handleApprovalClick = (action) => {
+    if (action === "approve") {
+      setShowApproveDialog(true);
+    } else {
+      setShowRejectDialog(true);
+    }
+  };
 
-    if (!confirm(confirmMessage)) return;
-
+  const confirmApproval = async (action) => {
     try {
       setActionLoading(true);
       const response = await fetch("/api/purchases/orders/approved", {
@@ -95,43 +115,64 @@ export default function PurchaseOrderDetailPage() {
       const data = await response.json();
 
       if (data.success) {
-        alert(`Purchase order ${action}d successfully!`);
+        setSuccessAction(action);
+        setDialogMessage(`Purchase order ${action}d successfully!`);
+        setShowSuccessDialog(true);
         fetchPurchaseOrder(); // Refresh data
       } else {
-        alert("Error processing approval: " + data.error);
+        setDialogMessage("Error processing approval: " + data.error);
+        setShowErrorDialog(true);
       }
     } catch (error) {
       console.error("Error processing approval:", error);
-      alert("Error processing approval");
+      setDialogMessage("Error processing approval");
+      setShowErrorDialog(true);
     } finally {
       setActionLoading(false);
+      setShowApproveDialog(false);
+      setShowRejectDialog(false);
     }
   };
 
   // Handle delete
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this purchase order?"))
-      return;
+  const handleDeleteClick = () => {
+    setShowDeleteDialog(true);
+  };
 
+  const confirmDelete = async () => {
     try {
       setActionLoading(true);
-      const response = await fetch(`/api/purchases/orders/${params.id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/purchases/orders/${resolvedParams.id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       const data = await response.json();
 
       if (data.success) {
-        alert("Purchase order deleted successfully!");
-        router.push("/dashboard/purchases");
+        setDialogMessage("Purchase order deleted successfully!");
+        setShowSuccessDialog(true);
+        setSuccessAction("delete");
       } else {
-        alert("Error deleting purchase order: " + data.error);
+        setDialogMessage("Error deleting purchase order: " + data.error);
+        setShowErrorDialog(true);
       }
     } catch (error) {
       console.error("Error deleting purchase order:", error);
-      alert("Error deleting purchase order");
+      setDialogMessage("Error deleting purchase order");
+      setShowErrorDialog(true);
     } finally {
       setActionLoading(false);
+      setShowDeleteDialog(false);
+    }
+  };
+
+  const handleSuccessDialogClose = () => {
+    setShowSuccessDialog(false);
+    if (successAction === "delete") {
+      router.push("/dashboard/purchases");
     }
   };
 
@@ -181,79 +222,211 @@ export default function PurchaseOrderDetailPage() {
   const canApprove = purchaseOrder.status === "pending_approval";
   const canReceive = purchaseOrder.status === "approved";
 
+  // Define columns for items table
+  const itemColumns = [
+    {
+      accessorKey: "product_name",
+      header: "Product",
+      cell: ({ row }) => (
+        <div className="space-y-1">
+          <div className="font-medium">{row.original.product_name}</div>
+          {row.original.product_code && (
+            <div className="text-xs text-muted-foreground">
+              Code: {row.original.product_code}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "quantity",
+      header: "Qty",
+      cell: ({ row }) => (
+        <div className="text-center font-medium">
+          {row.original.quantity}
+          {row.original.product_unit && (
+            <div className="text-xs text-muted-foreground">
+              {row.original.product_unit}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "unit_cost",
+      header: "Unit Price",
+      cell: ({ row }) => (
+        <div className="text-right font-medium">
+          {formatCurrency(
+            row.original.unit_cost || row.original.unit_price || 0
+          )}
+        </div>
+      ),
+    },
+    {
+      accessorKey: "discount",
+      header: "Discount",
+      cell: ({ row }) => {
+        const item = row.original;
+        if (item.discount_amount > 0 || item.discount_percentage > 0) {
+          return (
+            <div className="text-center font-medium text-green-600">
+              {item.discount_percentage > 0
+                ? `${item.discount_percentage}%`
+                : formatCurrency(item.discount_amount)}
+            </div>
+          );
+        }
+        return <div className="text-center text-muted-foreground">-</div>;
+      },
+    },
+    {
+      accessorKey: "total_cost",
+      header: "Total",
+      cell: ({ row }) => (
+        <div className="text-right font-medium">
+          {formatCurrency(row.original.total_cost || row.original.total || 0)}
+        </div>
+      ),
+    },
+  ];
+
   return (
-    <div className="container mx-auto py-6">
-      <div className="mb-6">
-        <Button variant="ghost" size="sm" asChild className="mb-4">
+    <div className="space-y-6 p-4 md:p-6">
+      {/* Back Button */}
+      <div className="flex items-center space-x-4">
+        <Button variant="ghost" size="sm" asChild className="shrink-0 p-2">
           <Link href="/dashboard/purchases">
             <ArrowLeft className="h-4 w-4" />
           </Link>
         </Button>
-        <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Purchase Order {purchaseOrder.po_number}
-            </h1>
-            <p className="text-muted-foreground">
+      </div>
+
+      {/* Header with Responsive Buttons */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start space-y-4 md:space-y-0">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold tracking-tight">
+            Purchase Order {purchaseOrder.po_number}
+          </h1>
+          <div className="flex items-center gap-2 mt-2">
+            <StatusBadge status={purchaseOrder.status} />
+            <p className="text-muted-foreground text-sm md:text-base">
               View and manage purchase order details
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <StatusBadge status={purchaseOrder.status} />
+        </div>
 
-            {canEdit && (
-              <Button variant="outline" asChild>
-                <Link href={`/dashboard/purchases/${params.id}/edit`}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </Link>
-              </Button>
-            )}
+        {/* Desktop Buttons */}
+        <div className="hidden md:flex items-center gap-2 flex-wrap">
+          {canEdit && (
+            <Button variant="outline" asChild>
+              <Link href={`/dashboard/purchases/${resolvedParams?.id}/edit`}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit
+              </Link>
+            </Button>
+          )}
 
-            {canApprove && (
-              <>
-                <Button
-                  onClick={() => handleApproval("approve")}
-                  disabled={actionLoading}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  Approve
-                </Button>
-                <Button
-                  onClick={() => handleApproval("reject")}
-                  disabled={actionLoading}
-                  variant="destructive"
-                >
-                  <X className="mr-2 h-4 w-4" />
-                  Reject
-                </Button>
-              </>
-            )}
-
-            {canReceive && (
-              <Button asChild>
-                <Link
-                  href={`/dashboard/purchases/receipts/create?po_id=${purchaseOrder.id}`}
-                >
-                  <Truck className="mr-2 h-4 w-4" />
-                  Receive Goods
-                </Link>
-              </Button>
-            )}
-
-            {canDelete && (
+          {canApprove && (
+            <>
               <Button
-                onClick={handleDelete}
+                onClick={() => handleApprovalClick("approve")}
+                disabled={actionLoading}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Approve
+              </Button>
+              <Button
+                onClick={() => handleApprovalClick("reject")}
                 disabled={actionLoading}
                 variant="destructive"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete
+                <X className="mr-2 h-4 w-4" />
+                Reject
               </Button>
-            )}
-          </div>
+            </>
+          )}
+
+          {canReceive && (
+            <Button asChild>
+              <Link
+                href={`/dashboard/purchases/receipts/create?po_id=${purchaseOrder.id}`}
+              >
+                <Truck className="mr-2 h-4 w-4" />
+                Receive Goods
+              </Link>
+            </Button>
+          )}
+
+          {canDelete && (
+            <Button
+              onClick={handleDeleteClick}
+              disabled={actionLoading}
+              variant="destructive"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete
+            </Button>
+          )}
         </div>
+      </div>
+
+      {/* Mobile Buttons */}
+      <div className="flex md:hidden flex-col space-y-2">
+        {canEdit && (
+          <Button variant="outline" asChild className="w-full">
+            <Link href={`/dashboard/purchases/${resolvedParams?.id}/edit`}>
+              <Edit className="mr-2 h-4 w-4" />
+              Edit
+            </Link>
+          </Button>
+        )}
+
+        {canApprove && (
+          <div className="flex space-x-2">
+            <Button
+              onClick={() => handleApprovalClick("approve")}
+              disabled={actionLoading}
+              className="bg-green-600 hover:bg-green-700 flex-1"
+            >
+              <Check className="mr-2 h-4 w-4" />
+              Approve
+            </Button>
+            <Button
+              onClick={() => handleApprovalClick("reject")}
+              disabled={actionLoading}
+              variant="destructive"
+              className="flex-1"
+            >
+              <X className="mr-2 h-4 w-4" />
+              Reject
+            </Button>
+          </div>
+        )}
+
+        {canReceive && (
+          <Button asChild className="w-full">
+            <Link
+              href={`/dashboard/purchases/receipts/create?po_id=${purchaseOrder.id}`}
+            >
+              <Truck className="mr-2 h-4 w-4" />
+              Receive Goods
+            </Link>
+          </Button>
+        )}
+
+        {canDelete && (
+          <Button
+            onClick={handleDeleteClick}
+            disabled={actionLoading}
+            variant="destructive"
+            className="w-full"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -370,72 +543,54 @@ export default function PurchaseOrderDetailPage() {
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {purchaseOrder.items.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-4 p-4 border rounded-lg"
-                    >
-                      <div className="flex-1">
-                        <div className="font-medium">{item.product_name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          Code: {item.product_code} | Unit: {item.product_unit}
-                        </div>
-                        {item.notes && (
-                          <div className="text-sm text-muted-foreground mt-1">
-                            Notes: {item.notes}
-                          </div>
-                        )}
-                      </div>
+                  <div className="overflow-x-auto">
+                    <DataTable
+                      data={purchaseOrder.items}
+                      columns={itemColumns}
+                      searchable={false}
+                      pagination={false}
+                    />
+                  </div>
 
-                      <div className="text-center">
-                        <div className="text-sm text-muted-foreground">
-                          Quantity
-                        </div>
-                        <div className="font-medium">{item.quantity}</div>
+                  {/* Total Summary */}
+                  <div className="border-t pt-4">
+                    <div className="flex flex-col md:flex-row md:justify-end space-y-2 md:space-y-0 md:space-x-8">
+                      <div className="flex justify-between md:block">
+                        <span className="text-sm text-muted-foreground">
+                          Subtotal:
+                        </span>
+                        <span className="font-medium">
+                          {formatCurrency(purchaseOrder.subtotal_amount || 0)}
+                        </span>
                       </div>
-
-                      <div className="text-center">
-                        <div className="text-sm text-muted-foreground">
-                          Unit Cost
-                        </div>
-                        <div className="font-medium">
-                          {new Intl.NumberFormat("id-ID", {
-                            style: "currency",
-                            currency: "IDR",
-                          }).format(item.unit_cost)}
-                        </div>
-                      </div>
-
-                      {(item.discount_amount > 0 ||
-                        item.discount_percentage > 0) && (
-                        <div className="text-center">
-                          <div className="text-sm text-muted-foreground">
-                            Discount
-                          </div>
-                          <div className="font-medium text-green-600">
-                            {item.discount_percentage > 0
-                              ? `${item.discount_percentage}%`
-                              : new Intl.NumberFormat("id-ID", {
-                                  style: "currency",
-                                  currency: "IDR",
-                                }).format(item.discount_amount)}
-                          </div>
+                      {purchaseOrder.discount_amount > 0 && (
+                        <div className="flex justify-between md:block">
+                          <span className="text-sm text-muted-foreground">
+                            Discount:
+                          </span>
+                          <span className="font-medium text-green-600">
+                            -{formatCurrency(purchaseOrder.discount_amount)}
+                          </span>
                         </div>
                       )}
-
-                      <div className="text-right">
-                        <div className="text-sm text-muted-foreground">
-                          Total
+                      {purchaseOrder.tax_amount > 0 && (
+                        <div className="flex justify-between md:block">
+                          <span className="text-sm text-muted-foreground">
+                            Tax:
+                          </span>
+                          <span className="font-medium">
+                            {formatCurrency(purchaseOrder.tax_amount)}
+                          </span>
                         </div>
-                        <div className="font-medium">
-                          {new Intl.NumberFormat("id-ID", {
-                            style: "currency",
-                            currency: "IDR",
-                          }).format(item.total_cost)}
-                        </div>
+                      )}
+                      <div className="flex justify-between md:block border-t md:border-t-0 pt-2 md:pt-0">
+                        <span className="text-lg font-semibold">Total:</span>
+                        <span className="text-lg font-bold">
+                          {formatCurrency(purchaseOrder.total_amount || 0)}
+                        </span>
                       </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
               )}
             </CardContent>
@@ -584,6 +739,116 @@ export default function PurchaseOrderDetailPage() {
           </Card>
         </div>
       </div>
+
+      {/* Approve Dialog */}
+      <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Approve Purchase Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to approve this purchase order? This action
+              cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowApproveDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => confirmApproval("approve")}
+              disabled={actionLoading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {actionLoading ? "Approving..." : "Yes, Approve"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Dialog */}
+      <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Purchase Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reject this purchase order? This action
+              cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowRejectDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => confirmApproval("reject")}
+              disabled={actionLoading}
+              variant="destructive"
+            >
+              {actionLoading ? "Rejecting..." : "Yes, Reject"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Purchase Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this purchase order? This action
+              cannot be undone and all data will be permanently removed.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowDeleteDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              disabled={actionLoading}
+              variant="destructive"
+            >
+              {actionLoading ? "Deleting..." : "Yes, Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Success Dialog */}
+      <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Success!</DialogTitle>
+            <DialogDescription>{dialogMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={handleSuccessDialogClose}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Error Dialog */}
+      <Dialog open={showErrorDialog} onOpenChange={setShowErrorDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Error</DialogTitle>
+            <DialogDescription>{dialogMessage}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setShowErrorDialog(false)}>OK</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
