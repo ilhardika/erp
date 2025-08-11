@@ -88,7 +88,7 @@ export function LoginForm({ className, ...props }) {
             </div>
             <div className="mt-4 text-center text-sm">
               <p className="text-xs text-gray-500 mt-1">
-                admin@bizflow.com / password123
+                admin@bizflow.com / admin123
               </p>
             </div>
           </form>

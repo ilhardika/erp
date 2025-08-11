@@ -46,21 +46,6 @@ export default function Home() {
           >
             Mulai Sekarang
           </Button>
-
-          <div className="mt-6 text-sm text-gray-600">
-            <p>Demo Accounts:</p>
-            <div className="mt-2 space-y-1">
-              <p>
-                <strong>Admin:</strong> admin@bizflow.com | password123
-              </p>
-              <p>
-                <strong>Cashier:</strong> cashier@bizflow.com | password123
-              </p>
-              <p>
-                <strong>Warehouse:</strong> warehouse@bizflow.com | password123
-              </p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
