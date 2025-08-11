@@ -77,7 +77,7 @@ export const useFormSubmit = (options = {}) => {
         setLoading(false);
       }
     },
-    [router, successMessage, errorMessage, redirectPath, onSuccess, onError]
+    [router, errorMessage, redirectPath, onSuccess, onError]
   );
 
   // Reset form state

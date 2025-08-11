@@ -68,7 +68,8 @@ export const useDataFetch = (endpoint, options = {}) => {
     if (immediate && endpoint) {
       fetchData();
     }
-  }, [immediate, endpoint, fetchData, ...dependencies]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [immediate, endpoint, fetchData, JSON.stringify(dependencies)]);
 
   return {
     data,
@@ -222,7 +223,7 @@ export const usePaginatedFetch = (baseEndpoint, options = {}) => {
     if (baseEndpoint) {
       fetchData();
     }
-  }, [fetchData]);
+  }, [baseEndpoint, fetchData]);
 
   return {
     data,
