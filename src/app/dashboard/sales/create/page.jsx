@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import { ArrowLeft, Plus, Trash2, Save } from "lucide-react";
 import { formatCurrency } from "@/lib/format-utils";
 import { FORM_DEFAULTS } from "@/lib/sales-constants";
@@ -33,7 +34,7 @@ export default function CreateSalesOrderPage() {
       ]);
 
       if (customersData.success) setCustomers(customersData.data);
-      if (productsData.success) setProducts(productsData.data.products || []);
+      if (productsData.success) setProducts(productsData.data || []); // Fixed: removed .products
       if (usersData.success) {
         const salesUsers = usersData.data.filter(
           (user) => user.role === "admin" || user.role === "sales"
@@ -175,51 +176,64 @@ export default function CreateSalesOrderPage() {
                 <CardTitle>Informasi Order</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       Customer *
                     </label>
-                    <select
+                    <SearchableSelect
+                      options={customers}
                       value={formData.customer_id}
-                      onChange={(e) =>
+                      onValueChange={(value) =>
                         setFormData({
                           ...formData,
-                          customer_id: e.target.value,
+                          customer_id: value,
                         })
                       }
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
-                    >
-                      <option value="">Pilih Customer</option>
-                      {customers.map((customer) => (
-                        <option key={customer.id} value={customer.id}>
-                          {customer.name} - {customer.phone}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Pilih Customer"
+                      searchPlaceholder="Cari customer..."
+                      getOptionLabel={(customer) =>
+                        `${customer.name} - ${customer.phone}`
+                      }
+                      getOptionValue={(customer) => customer.id}
+                      renderOption={(customer) => (
+                        <div className="flex flex-col">
+                          <span className="font-medium">{customer.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {customer.phone} • {customer.email}
+                          </span>
+                        </div>
+                      )}
+                      className="w-full"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
                       Salesperson
                     </label>
-                    <select
+                    <SearchableSelect
+                      options={users}
                       value={formData.salesperson_id}
-                      onChange={(e) =>
+                      onValueChange={(value) =>
                         setFormData({
                           ...formData,
-                          salesperson_id: e.target.value,
+                          salesperson_id: value,
                         })
                       }
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="">Pilih Salesperson</option>
-                      {users.map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.full_name || user.username}
-                        </option>
-                      ))}
-                    </select>
+                      placeholder="Pilih Salesperson"
+                      searchPlaceholder="Cari salesperson..."
+                      getOptionLabel={(user) => `${user.name} - ${user.role}`}
+                      getOptionValue={(user) => user.id}
+                      renderOption={(user) => (
+                        <div className="flex flex-col">
+                          <span className="font-medium">{user.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            {user.email} • {user.role}
+                          </span>
+                        </div>
+                      )}
+                      className="w-full"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-2">
@@ -231,7 +245,7 @@ export default function CreateSalesOrderPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, order_date: e.target.value })
                       }
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full h-12 md:h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
                     />
                   </div>
                   <div>
@@ -247,10 +261,10 @@ export default function CreateSalesOrderPage() {
                           delivery_date: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full h-12 md:h-10 px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation"
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-1 md:col-span-2">
                     <label className="block text-sm font-medium mb-2">
                       Shipping Address
                     </label>
@@ -262,12 +276,12 @@ export default function CreateSalesOrderPage() {
                           shipping_address: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation resize-none"
                       rows="2"
                       placeholder="Alamat pengiriman..."
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-1 md:col-span-2">
                     <label className="block text-sm font-medium mb-2">
                       Terms & Conditions
                     </label>
@@ -279,12 +293,12 @@ export default function CreateSalesOrderPage() {
                           terms_conditions: e.target.value,
                         })
                       }
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation resize-none"
                       rows="2"
                       placeholder="Syarat dan ketentuan..."
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-1 md:col-span-2">
                     <label className="block text-sm font-medium mb-2">
                       Notes
                     </label>
@@ -293,7 +307,7 @@ export default function CreateSalesOrderPage() {
                       onChange={(e) =>
                         setFormData({ ...formData, notes: e.target.value })
                       }
-                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 touch-manipulation resize-none"
                       rows="2"
                       placeholder="Catatan tambahan..."
                     />
@@ -328,22 +342,33 @@ export default function CreateSalesOrderPage() {
                             <label className="block text-sm font-medium mb-2">
                               Produk *
                             </label>
-                            <select
+                            <SearchableSelect
+                              options={products}
                               value={item.product_id}
-                              onChange={(e) =>
-                                updateItem(index, "product_id", e.target.value)
+                              onValueChange={(value) =>
+                                updateItem(index, "product_id", value)
                               }
-                              className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              required
-                            >
-                              <option value="">Pilih Produk</option>
-                              {products.map((product) => (
-                                <option key={product.id} value={product.id}>
-                                  {product.name} -{" "}
-                                  {formatCurrency(product.price)}
-                                </option>
-                              ))}
-                            </select>
+                              placeholder="Pilih Produk"
+                              searchPlaceholder="Cari produk..."
+                              getOptionLabel={(product) =>
+                                `${product.name} - ${formatCurrency(
+                                  product.price
+                                )}`
+                              }
+                              getOptionValue={(product) => product.id}
+                              renderOption={(product) => (
+                                <div className="flex flex-col">
+                                  <span className="font-medium">
+                                    {product.name}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {product.code} •{" "}
+                                    {formatCurrency(product.price)}
+                                  </span>
+                                </div>
+                              )}
+                              className="w-full"
+                            />
                           </div>
                         </div>
 
