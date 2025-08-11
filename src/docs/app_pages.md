@@ -1,6 +1,6 @@
 # 📄 Page List for Bizflow ERP + POS App (Unified Dashboard Layout)
 
-## 📂 Main Page Structure by Role (Shared `/dashboard` Layout)
+## 📂 Main Page Structure by Role (Shared `/dashboard` Layout).
 
 ### 1. Auth Pages
 
