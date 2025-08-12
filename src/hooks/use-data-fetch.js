@@ -148,7 +148,14 @@ export const usePaginatedFetch = (baseEndpoint, options = {}) => {
         let totalItems = 0;
         let totalPages = 1;
 
-        if (result.data.products) {
+        if (result.pagination) {
+          // API with pagination object (like employees)
+          items = result.data;
+          totalItems = result.pagination.total || items.length;
+          totalPages =
+            result.pagination.totalPages ||
+            Math.ceil(totalItems / pagination.pageSize);
+        } else if (result.data.products) {
           // Products API format
           items = result.data.products;
           totalItems = result.data.pagination?.total || items.length;

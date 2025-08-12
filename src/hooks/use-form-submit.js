@@ -172,7 +172,7 @@ export const useFormData = (initialData = {}, options = {}) => {
 
   // Generate code
   const generateCode = useCallback(
-    (customPrefix = null) => {
+    (fieldName = "code", customPrefix = null) => {
       // More robust prefix handling
       let prefix = "CODE"; // default fallback
 
@@ -186,7 +186,7 @@ export const useFormData = (initialData = {}, options = {}) => {
       const random = Math.random().toString(36).substring(2, 5).toUpperCase();
       const code = `${prefix}${timestamp}${random}`;
 
-      updateField("code", code);
+      updateField(fieldName, code);
       return code;
     },
     [codePrefix, updateField]
